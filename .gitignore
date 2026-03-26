@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Entorno
+.env
+*.env
+
+# Outputs temporales
+/tmp/
+*.pdf
+*.png
+!samples/
+
+# OS
+.DS_Store
+Thumbs.db

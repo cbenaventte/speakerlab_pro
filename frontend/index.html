@@ -1,0 +1,2676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeakerLab — Calculadora & Enciclopedia Acústica</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   TOKENS — un solo sistema de diseño para ambas secciones
+═══════════════════════════════════════════════════════════ */
+:root {
+  /* Papel */
+  --paper:        #f1ebd9;
+  --paper-light:  #fcfbf8;
+  --paper-dark:   #e8dfc8;
+  --ink:          #1e272e;
+  --ink-muted:    #5a6a72;
+  --ink-faint:    rgba(30,39,46,0.08);
+
+  /* Acento azul (blueprint) */
+  --blue:         #0984e3;
+  --blue-dark:    #075f9e;
+  --blue-bg:      rgba(9,132,227,0.07);
+
+  /* Acento rojo (pluma roja del diseñador) */
+  --red:          #d63031;
+  --red-bg:       rgba(214,48,49,0.07);
+
+  /* Acento verde (resultado / OK) */
+  --green:        #00b894;
+  --green-bg:     rgba(0,184,148,0.09);
+
+  /* Acento naranja */
+  --orange:       #e17055;
+
+  /* Highlight */
+  --hl:           rgba(253,203,110,0.42);
+
+  /* Grid de papel cuadriculado */
+  --grid:         rgba(0,0,0,0.055);
+
+  /* Radios sketch */
+  --r-sketch:     255px 15px 225px 15px / 15px 225px 15px 255px;
+  --r-sketch-alt: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  --r-soft:       6px;
+
+  /* Sombra sketch */
+  --shadow-sketch: 4px 5px 0 rgba(0,0,0,0.10);
+  --shadow-card:   0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+h1,h2,h3,h4,.hand { font-family: 'Kalam', cursive; }
+.mono, .val, code  { font-family: 'Space Mono', monospace; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════════════════ */
+#topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--paper-light);
+  border-bottom: 2.5px solid var(--ink);
+  display: flex; align-items: center; gap: 0;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.07);
+}
+
+.tb-logo {
+  padding: 0.7rem 1.5rem;
+  border-right: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+.tb-logo h1 {
+  font-size: 1.5rem; color: var(--blue-dark); line-height: 1;
+  letter-spacing: -0.5px;
+}
+.tb-logo span.subtitle {
+  font-family: 'Nunito', sans-serif; font-size: 0.7rem;
+  color: var(--ink-muted); letter-spacing: 0.05em; font-weight: 600;
+  text-transform: uppercase; display: block; margin-top: 1px;
+}
+.tb-logo span.author-credits {
+  font-family: 'Georgia', serif; font-size: 0.9rem; font-style: italic;
+  color: var(--ink-muted); font-weight: normal; letter-spacing: 0.2px;
+  text-transform: none; display: block; margin-top: 4px;
+}
+
+.tb-nav {
+  display: flex; flex: 1; overflow-x: auto;
+}
+.tb-nav button {
+  flex-shrink: 0;
+  padding: 0.9rem 1.4rem;
+  background: none; border: none;
+  font-family: 'Kalam', cursive; font-size: 1.05rem;
+  color: var(--ink-muted); cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.18s;
+  position: relative;
+}
+.tb-nav button:hover { color: var(--ink); background: var(--ink-faint); }
+.tb-nav button.active {
+  color: var(--blue-dark);
+  border-bottom-color: var(--blue);
+  background: var(--blue-bg);
+  font-weight: 700;
+}
+.tb-nav button .tb-icon { margin-right: 6px; }
+
+.tb-pro {
+  padding: 0.5rem 1.2rem;
+  border-left: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+.btn-pro {
+  background: var(--ink); color: var(--paper-light);
+  border: none; padding: 0.5rem 1.1rem;
+  font-family: 'Kalam', cursive; font-size: 1rem;
+  cursor: pointer; border-radius: var(--r-sketch);
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-pro:hover { background: var(--blue-dark); }
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL: sidebar + contenido
+═══════════════════════════════════════════════════════════ */
+#app {
+  display: flex;
+  min-height: calc(100vh - 58px);
+}
+
+/* ── Sidebar enciclopedia ── */
+#enc-sidebar {
+  width: 270px; flex-shrink: 0;
+  background: var(--paper-light);
+  border-right: 2.5px solid var(--ink);
+  padding: 1.5rem 0.8rem;
+  overflow-y: auto;
+  transition: width 0.3s;
+}
+#enc-sidebar.hidden { width: 0; padding: 0; overflow: hidden; }
+
+.nav-section-title {
+  font-family: 'Caveat', cursive; font-size: 1.2rem;
+  color: var(--red); margin: 1.4rem 0 0.4rem 0.5rem;
+  transform: rotate(-1.5deg); display: inline-block;
+}
+.nav-item {
+  display: block; width: 100%; text-align: left;
+  padding: 0.55rem 0.9rem; margin-bottom: 3px;
+  background: none; border: 2px dashed transparent;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem;
+  color: var(--ink); cursor: pointer;
+  border-radius: var(--r-sketch); transition: all 0.17s;
+}
+.nav-item:hover { border-color: var(--blue); background: var(--blue-bg); }
+.nav-item.active {
+  border: 2px solid var(--ink); background: var(--blue);
+  color: var(--paper-light); transform: scale(1.02);
+}
+
+/* ── Área de contenido ── */
+#content-area {
+  flex: 1; overflow-y: auto; padding: 2.5rem 2.8rem;
+  scroll-behavior: smooth;
+  max-width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VISTAS PRINCIPALES
+═══════════════════════════════════════════════════════════ */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ENCICLOPEDIA — estilos (del original, refinados)
+═══════════════════════════════════════════════════════════ */
+.enc-article { max-width: 820px; margin: 0 auto; }
+.enc-article h2 {
+  font-size: 1.8rem; margin-bottom: 0.8rem;
+  border-bottom: 2px solid var(--ink); display: inline-block; padding-bottom: 0.2rem;
+}
+.enc-article h3 { font-size: 1.35rem; color: var(--blue); margin: 1.3rem 0 0.6rem; }
+.enc-article p  { margin-bottom: 0.9rem; font-size: 1.02rem; }
+.enc-article ul, .enc-article ol { margin: 0 0 1rem 1.8rem; }
+.enc-article li { margin-bottom: 0.45rem; font-size: 1rem; }
+
+/* Bridge CTA — llamada a la calculadora desde la enciclopedia */
+.bridge-cta {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--blue-bg);
+  border: 2px dashed var(--blue);
+  border-radius: var(--r-sketch);
+  padding: 1rem 1.4rem;
+  margin: 1.8rem 0;
+  cursor: pointer; transition: all 0.2s;
+}
+.bridge-cta:hover { background: rgba(9,132,227,0.14); transform: translateX(4px); }
+.bridge-cta .bridge-icon { font-size: 1.8rem; flex-shrink: 0; }
+.bridge-cta .bridge-text strong {
+  font-family: 'Kalam', cursive; font-size: 1.2rem; color: var(--blue-dark); display: block;
+}
+.bridge-cta .bridge-text span { font-size: 0.88rem; color: var(--ink-muted); }
+.bridge-arrow { margin-left: auto; color: var(--blue); font-size: 1.4rem; }
+
+.sketch-box {
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-sketch);
+  padding: 1.6rem; margin: 1.6rem 0;
+  box-shadow: var(--shadow-sketch);
+}
+.key-idea {
+  background: var(--hl); padding: 1.2rem 1.4rem;
+  border-left: 4px solid var(--red); margin: 1.4rem 0;
+  font-style: italic; position: relative; border-radius: 0 4px 4px 0;
+}
+.key-idea::before {
+  content: "💡 Nota importante";
+  display: block; font-family: 'Caveat', cursive; font-size: 1.3rem;
+  color: var(--red); margin-bottom: 0.4rem; font-style: normal;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8rem; align-items: center; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; }
+@media(max-width:780px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+/* Tarjetas T/S */
+.ts-card {
+  border: 2px dashed var(--blue); padding: 1.2rem; cursor: pointer;
+  border-radius: var(--r-sketch-alt); background: var(--paper-light);
+  transition: all 0.25s;
+}
+.ts-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card); }
+.ts-card h4 { font-size: 2.2rem; margin-bottom: 0.3rem; color: var(--blue-dark); text-align: center; }
+.ts-content { display: none; margin-top: 0.8rem; border-top: 1px dotted var(--ink); padding-top: 0.8rem; font-size: 0.92rem; }
+.ts-card.open .ts-content { display: block; }
+.ts-card.open { border-style: solid; }
+
+/* SVG global */
+svg.enc-svg { width: 100%; height: auto; max-height: 300px; }
+.s-stroke { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.s-blue { stroke: var(--blue); }
+.s-red  { stroke: var(--red); }
+.s-dash { stroke-dasharray: 5,5; }
+
+/* Simulator */
+.simulator-panel {
+  background: var(--paper-light);
+  border: 3px solid var(--ink); border-radius: 8px; padding: 1.8rem;
+}
+input[type=range] { width: 100%; cursor: pointer; accent-color: var(--blue); }
+.slider-wrapper { margin: 1.5rem 0; }
+
+/* Tabs */
+.tab-btn {
+  background: transparent; border: 2px solid var(--ink);
+  padding: 0.45rem 1rem; font-family: 'Kalam', cursive; font-size: 1.1rem;
+  cursor: pointer; border-radius: var(--r-sketch);
+  margin-right: 0.4rem; margin-bottom: 0.4rem; transition: all 0.18s;
+}
+.tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.tab-content { display: none; padding-top: 1.5rem; }
+.tab-content.active { display: block; animation: fadeIn 0.25s; }
+
+/* ═══════════════════════════════════════════════════════════
+   CALCULADORA — aesthetic papel/tinta
+═══════════════════════════════════════════════════════════ */
+#view-calc { max-width: 1100px; margin: 0 auto; }
+
+.calc-header {
+  margin-bottom: 1.8rem; padding-bottom: 1rem;
+  border-bottom: 2px solid var(--ink);
+  display: flex; align-items: flex-end; gap: 1.2rem; flex-wrap: wrap;
+}
+.calc-header h2 { font-size: 1.9rem; }
+.calc-header p  { color: var(--ink-muted); font-size: 0.93rem; margin: 0; }
+
+.calc-layout {
+  display: grid; grid-template-columns: 380px 1fr; gap: 1.8rem;
+}
+@media(max-width:900px) { .calc-layout { grid-template-columns: 1fr; } }
+
+/* Panel de inputs */
+.input-panel {
+  background: var(--paper-light);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-sketch);
+  box-shadow: var(--shadow-sketch);
+  padding: 1.5rem;
+}
+
+.panel-title {
+  font-family: 'Kalam', cursive; font-size: 1.25rem;
+  color: var(--blue-dark); margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.panel-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: repeating-linear-gradient(90deg, var(--ink) 0, var(--ink) 4px, transparent 4px, transparent 8px);
+  opacity: 0.25;
+}
+
+/* Searchbox altavoces */
+.search-wrapper {
+  position: relative; margin-bottom: 1rem;
+}
+.search-wrapper input {
+  width: 100%; padding: 0.6rem 0.9rem 0.6rem 2.2rem;
+  border: 2px dashed var(--ink);
+  border-radius: var(--r-sketch); background: var(--paper);
+  font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: var(--ink);
+  outline: none; transition: border-color 0.18s;
+}
+.search-wrapper input:focus { border-style: solid; border-color: var(--blue); }
+.search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--ink-muted); font-size: 1rem; pointer-events: none; }
+.search-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--paper-light); border: 2px solid var(--ink);
+  border-radius: var(--r-soft); z-index: 50; max-height: 220px; overflow-y: auto;
+  box-shadow: var(--shadow-card); display: none;
+}
+.search-dropdown.open { display: block; }
+.dd-item {
+  padding: 0.6rem 0.9rem; cursor: pointer; font-size: 0.9rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px dotted var(--ink-faint); transition: background 0.12s;
+}
+.dd-item:hover { background: var(--blue-bg); }
+.dd-item .dd-brand { color: var(--ink-muted); font-size: 0.8rem; }
+.dd-item .dd-model { font-weight: 700; }
+
+/* Inputs del formulario */
+.form-section { margin-bottom: 1.2rem; }
+.form-section-title {
+  font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--red);
+  margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;
+}
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem;
+}
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-field { display: flex; flex-direction: column; gap: 3px; }
+.form-field label {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-muted);
+  display: flex; align-items: center; gap: 0.3rem;
+}
+.form-field label .tip {
+  width: 14px; height: 14px; background: var(--ink-muted); color: var(--paper);
+  border-radius: 50%; font-size: 0.65rem; font-weight: 700; text-align: center;
+  line-height: 14px; cursor: pointer; flex-shrink: 0; font-family: sans-serif;
+}
+.form-field input, .form-field select {
+  padding: 0.42rem 0.7rem;
+  border: 2px dashed var(--ink);
+  border-radius: var(--r-sketch-alt);
+  background: var(--paper); font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; color: var(--ink); outline: none; width: 100%;
+  transition: border-color 0.18s, border-style 0.18s;
+}
+.form-field input:focus, .form-field select:focus {
+  border-style: solid; border-color: var(--blue);
+}
+.form-field .unit-hint {
+  font-size: 0.7rem; color: var(--ink-muted);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Botón calcular */
+.btn-calc {
+  width: 100%; padding: 0.85rem;
+  background: var(--ink); color: var(--paper-light);
+  border: none; border-radius: var(--r-sketch);
+  font-family: 'Kalam', cursive; font-size: 1.35rem;
+  cursor: pointer; transition: all 0.2s; margin-top: 0.8rem;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+}
+.btn-calc:hover {
+  background: var(--blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 rgba(0,0,0,0.18);
+}
+.btn-calc:active { transform: translateY(0); box-shadow: 2px 2px 0 rgba(0,0,0,0.12); }
+
+/* Panel de resultados */
+.results-panel {
+  display: flex; flex-direction: column; gap: 1.2rem;
+}
+
+.empty-state {
+  text-align: center; padding: 4rem 2rem;
+  color: var(--ink-muted);
+  border: 2px dashed var(--ink-muted);
+  border-radius: var(--r-sketch);
+}
+.empty-state .es-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.4; }
+.empty-state p { font-family: 'Kalam', cursive; font-size: 1.3rem; }
+
+/* Tarjetas de resultado hero */
+.hero-cards {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 0.9rem;
+}
+.hero-card {
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-sketch-alt);
+  padding: 1rem 1.2rem;
+  box-shadow: var(--shadow-sketch);
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--blue);
+}
+.hero-card.green::before { background: var(--green); }
+.hero-card.red::before   { background: var(--red); }
+.hero-card .hc-label {
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--ink-muted); margin-bottom: 0.2rem;
+}
+.hero-card .hc-val {
+  font-family: 'Space Mono', monospace; font-size: 2rem;
+  font-weight: 700; color: var(--ink); line-height: 1.1;
+}
+.hero-card .hc-unit { font-size: 1rem; color: var(--ink-muted); }
+.hero-card .hc-sub  { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.2rem; }
+
+/* Resultado sketch-box */
+.result-section {
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-sketch);
+  box-shadow: var(--shadow-sketch);
+  overflow: hidden;
+}
+.result-section-header {
+  padding: 0.7rem 1.2rem;
+  background: var(--paper-dark);
+  border-bottom: 1.5px solid var(--ink);
+  font-family: 'Kalam', cursive; font-size: 1.1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.result-section-body { padding: 1rem 1.2rem; }
+
+/* Filas de datos */
+.data-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.38rem 0;
+  border-bottom: 1px dotted rgba(0,0,0,0.1);
+  font-size: 0.92rem;
+}
+.data-row:last-child { border-bottom: none; }
+.data-row .dr-label { color: var(--ink-muted); flex: 1; }
+.data-row .dr-val {
+  font-family: 'Space Mono', monospace; font-weight: 700;
+  color: var(--ink); font-size: 0.95rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+
+/* Diagnósticos */
+.diag-grid { display: flex; flex-direction: column; gap: 0.4rem; }
+.diag-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  background: var(--paper); border-radius: var(--r-soft);
+  border: 1.5px solid rgba(0,0,0,0.07);
+}
+.diag-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid;
+}
+.diag-dot.g { background: var(--green-bg); border-color: var(--green); }
+.diag-dot.y { background: rgba(253,203,110,0.4); border-color: #e5a700; }
+.diag-dot.r { background: var(--red-bg); border-color: var(--red); }
+.diag-label { font-size: 0.78rem; color: var(--ink-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.diag-value { font-family: 'Space Mono', monospace; font-size: 0.88rem; color: var(--ink); }
+
+/* Gráfica canvas */
+.chart-wrapper {
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-sketch);
+  box-shadow: var(--shadow-sketch);
+  overflow: hidden;
+}
+.chart-header {
+  padding: 0.7rem 1.2rem;
+  background: var(--paper-dark);
+  border-bottom: 1.5px solid var(--ink);
+  font-family: 'Kalam', cursive; font-size: 1.1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+#freqChart {
+  width: 100%; height: 240px; display: block;
+  background: var(--paper);
+}
+
+/* Planos de corte */
+.cuts-table {
+  width: 100%; border-collapse: collapse; font-size: 0.88rem;
+}
+.cuts-table th {
+  background: var(--paper-dark);
+  font-family: 'Kalam', cursive; font-size: 1rem;
+  padding: 0.5rem 0.8rem; text-align: left;
+  border: 1.5px solid var(--ink);
+}
+.cuts-table td {
+  padding: 0.45rem 0.8rem;
+  border: 1px dotted rgba(0,0,0,0.15);
+}
+.cuts-table tr:nth-child(even) td { background: var(--paper-dark); }
+.cuts-table .piece { font-weight: 700; color: var(--blue-dark); }
+.cuts-table .dims  { font-family: 'Space Mono', monospace; color: var(--ink); }
+.cuts-table .note  { font-size: 0.78rem; color: var(--ink-muted); }
+.cuts-summary {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  margin-top: 0.9rem; padding-top: 0.9rem;
+  border-top: 2px dashed rgba(0,0,0,0.15);
+}
+.sum-item { text-align: center; flex: 1; }
+.sum-item .sv { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+.sum-item .sl { font-size: 0.72rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Paywall */
+.paywall-banner {
+  background: linear-gradient(135deg, var(--paper-dark) 0%, var(--paper-light) 100%);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-sketch);
+  padding: 1.4rem 1.8rem;
+  display: flex; align-items: center; gap: 1.5rem;
+  box-shadow: var(--shadow-sketch);
+}
+.paywall-banner .pw-icon { font-size: 2.5rem; flex-shrink: 0; }
+.paywall-banner h3 { font-size: 1.3rem; margin-bottom: 0.2rem; }
+.paywall-banner p  { font-size: 0.88rem; color: var(--ink-muted); margin: 0; }
+.btn-unlock {
+  margin-left: auto; flex-shrink: 0;
+  padding: 0.7rem 1.4rem;
+  background: var(--ink); color: var(--paper-light);
+  border: none; border-radius: var(--r-sketch);
+  font-family: 'Kalam', cursive; font-size: 1.15rem;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+  white-space: nowrap;
+}
+.btn-unlock:hover { background: var(--green); color: var(--ink); }
+
+/* Tabs de la calculadora */
+.calc-tabs {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.calc-tab {
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--ink); background: var(--paper);
+  font-family: 'Kalam', cursive; font-size: 1rem;
+  cursor: pointer; border-radius: var(--r-sketch); transition: all 0.18s;
+}
+.calc-tab.active { background: var(--ink); color: var(--paper-light); }
+
+/* Tooltip de enciclopedia */
+.enc-tooltip {
+  display: none; position: fixed; z-index: 200;
+  background: var(--paper-light); border: 2px solid var(--ink);
+  border-radius: var(--r-soft); padding: 1rem 1.2rem;
+  max-width: 320px; box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+  font-size: 0.88rem;
+}
+.enc-tooltip.show { display: block; }
+.enc-tooltip strong { font-family: 'Kalam', cursive; font-size: 1.1rem; color: var(--blue-dark); display: block; margin-bottom: 0.3rem; }
+
+/* Banner de contexto en la calculadora */
+.context-banner {
+  display: none;
+  background: var(--blue-bg); border: 2px dashed var(--blue);
+  border-radius: var(--r-sketch); padding: 0.7rem 1.1rem;
+  margin-bottom: 1.2rem; font-size: 0.9rem; color: var(--blue-dark);
+  align-items: center; gap: 0.6rem;
+}
+.context-banner.show { display: flex; }
+.context-banner button {
+  margin-left: auto; background: none; border: none;
+  color: var(--blue-dark); cursor: pointer; font-size: 1.2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BASE DE DATOS VIEW
+═══════════════════════════════════════════════════════════ */
+#view-db { max-width: 980px; margin: 0 auto; }
+.db-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.db-table th {
+  background: var(--paper-dark); font-family: 'Kalam', cursive; font-size: 1rem;
+  padding: 0.5rem 0.7rem; border: 1.5px solid var(--ink); text-align: left;
+  white-space: nowrap; cursor: pointer;
+}
+.db-table th:hover { background: var(--blue-bg); }
+.db-table td {
+  padding: 0.4rem 0.7rem; border: 1px dotted rgba(0,0,0,0.12);
+}
+.db-table tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
+.db-table .num { font-family: 'Space Mono', monospace; text-align: right; }
+.db-table .brand { font-weight: 700; }
+.db-use-btn {
+  padding: 0.25rem 0.7rem; font-family: 'Kalam', cursive; font-size: 0.9rem;
+  background: var(--ink); color: var(--paper-light); border: none;
+  border-radius: var(--r-sketch); cursor: pointer; white-space: nowrap;
+}
+.db-use-btn:hover { background: var(--blue-dark); }
+.align-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px;
+  font-family: 'Space Mono', monospace; font-size: 0.75rem; font-weight: 700;
+}
+.align-badge.QB3  { background: rgba(9,132,227,0.15); color: var(--blue-dark); }
+.align-badge.SBB4 { background: rgba(0,184,148,0.15); color: #00836a; }
+.align-badge.B4   { background: rgba(225,112,85,0.15); color: #c0441e; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media(max-width:700px) {
+  #content-area { padding: 1.2rem; }
+  #enc-sidebar  { width: 0; padding: 0; overflow: hidden; }
+  .hero-cards   { grid-template-columns: 1fr 1fr; }
+  .calc-layout  { grid-template-columns: 1fr; }
+  .paywall-banner { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
+<header id="topbar">
+  <div class="tb-logo">
+    <h1>SpeakerLab Pro</h1>
+    <span class="subtitle">Diseño acústico DIY</span>
+    <span class="author-credits">Desarrollado por Ing. Carlos Benavente</span>
+  </div>
+  <nav class="tb-nav">
+    <button class="active" onclick="setView('calc')" id="tb-calc">
+      <span class="tb-icon">📐</span>Calculadora
+    </button>
+    <button onclick="setView('enc')" id="tb-enc">
+      <span class="tb-icon">📖</span>Enciclopedia
+    </button>
+    <button onclick="setView('db')" id="tb-db">
+      <span class="tb-icon">🔊</span>Base de Datos
+    </button>
+  </nav>
+  <div class="tb-pro">
+    <button class="btn-pro" onclick="unlockPro()">⬇ PDF Planos — $10</button>
+  </div>
+</header>
+
+<!-- ═══ APP ══════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Sidebar Enciclopedia -->
+  <nav id="enc-sidebar">
+    <div class="nav-section-title">Fundamentos</div>
+    <button class="nav-item active" onclick="showEnc('sec-intro')">1. Anatomía del Altavoz</button>
+    <button class="nav-item" onclick="showEnc('sec-modelo')">2. Modelo Electro-Mecánico</button>
+    <button class="nav-item" onclick="showEnc('sec-ts')">3. Parámetros Thiele-Small</button>
+
+    <div class="nav-section-title">Tipos de Recintos</div>
+    <button class="nav-item" onclick="showEnc('sec-cerradas')">4. Cajas Cerradas</button>
+    <button class="nav-item" onclick="showEnc('sec-reflex')">5. Cajas Bass-Reflex</button>
+    <button class="nav-item" onclick="showEnc('sec-avanzadas')">6. Bandpass y Líneas</button>
+
+    <div class="nav-section-title">Física de la Caja</div>
+    <button class="nav-item" onclick="showEnc('sec-baffle')">7. Difracción y Baffle Step</button>
+    <button class="nav-item" onclick="showEnc('sec-materiales')">8. Materiales y Proporciones</button>
+    <button class="nav-item" onclick="showEnc('sec-refuerzos')">9. Refuerzos y Amortiguamiento</button>
+
+    <div class="nav-section-title">Diseño y Cálculo</div>
+    <button class="nav-item" onclick="showEnc('sec-puertos')">10. Diseño del Puerto</button>
+    <button class="nav-item" onclick="showEnc('sec-simulador')">11. Alineamientos</button>
+    <button class="nav-item" onclick="showEnc('sec-pruebas')">12. Medición y Pruebas</button>
+  </nav>
+
+  <!-- Área de contenido -->
+  <main id="content-area">
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA CALCULADORA
+    ════════════════════════════════════════════════════ -->
+    <div id="view-calc" class="view active">
+
+      <div class="calc-header">
+        <div>
+          <h2>Calculadora de Cajas Acústicas</h2>
+          <p>Fórmulas: Thiele (1971) · Small (1973) · Keele (1975) · Proporciones áureas</p>
+        </div>
+      </div>
+
+      <!-- Banner de contexto (cuando viene de la enciclopedia) -->
+      <div id="context-banner" class="context-banner">
+        <span>📖</span>
+        <span id="context-msg">Vinculado desde la Enciclopedia</span>
+        <button onclick="dismissContext()">✕</button>
+      </div>
+
+      <div class="calc-layout">
+
+        <!-- Panel de inputs -->
+        <div class="input-panel">
+
+          <!-- Búsqueda de altavoz -->
+          <div class="panel-title">🔊 Altavoz</div>
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="spk-search" placeholder="Buscar marca / modelo…" oninput="filterDB(this.value)" autocomplete="off">
+            <div id="spk-dropdown" class="search-dropdown"></div>
+          </div>
+
+          <!-- Parámetros T/S -->
+          <div class="form-section">
+            <div class="form-section-title">📊 Parámetros Thiele-Small</div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Fs <span class="tip" onclick="openTip('Fs')">?</span></label>
+                <input type="number" id="fs" placeholder="p. ej. 28" step="0.1">
+                <span class="unit-hint">Hz — resonancia libre</span>
+              </div>
+              <div class="form-field">
+                <label>Vas <span class="tip" onclick="openTip('Vas')">?</span></label>
+                <input type="number" id="vas" placeholder="p. ej. 75" step="0.1">
+                <span class="unit-hint">Litros — vol. equiv.</span>
+              </div>
+            </div>
+            <div class="form-row three">
+              <div class="form-field">
+                <label>Qts <span class="tip" onclick="openTip('Qts')">?</span></label>
+                <input type="number" id="qts" placeholder="0.33" step="0.01">
+              </div>
+              <div class="form-field">
+                <label>Qes</label>
+                <input type="number" id="qes" placeholder="0.35" step="0.01">
+              </div>
+              <div class="form-field">
+                <label>Qms</label>
+                <input type="number" id="qms" placeholder="5.1" step="0.1">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Xmax <span class="tip" onclick="openTip('Xmax')">?</span></label>
+                <input type="number" id="xmax" placeholder="12" step="0.5">
+                <span class="unit-hint">mm</span>
+              </div>
+              <div class="form-field">
+                <label>Sd <span class="tip" onclick="openTip('Sd')">?</span></label>
+                <input type="number" id="sd" placeholder="346" step="1">
+                <span class="unit-hint">cm²</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>SPL ref.</label>
+                <input type="number" id="spl" placeholder="86" step="0.5">
+                <span class="unit-hint">dB / 1W / 1m</span>
+              </div>
+              <div class="form-field">
+                <label>Pulgadas (∅)</label>
+                <select id="inches">
+                  <option value="6">6"</option>
+                  <option value="8">8"</option>
+                  <option value="10" selected>10"</option>
+                  <option value="12">12"</option>
+                  <option value="15">15"</option>
+                  <option value="18">18"</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuración de caja -->
+          <div class="form-section">
+            <div class="form-section-title">📦 Recinto</div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Tipo de caja <span class="tip" onclick="openTip('TipoCaja')">?</span></label>
+                <select id="boxType" onchange="toggleBoxOpts()">
+                  <option value="reflex">Bass-Reflex</option>
+                  <option value="closed">Cerrada (Sellada)</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Material</label>
+                <select id="material">
+                  <option value="18">MDF 18mm</option>
+                  <option value="22">MDF 22mm</option>
+                  <option value="25">MDF 25mm</option>
+                  <option value="18" data-label="Cont. Abedul 18mm">Contrachapado 18mm</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Opciones reflex -->
+            <div id="reflex-opts">
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Alineación <span class="tip" onclick="openTip('Alineacion')">?</span></label>
+                  <select id="alignment">
+                    <option value="QB3">QB3 — Quasi Butterworth</option>
+                    <option value="SBB4" selected>SBB4 — Sub-Butterworth</option>
+                    <option value="B4">B4 — Butterworth</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Tipo de puerto</label>
+                  <select id="portType" onchange="togglePortOpts()">
+                    <option value="circular">Circular</option>
+                    <option value="slot">Slot (rectangular)</option>
+                  </select>
+                </div>
+              </div>
+              <div id="port-circular" class="form-row">
+                <div class="form-field">
+                  <label>∅ Puerto</label>
+                  <input type="number" id="portDiam" value="7" step="0.5">
+                  <span class="unit-hint">cm</span>
+                </div>
+                <div class="form-field">
+                  <label>N° puertos</label>
+                  <input type="number" id="numPorts" value="1" min="1" max="4">
+                </div>
+              </div>
+              <div id="port-slot" class="form-row" style="display:none">
+                <div class="form-field">
+                  <label>Slot Ancho</label>
+                  <input type="number" id="slotW" value="10" step="0.5">
+                  <span class="unit-hint">cm</span>
+                </div>
+                <div class="form-field">
+                  <label>Slot Alto</label>
+                  <input type="number" id="slotH" value="5" step="0.5">
+                  <span class="unit-hint">cm</span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Corrección k <span class="tip" onclick="openTip('FactorK')">?</span></label>
+                  <select id="kFactor">
+                    <option value="0.614">0.614 — ambos extremos abiertos</option>
+                    <option value="0.732" selected>0.732 — un extremo cerrado</option>
+                    <option value="0.850">0.850 — con cono de entrada</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Opciones sellada -->
+            <div id="closed-opts" style="display:none">
+              <div class="form-field">
+                <label>Qtc objetivo <span class="tip" onclick="openTip('Qtc')">?</span></label>
+                <select id="qtcTarget">
+                  <option value="0.577">0.577 — Bessel (transitorios)</option>
+                  <option value="0.707" selected>0.707 — Butterworth (plano)</option>
+                  <option value="1.0">1.0 — Chebyshev (pico +1.2dB)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-calc" onclick="calculate()">
+            ✏️ Calcular
+          </button>
+        </div>
+
+        <!-- Panel de resultados -->
+        <div class="results-panel">
+
+          <div id="empty-state" class="empty-state">
+            <div class="es-icon">📐</div>
+            <p>Introduce los parámetros T/S<br>y pulsa Calcular</p>
+          </div>
+
+          <div id="results-content" style="display:none">
+
+            <!-- Hero cards -->
+            <div class="hero-cards">
+              <div class="hero-card">
+                <div class="hc-label">Volumen Vb</div>
+                <div class="hc-val" id="r-vb">—<span class="hc-unit"> L</span></div>
+                <div class="hc-sub" id="r-vb-sub"></div>
+              </div>
+              <div class="hero-card green">
+                <div class="hc-label" id="r-fb-label">Sintonía Fb</div>
+                <div class="hc-val" id="r-fb">—<span class="hc-unit" id="r-fb-unit"> Hz</span></div>
+                <div class="hc-sub" id="r-fb-sub"></div>
+              </div>
+              <div class="hero-card">
+                <div class="hc-label">F3 (−3 dB)</div>
+                <div class="hc-val" id="r-f3">—<span class="hc-unit"> Hz</span></div>
+                <div class="hc-sub" id="r-f3-sub"></div>
+              </div>
+            </div>
+
+            <!-- Tabs resultados -->
+            <div class="calc-tabs">
+              <button class="calc-tab active" onclick="switchTab('tab-diag')">Diagnóstico</button>
+              <button class="calc-tab" onclick="switchTab('tab-port')">Puerto</button>
+              <button class="calc-tab" onclick="switchTab('tab-dim')">Dimensiones</button>
+              <button class="calc-tab" onclick="switchTab('tab-chart')">Gráfica</button>
+              <button class="calc-tab" onclick="switchTab('tab-cuts')">Planos de Corte</button>
+              <button class="calc-tab" onclick="switchTab('tab-compare')">Comparar</button>
+            </div>
+
+            <!-- Tab: Diagnóstico -->
+            <div id="tab-diag" class="result-section">
+              <div class="result-section-header">🔍 Diagnóstico y Semáforo</div>
+              <div class="result-section-body">
+                <div id="diag-grid" class="diag-grid"></div>
+              </div>
+            </div>
+
+            <!-- Tab: Puerto -->
+            <div id="tab-port" class="result-section" style="display:none">
+              <div class="result-section-header">🌬️ Puerto Bass-Reflex</div>
+              <div class="result-section-body" id="port-body"></div>
+            </div>
+
+            <!-- Tab: Dimensiones -->
+            <div id="tab-dim" class="result-section" style="display:none">
+              <div class="result-section-header">📏 Dimensiones de la Caja</div>
+              <div class="result-section-body" id="dim-body"></div>
+            </div>
+
+            <!-- Tab: Gráfica -->
+            <div id="tab-chart" class="chart-wrapper" style="display:none">
+              <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+                <span>📈 Respuesta en Frecuencia</span>
+                <div style="display:flex;align-items:center;gap:0.6rem">
+                  <span id="chart-mode-badge" style="font-family:'Space Mono',monospace;font-size:0.72rem;padding:2px 8px;border-radius:3px;background:rgba(253,203,110,0.5);border:1px solid #c4900a;color:#7a5500">JS aproximado</span>
+                  <button id="btn-scipy" onclick="runScipy()" style="font-family:'Kalam',cursive;font-size:0.95rem;padding:3px 10px;border:2px solid var(--blue);background:var(--blue-bg);color:var(--blue-dark);border-radius:var(--r-sketch);cursor:pointer">⚗️ Simular con scipy</button>
+                </div>
+              </div>
+              <div id="chart-loading" style="display:none;text-align:center;padding:2rem;font-family:'Kalam',cursive;color:var(--ink-muted);font-size:1.1rem">⏳ Simulando con modelo Small (1973)…</div>
+              <canvas id="freqChart"></canvas>
+              <div id="extra-charts" style="display:none">
+                <div class="chart-header" style="border-top:1.5px solid var(--ink)">🎯 Excursión del Cono &amp; Velocidad en Puerto</div>
+                <canvas id="excChart" style="width:100%;height:160px;display:block;background:var(--paper)"></canvas>
+              </div>
+              <div id="chart-api-error" style="display:none;padding:0.8rem 1.2rem;background:var(--red-bg);border-top:1px solid var(--red);font-size:0.85rem;color:var(--red)"></div>
+            </div>
+
+            <!-- Tab: Planos de corte -->
+            <div id="tab-cuts" style="display:none">
+              <div class="result-section">
+                <div class="result-section-header">✂️ Planos de Corte (vista previa)</div>
+                <div class="result-section-body">
+                  <table class="cuts-table" id="cuts-table"></table>
+                  <div class="cuts-summary" id="cuts-summary"></div>
+                </div>
+              </div>
+              <div class="paywall-banner" style="margin-top:1rem">
+                <div class="pw-icon">📄</div>
+                <div>
+                  <h3>PDF Profesional con planos exactos</h3>
+                  <p>Medidas en mm precisas, diagrama isométrico, gráfica precisa, notas de ensamblaje</p>
+                </div>
+                <button class="btn-unlock" onclick="unlockPro()">Desbloquear — $10</button>
+              </div>
+            </div>
+
+            <!-- Tab: Comparativa -->
+            <div id="tab-compare" style="display:none">
+              <div class="result-section">
+                <div class="result-section-header">⚖️ Comparativa de Alineaciones</div>
+                <div class="result-section-body">
+                  <button class="btn-calc" onclick="runCompare()" id="btn-compare" style="margin-bottom:1rem;background:var(--blue-dark)">
+                    Analizar las 4 alineaciones (Scipy)
+                  </button>
+                  <div id="compare-error" style="display:none;color:var(--red);margin-bottom:1rem;font-size:0.9rem"></div>
+                  <div id="compare-results" style="display:none">
+                    <table class="cuts-table">
+                      <thead><tr><th>Alineación</th><th>Volumen Vb</th><th>Sintonía</th><th>F3 (−3dB)</th></tr></thead>
+                      <tbody id="compare-tbody"></tbody>
+                    </table>
+                    <canvas id="compareChart" style="margin-top:1rem;width:100%;height:320px;display:block;background:var(--paper)"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /results-content -->
+        </div><!-- /results-panel -->
+      </div><!-- /calc-layout -->
+    </div><!-- /view-calc -->
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA ENCICLOPEDIA
+    ════════════════════════════════════════════════════ -->
+    <div id="view-enc" class="view">
+
+      <!-- 1. Anatomía -->
+      <article id="sec-intro" class="enc-article">
+        <h2>1. Anatomía del Altavoz Dinámico</h2>
+        <p>El transductor de radiación directa es el corazón de cualquier sistema. Su función es convertir la energía eléctrica en energía acústica audible.</p>
+        <div class="sketch-box grid-2">
+          <div>
+            <h3>Componentes clave</h3>
+            <ol>
+              <li><strong>Motor Magnético:</strong> Imán permanente + piezas polares. Crea el campo estático en el entrehierro.</li>
+              <li><strong>Bobina Móvil:</strong> Devanado de cobre en el campo magnético. La señal alterna genera fuerza electromotriz.</li>
+              <li><strong>Diafragma (Cono):</strong> Pistón que empuja el aire. Debe ser rígido y ligero.</li>
+              <li><strong>Suspensión + Araña:</strong> Resorte mecánico que centra la bobina y devuelve el cono al reposo.</li>
+            </ol>
+          </div>
+          <div>
+            <svg class="enc-svg" viewBox="0 0 300 250">
+              <rect x="120" y="180" width="60" height="40" class="s-stroke" fill="#eee"/>
+              <path d="M 140 180 L 140 140 M 160 180 L 160 140" class="s-stroke" stroke-width="4"/>
+              <path d="M 120 180 L 50 50 M 180 180 L 250 50" class="s-stroke s-dash"/>
+              <path d="M 130 140 L 60 50 L 240 50 L 170 140 Z" fill="rgba(9,132,227,0.1)" class="s-stroke"/>
+              <path d="M 100 140 Q 115 130 130 140 M 170 140 Q 185 130 200 140" class="s-stroke s-red"/>
+              <path d="M 50 50 Q 55 40 60 50 M 240 50 Q 245 40 250 50" class="s-stroke s-blue"/>
+              <text x="10" y="40" font-family="Kalam" font-size="13">Suspensión</text>
+              <text x="100" y="90" font-family="Kalam" font-size="13">Cono / Diafragma</text>
+              <text x="20" y="135" font-family="Kalam" font-size="12" fill="#d63031">Araña (Spider)</text>
+              <text x="195" y="152" font-family="Kalam" font-size="12">Bobina</text>
+              <text x="195" y="202" font-family="Kalam" font-size="12">Imán</text>
+            </svg>
+          </div>
+        </div>
+        <div class="key-idea">
+          El conjunto móvil (cono + bobina) tiene <strong>masa</strong>, y la suspensión tiene <strong>elasticidad</strong>. Esto forma un resonador masa-resorte con una frecuencia natural de resonancia (<em>Fs</em>).
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Ir a la Calculadora</strong>
+            <span>Diseña la caja para tu altavoz con los parámetros T/S</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 2. Modelo -->
+      <article id="sec-modelo" class="enc-article" style="display:none">
+        <h2>2. Modelo Electro-Mecánico-Acústico</h2>
+        <p>Para diseñar una caja correctamente, tratamos al altavoz como un <strong>circuito equivalente</strong>. La energía pasa por tres dominios:</p>
+        <div class="sketch-box">
+          <div style="display:flex; justify-content:space-around; align-items:center; text-align:center; flex-wrap:wrap; gap:1rem;">
+            <div style="flex:1; min-width:120px;">
+              <h3>1. Eléctrico</h3>
+              <svg viewBox="0 0 100 60" style="height:50px">
+                <path d="M 5 30 L 25 30 L 30 10 L 40 50 L 50 10 L 60 50 L 65 30 L 85 30" class="s-stroke s-blue"/>
+              </svg>
+              <p style="font-size:0.88rem">Voltaje del amplificador, Re (resistencia DC)</p>
+            </div>
+            <div style="font-size:1.8rem; flex-shrink:0;">→</div>
+            <div style="flex:1; min-width:120px;">
+              <h3>2. Mecánico</h3>
+              <svg viewBox="0 0 100 60" style="height:50px">
+                <rect x="35" y="15" width="30" height="30" class="s-stroke"/>
+                <path d="M 5 30 Q 15 5 35 30" class="s-stroke s-red"/>
+                <line x1="65" y1="30" x2="85" y2="30" class="s-stroke"/>
+              </svg>
+              <p style="font-size:0.88rem">Masa (Mms), Resorte (Cms), Fricción (Rms)</p>
+            </div>
+            <div style="font-size:1.8rem; flex-shrink:0;">→</div>
+            <div style="flex:1; min-width:120px;">
+              <h3>3. Acústico</h3>
+              <svg viewBox="0 0 100 60" style="height:50px">
+                <path d="M 20 10 A 35 35 0 0 1 20 50 M 40 5 A 55 55 0 0 1 40 55" class="s-stroke s-dash"/>
+              </svg>
+              <p style="font-size:0.88rem">Presión, Compliancia acústica (Cas), Masa acústica</p>
+            </div>
+          </div>
+        </div>
+        <p>El factor de fuerza <strong>Bl</strong> (Teslas × metros) es el "engranaje" que convierte la corriente eléctrica en fuerza mecánica. Un Bl alto significa un motor potente — y se refleja en un Qes bajo.</p>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Calcular con estos parámetros</strong>
+            <span>Pon a prueba el modelo con tu altavoz real</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 3. Parámetros T/S -->
+      <article id="sec-ts" class="enc-article" style="display:none">
+        <h2>3. Parámetros Thiele-Small</h2>
+        <p>Sin ellos el diseño de la caja es pura adivinanza. Haz clic en cada tarjeta para explorar su función técnica.</p>
+        <div class="grid-3">
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>Fs</h4><p style="text-align:center;font-weight:700">Resonancia Libre</p>
+            <div class="ts-content">Frecuencia (Hz) donde la masa del cono resuena con su suspensión al aire libre. Por debajo de Fs la respuesta cae abruptamente. La caja sube esta frecuencia al añadir rigidez neumática.</div>
+          </div>
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>Qts</h4><p style="text-align:center;font-weight:700">Factor de Calidad Total</p>
+            <div class="ts-content">Describe el amortiguamiento del altavoz en Fs. <br>• <strong>Qts &lt; 0.4:</strong> motor fuerte, ideal Bass-Reflex.<br>• <strong>Qts &gt; 0.4:</strong> motor débil, necesita la rigidez de caja sellada.</div>
+          </div>
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>Vas</h4><p style="text-align:center;font-weight:700">Vol. Acústico Equiv.</p>
+            <div class="ts-content">Elasticidad de la suspensión expresada en litros de aire. <strong>NO</strong> es el volumen de la caja. Vas alto = suspensión blanda = caja grande necesaria.</div>
+          </div>
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>Xmax</h4><p style="text-align:center;font-weight:700">Excursión Máxima</p>
+            <div class="ts-content">Desplazamiento lineal máximo (mm) en una dirección sin salir del campo magnético. Determina el SPL máximo en graves sin distorsión.</div>
+          </div>
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>Sd</h4><p style="text-align:center;font-weight:700">Área Efectiva</p>
+            <div class="ts-content">Superficie radiante del cono (cm²). Con Xmax define el <em>Volumen de Desplazamiento</em>: Vd = Sd × Xmax. Mayor Sd = más aire movido a igual excursión.</div>
+          </div>
+          <div class="ts-card" onclick="this.classList.toggle('open')">
+            <h4>EBP</h4><p style="text-align:center;font-weight:700">Efficiency Bandwidth Product</p>
+            <div class="ts-content">EBP = Fs/Qes. Guía rápida de tipo de recinto ideal:<br>• <strong>&gt;100:</strong> Bass-Reflex claro.<br>• <strong>50-100:</strong> ambos tipos funcionan.<br>• <strong>&lt;50:</strong> Caja sellada.</div>
+          </div>
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Introducir mis parámetros T/S en la calculadora</strong>
+            <span>Calcula Vb, Fb, F3 y planos de corte</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 4. Cajas Cerradas -->
+      <article id="sec-cerradas" class="enc-article" style="display:none">
+        <h2>4. Diseño de Cajas Cerradas</h2>
+        <p>También llamadas <em>Acoustic Suspension</em>. El aire encerrado actúa como resorte neumático adicional.</p>
+        <div class="sketch-box grid-2">
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 200">
+              <rect x="50" y="20" width="100" height="160" class="s-stroke" fill="rgba(0,0,0,0.02)"/>
+              <path d="M 50 80 L 30 60 L 30 140 L 50 120" class="s-stroke" fill="#eee"/>
+              <path d="M 60 100 Q 100 80 140 100 M 60 100 Q 100 120 140 100" class="s-stroke s-dash s-red"/>
+              <circle cx="100" cy="100" r="20" fill="rgba(214,48,49,0.08)"/>
+              <text x="70" y="165" font-family="Kalam" font-size="12">Resorte neumático</text>
+            </svg>
+          </div>
+          <div>
+            <h3>Características</h3>
+            <ul>
+              <li><strong>Caída:</strong> 12 dB/octava por debajo de Fc</li>
+              <li><strong>Ventajas:</strong> Bajos rápidos y precisos. El cono no se descontrola a ultrabajas.</li>
+              <li><strong>Desventajas:</strong> Menor extensión en graves que Reflex del mismo tamaño.</li>
+              <li><strong>Altavoces ideales:</strong> Qts 0.4–0.7, Vas alto.</li>
+            </ul>
+            <p>La caja eleva la resonancia libre Fs al valor Fc del sistema, con Qtc que determina la forma de la curva.</p>
+          </div>
+        </div>
+        <div class="key-idea">
+          Qtc = 0.707 (Butterworth) es el compromiso óptimo: máxima planura sin pico. Qtc &lt; 0.577 tiene caída suave pero el altavoz necesita una caja muy grande.
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('closed')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Diseñar una caja cerrada</strong>
+            <span>Abre la calculadora con tipo = Sellada preseleccionado</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 5. Bass-Reflex -->
+      <article id="sec-reflex" class="enc-article" style="display:none">
+        <h2>5. Cajas Bass-Reflex (Ventiladas)</h2>
+        <p>Aprovechan la onda trasera del cono a través de un <strong>resonador de Helmholtz</strong> para reforzar la salida en graves.</p>
+        <div class="sketch-box grid-2">
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 200">
+              <rect x="50" y="20" width="100" height="160" class="s-stroke" fill="rgba(0,0,0,0.02)"/>
+              <path d="M 50 50 L 30 30 L 30 100 L 50 80" class="s-stroke" fill="#eee"/>
+              <rect x="50" y="130" width="50" height="30" class="s-stroke"/>
+              <path d="M 50 145 Q 20 145 10 130 M 50 145 Q 20 145 10 160" class="s-stroke s-blue"/>
+              <text x="65" y="150" font-family="Kalam" font-size="11" fill="#075f9e">Masa acústica</text>
+              <path d="M 60 65 Q 100 90 100 130" class="s-stroke s-dash" stroke="rgba(0,0,0,0.3)"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Comportamiento en Fb</h3>
+            <p>A la frecuencia de sintonía Fb, la <strong>masa de aire del tubo oscila violentamente</strong> y produce casi todo el sonido. El cono apenas se mueve — excursión mínima — lo que protege el altavoz.</p>
+            <h3>Peligro por debajo de Fb</h3>
+            <p>Sin contrapresión, el cono se mueve sin control. El altavoz puede exceder su Xmax y dañarse. Por eso se recomienda un <strong>filtro subsónico</strong> a 0.7×Fb.</p>
+            <ul>
+              <li>Caída: 24 dB/octava por debajo de Fb</li>
+              <li>Mayor extensión y eficiencia que caja sellada del mismo tamaño</li>
+              <li>Respuesta transitoria algo menor que sellada</li>
+            </ul>
+          </div>
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Diseñar un Bass-Reflex</strong>
+            <span>Calcula Vb, Fb, longitud del puerto y velocidad del aire</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 6. Avanzadas -->
+      <article id="sec-avanzadas" class="enc-article" style="display:none">
+        <h2>6. Diseños Avanzados</h2>
+        <div class="sketch-box">
+          <div style="margin-bottom:0.8rem">
+            <button class="tab-btn active" onclick="openTab(event,'tab-bp','adv')">Paso-Banda (4°)</button>
+            <button class="tab-btn" onclick="openTab(event,'tab-tl','adv')">Línea de Transmisión</button>
+          </div>
+          <div id="tab-bp" class="tab-content adv active grid-2">
+            <svg class="enc-svg" viewBox="0 0 200 200">
+              <rect x="40" y="20" width="120" height="160" class="s-stroke"/>
+              <line x1="40" y1="100" x2="160" y2="100" class="s-stroke"/>
+              <path d="M 80 100 L 100 80 L 120 100" class="s-stroke" fill="#eee"/>
+              <rect x="40" y="40" width="40" height="25" class="s-stroke"/>
+              <path d="M 40 52 Q 10 52 5 35 M 40 52 Q 10 52 5 70" class="s-stroke s-blue"/>
+              <text x="90" y="65" font-family="Kalam" font-size="11">Ventilada</text>
+              <text x="90" y="148" font-family="Kalam" font-size="11">Sellada</text>
+            </svg>
+            <div>
+              <h3>Paso-Banda</h3>
+              <p>El transductor está completamente oculto. La cámara delantera actúa como filtro acústico pasa-bajos. Eficiencia altísima en una banda estrecha.</p>
+              <ul>
+                <li>Todo el sonido sale por el puerto</li>
+                <li>Sin crossover para filtrar agudos</li>
+                <li>Casi exclusivo para subwoofers</li>
+                <li>Respuesta transitoria pobre si mal sintonizado</li>
+              </ul>
+            </div>
+          </div>
+          <div id="tab-tl" class="tab-content adv grid-2">
+            <svg class="enc-svg" viewBox="0 0 200 200">
+              <rect x="30" y="20" width="140" height="160" class="s-stroke"/>
+              <line x1="80" y1="20" x2="80" y2="140" class="s-stroke"/>
+              <line x1="120" y1="180" x2="120" y2="60" class="s-stroke"/>
+              <path d="M 30 50 L 10 30 L 10 100 L 30 80" class="s-stroke" fill="#eee"/>
+              <path d="M 55 100 L 55 160 L 100 160 L 100 40 L 150 40 L 150 180" class="s-stroke s-dash s-blue"/>
+            </svg>
+            <div>
+              <h3>Línea de Transmisión</h3>
+              <p>La onda trasera recorre un laberinto largo y densamente amortiguado. La longitud equivale a λ/4 de la frecuencia de refuerzo.</p>
+              <ul>
+                <li>Impedancia eléctrica muy plana</li>
+                <li>Bajos inmensamente profundos y limpios</li>
+                <li>Recintos enormes y complejos de calcular</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 7. Baffle Step -->
+      <article id="sec-baffle" class="enc-article" style="display:none">
+        <h2>7. Difracción de Bordes y Baffle Step</h2>
+        <p>El baffle no es solo soporte mecánico: es un componente acústico crítico.</p>
+        <div class="sketch-box grid-2">
+          <div>
+            <h3>El efecto Baffle Step</h3>
+            <ul>
+              <li><strong>Agudos</strong> (longitud de onda corta): se propagan hacia el frente de forma <em>direccional</em>. Energía concentrada.</li>
+              <li><strong>Graves</strong> (longitud de onda larga): "se doblan" alrededor del recinto y se propagan <em>omnidireccionalmente</em>. Menor energía frontal.</li>
+            </ul>
+            <p>Resultado: caída intrínseca de ~6 dB en graves que se debe compensar en el crossover.</p>
+            <p>La frecuencia del escalón es aproximadamente: <code>Fbsc ≈ 115 / W_ext (m)</code></p>
+          </div>
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 180">
+              <path d="M 100 20 L 100 160" stroke="var(--ink)" stroke-width="5"/>
+              <circle cx="100" cy="90" r="10" fill="var(--ink)"/>
+              <path d="M 130 55 Q 145 90 130 125 M 158 35 Q 178 90 158 145" class="s-stroke s-blue"/>
+              <path d="M 90 5 A 85 85 0 1 0 90 175" class="s-stroke s-dash s-red" stroke-width="2.5"/>
+              <text x="130" y="22" font-family="Kalam" font-size="11" fill="#075f9e">Agudos (+0dB)</text>
+              <text x="5" y="173" font-family="Kalam" font-size="11" fill="#d63031">Graves (−6dB)</text>
+            </svg>
+          </div>
+        </div>
+        <div class="key-idea">
+          <strong>Solución práctica:</strong> Siempre biselar o redondear fuertemente los bordes frontales del recinto. Reduce las difracciones y suaviza las irregularidades en la respuesta de medios-agudos.
+        </div>
+      </article>
+
+      <!-- 8. Materiales -->
+      <article id="sec-materiales" class="enc-article" style="display:none">
+        <h2>8. Materiales y Proporciones</h2>
+        <div class="grid-2">
+          <div class="sketch-box">
+            <h3>Materiales</h3>
+            <ul>
+              <li><strong>MDF 18mm:</strong> Estándar de la industria. Denso, isótropo, fácil de mecanizar.</li>
+              <li><strong>Contrachapado de Abedul:</strong> Superior en rigidez/peso. Soporta mejor la humedad.</li>
+              <li><strong>Evitar:</strong> madera maciza o aglomerado barato — resuena y se deforma.</li>
+            </ul>
+            <p><em>Subwoofers:</em> mínimo 25mm o doble capa en el baffle frontal.</p>
+          </div>
+          <div class="sketch-box">
+            <h3>Proporciones Internas</h3>
+            <p>Una caja cúbica acumula modos estacionarios en las mismas frecuencias. La calculadora usa la proporción áurea acústica:</p>
+            <p style="text-align:center; font-family:'Space Mono'; font-size:1.1rem; margin:1rem 0; font-weight:700; letter-spacing:0.05em;">
+              H : W : D = 1.59 : 1.26 : 1.00
+            </p>
+            <p>Distribuye los modos de forma suave, evitando picos indeseados en la respuesta interna.</p>
+          </div>
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">✂️</div>
+          <div class="bridge-text">
+            <strong>Calcular planos de corte con proporciones áureas</strong>
+            <span>La calculadora aplica H:W:D automáticamente a tu Vb</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 9. Refuerzos -->
+      <article id="sec-refuerzos" class="enc-article" style="display:none">
+        <h2>9. Refuerzos y Amortiguamiento Interno</h2>
+        <div class="sketch-box grid-2">
+          <div>
+            <h3>Window Bracing</h3>
+            <p>Las "costillas" internas dividen los paneles grandes en sub-paneles más pequeños, empujando su frecuencia de resonancia hacia arriba donde son más fáciles de absorber.</p>
+            <p>Doblar el grosor de pared a 36mm puede ser <em>contraproducente</em>: baja la resonancia del panel al rango auditivo sensible.</p>
+          </div>
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 200">
+              <rect x="40" y="40" width="120" height="120" class="s-stroke" fill="rgba(0,0,0,0.02)"/>
+              <rect x="40" y="90" width="120" height="20" class="s-stroke" fill="rgba(214,48,49,0.18)"/>
+              <rect x="90" y="40" width="20" height="120" class="s-stroke" fill="rgba(214,48,49,0.18)"/>
+              <circle cx="65" cy="65" r="14" class="s-stroke" fill="var(--paper-light)"/>
+              <circle cx="135" cy="65" r="14" class="s-stroke" fill="var(--paper-light)"/>
+              <circle cx="65" cy="135" r="14" class="s-stroke" fill="var(--paper-light)"/>
+              <circle cx="135" cy="135" r="14" class="s-stroke" fill="var(--paper-light)"/>
+              <text x="20" y="190" font-family="Kalam" font-size="11">Window Bracing</text>
+            </svg>
+          </div>
+        </div>
+        <div class="sketch-box">
+          <h3>Amortiguamiento (Acoustic Damping)</h3>
+          <ol>
+            <li><strong>Atenuación de ondas traseras:</strong> Evita que los medios reboten y atraviesen el cono.</li>
+            <li><strong>Efecto termodinámico:</strong> El material fibroso convierte las variaciones rápidas de presión en calor, reduciendo la velocidad del sonido interior.</li>
+            <li><strong>Resultado:</strong> El altavoz "ve" una caja hasta un <strong>20% más grande</strong> — ventaja acústica sin coste de espacio.</li>
+          </ol>
+          <p style="margin-top:0.8rem"><em>Materiales recomendados:</em> lana de vidrio, lana de oveja, guata acústica de poliéster. No bloquear el puerto en cajas reflex.</p>
+        </div>
+      </article>
+
+      <!-- 10. Puertos -->
+      <article id="sec-puertos" class="enc-article" style="display:none">
+        <h2>10. Matemáticas del Puerto Reflex</h2>
+        <div class="key-idea">
+          Para bajar Fb (graves más profundos):<br>
+          1. Aumentar Vb, O BIEN<br>
+          2. Alargar el tubo, O BIEN<br>
+          3. Reducir el área del puerto (con límite de velocidad del aire)
+        </div>
+        <div class="sketch-box grid-2">
+          <div>
+            <h3>Fórmula de longitud del tubo</h3>
+            <p>Derivada de la resonancia de Helmholtz:</p>
+            <code style="display:block; padding:0.8rem; background:var(--paper-dark); border-radius:4px; font-size:0.9rem; margin:0.8rem 0;">
+              L = (29974.86 × N × Sp) / (Fb² × Vb) − k × d_eq
+            </code>
+            <p>Donde k es la corrección de extremo (end-correction): 0.614 / 0.732 / 0.850 según la geometría del tubo.</p>
+            <h3>Límite de velocidad (Chuffing)</h3>
+            <p>La velocidad del aire en el puerto debe mantenerse por debajo de <strong>17 m/s</strong> (idealmente &lt; 12 m/s) para evitar turbulencia audible. Achaflanar ambos extremos del tubo reduce la velocidad efectiva.</p>
+          </div>
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 150">
+              <path d="M 20 45 L 100 45 M 20 105 L 100 105" stroke="var(--ink)" stroke-width="4"/>
+              <path d="M 5 75 L 120 75" class="s-stroke s-blue"/>
+              <path d="M 120 75 Q 130 48 142 68 T 162 58 T 182 78" class="s-stroke s-red"/>
+              <path d="M 120 75 Q 130 102 142 82 T 162 92 T 182 72" class="s-stroke s-red"/>
+              <text x="4" y="36" font-family="Kalam" font-size="11" fill="#075f9e">Flujo laminar (&lt;12 m/s)</text>
+              <text x="118" y="138" font-family="Kalam" font-size="11" fill="#d63031">Turbulencia (chuffing)</text>
+            </svg>
+          </div>
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Calcular la longitud exacta del puerto</strong>
+            <span>Obtén L en cm, velocidad del aire y diagnóstico de turbulencia</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 11. Simulador -->
+      <article id="sec-simulador" class="enc-article" style="display:none">
+        <h2>11. Alineamientos Clásicos</h2>
+        <p>Interactúa con el control para ver cómo el volumen de la caja cambia la forma de la curva.</p>
+        <div class="simulator-panel sketch-box">
+          <div class="slider-wrapper">
+            <label for="align-slider" style="font-family:'Kalam';font-size:1.2rem;color:var(--blue-dark)">
+              Volumen Vb: <span id="align-label">Óptimo (Butterworth B4)</span>
+            </label>
+            <input type="range" id="align-slider" min="1" max="3" value="2" step="1">
+          </div>
+          <svg viewBox="0 0 600 230" style="background:var(--paper);border:1px solid #ccc;border-radius:4px;width:100%">
+            <line x1="50" y1="190" x2="550" y2="190" stroke="#999" stroke-width="1.5"/>
+            <line x1="50" y1="15" x2="50" y2="190" stroke="#999" stroke-width="1.5"/>
+            <line x1="50" y1="75" x2="550" y2="75" class="s-stroke s-dash" stroke="rgba(0,0,0,0.08)"/>
+            <text x="300" y="218" font-family="Nunito" font-size="11" text-anchor="middle">Frecuencia Hz →</text>
+            <text x="14" y="110" font-family="Nunito" font-size="11" transform="rotate(-90 14 110)" text-anchor="middle">dB</text>
+            <text x="50" y="208" font-family="Nunito" font-size="9">20Hz</text>
+            <text x="148" y="208" font-family="Nunito" font-size="9">50Hz</text>
+            <text x="248" y="208" font-family="Nunito" font-size="9">100Hz</text>
+            <path id="curve-path" d="M 50 190 C 120 190, 140 75, 220 75 L 550 75" fill="none" stroke="var(--blue)" stroke-width="2.5" style="transition:d 0.35s ease"/>
+          </svg>
+          <div id="align-desc" style="margin-top:1.2rem;padding:1rem;background:var(--paper);border-radius:4px;font-size:0.93rem;min-height:70px"></div>
+        </div>
+        <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-icon">📐</div>
+          <div class="bridge-text">
+            <strong>Simular con mi altavoz real</strong>
+            <span>La calculadora aplica las tablas de Thiele a tu Qts específico</span>
+          </div>
+          <div class="bridge-arrow">→</div>
+        </div>
+      </article>
+
+      <!-- 12. Pruebas -->
+      <article id="sec-pruebas" class="enc-article" style="display:none">
+        <h2>12. Medición y Pruebas</h2>
+        <div class="sketch-box grid-2">
+          <div>
+            <h3>Curva de Impedancia</h3>
+            <p>Herramienta de diagnóstico más poderosa. Mide los terminales del altavoz montado en la caja:</p>
+            <ul>
+              <li><strong>Caja sellada:</strong> único pico en Fc.</li>
+              <li><strong>Bass-reflex:</strong> dos picos gemelos. El valle entre ellos indica Fb real. Ajusta la longitud del tubo hasta que el valle quede en la Fb calculada.</li>
+            </ul>
+            <p style="margin-top:0.8rem"><em>Herramientas:</em> DATS v3 (Dayton Audio), REW + tarjeta de audio, LIMP (Arta software).</p>
+          </div>
+          <div>
+            <svg class="enc-svg" viewBox="0 0 200 150">
+              <line x1="10" y1="140" x2="190" y2="140" stroke="var(--ink)" stroke-width="1.5"/>
+              <line x1="10" y1="10" x2="10" y2="140" stroke="var(--ink)" stroke-width="1.5"/>
+              <path d="M 10 140 Q 50 140 80 40 Q 110 140 190 140" class="s-stroke s-dash" stroke="rgba(0,0,0,0.25)"/>
+              <path d="M 10 140 C 30 140, 42 48, 60 48 C 72 48, 78 118, 93 118 C 107 118, 112 78, 124 78 C 142 78, 150 140, 190 140" class="s-stroke s-red"/>
+              <circle cx="93" cy="118" r="4" fill="var(--red)"/>
+              <text x="86" y="108" font-family="Kalam" font-size="11" fill="var(--red)">Fb</text>
+              <text x="80" y="20" font-family="Kalam" font-size="9" fill="rgba(0,0,0,0.4)">—— Sellada</text>
+              <text x="80" y="35" font-family="Kalam" font-size="9" fill="var(--red)">—— Reflex</text>
+            </svg>
+          </div>
+        </div>
+        <div class="key-idea">
+          <strong>Medición near-field:</strong> Coloca el micrófono a &lt;1 cm del cono para medir la respuesta acústica en graves sin los ecos de la habitación. Combina con la medición del puerto para obtener la respuesta total.
+        </div>
+      </article>
+
+    </div><!-- /view-enc -->
+
+    <!-- ════════════════════════════════════════════════════
+         VISTA BASE DE DATOS
+    ════════════════════════════════════════════════════ -->
+    <div id="view-db" class="view">
+      <h2 style="font-family:'Kalam';font-size:1.8rem;margin-bottom:0.3rem">Base de Datos de Altavoces</h2>
+      <p style="color:var(--ink-muted);margin-bottom:1.5rem;font-size:0.93rem">15 altavoces verificados · parámetros T/S · alineación recomendada</p>
+      <div style="overflow-x:auto">
+        <table class="db-table" id="db-table">
+          <thead><tr>
+            <th>Marca</th><th>Modelo</th><th>∅</th>
+            <th>Fs (Hz)</th><th>Vas (L)</th><th>Qts</th><th>Qes</th>
+            <th>Xmax (mm)</th><th>Sd (cm²)</th><th>SPL</th>
+            <th>Alineación</th><th></th>
+          </tr></thead>
+          <tbody id="db-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main><!-- /content-area -->
+</div><!-- /app -->
+
+<!-- Tooltip de enciclopedia (conceptos T/S) -->
+<div id="enc-tooltip" class="enc-tooltip"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DATOS
+═══════════════════════════════════════════════════════════ -->
+<script>
+let DB = [];
+
+async function loadDB() {
+  try {
+    const res = await fetch(`${API_BASE}/api/speakers`);
+    if (res.ok) {
+      const rawDB = await res.json();
+      DB = rawDB.map(s => ({
+        ...s,
+        brand: s.manufacturer,
+        model: s.model_name,
+        inches: s.sd < 150 ? 6 : s.sd < 400 ? 8 : s.sd < 600 ? 10 : s.sd < 800 ? 12 : 15,
+        align: s.qts < 0.25 ? "SBB4" : "QB3"
+      }));
+      if (typeof renderDB === 'function' && currentView === 'db') renderDB();
+    }
+  } catch(e) { console.error('Error cargando BD:', e); }
+}
+
+const TABLES = {
+  QB3:  [{qts:.20,a:8.80,h:1.87,f3:1.55},{qts:.25,a:6.13,h:1.67,f3:1.45},{qts:.30,a:4.42,h:1.50,f3:1.36},{qts:.35,a:3.22,h:1.35,f3:1.27},{qts:.40,a:2.35,h:1.22,f3:1.19},{qts:.45,a:1.70,h:1.10,f3:1.10},{qts:.50,a:1.20,h:1.00,f3:1.00}],
+  SBB4: [{qts:.20,a:16.32,h:2.09,f3:1.00},{qts:.25,a:10.04,h:1.85,f3:1.00},{qts:.30,a:6.57,h:1.64,f3:1.00},{qts:.35,a:4.50,h:1.46,f3:1.00},{qts:.40,a:3.18,h:1.30,f3:1.00},{qts:.45,a:2.29,h:1.16,f3:1.00},{qts:.50,a:1.67,h:1.04,f3:1.00}],
+  B4:   [{qts:.20,a:6.97,h:1.56,f3:1.56},{qts:.25,a:4.47,h:1.41,f3:1.41},{qts:.30,a:3.05,h:1.28,f3:1.28},{qts:.35,a:2.17,h:1.16,f3:1.16},{qts:.40,a:1.58,h:1.07,f3:1.07},{qts:.45,a:1.18,h:.98,f3:.98},{qts:.50,a:.89,h:.91,f3:.91}],
+};
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LÓGICA DE LA APLICACIÓN
+═══════════════════════════════════════════════════════════ -->
+<script>
+/* ── Estado ─────────────────────────────────────────────── */
+let calcResults = null;
+let currentView = 'calc';
+let currentEnc  = 'sec-intro';
+
+/* ── Navegación principal ───────────────────────────────── */
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.tb-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tb-' + v).classList.add('active');
+
+  const sidebar = document.getElementById('enc-sidebar');
+  sidebar.classList.toggle('hidden', v !== 'enc');
+
+  if (v === 'db') renderDB();
+}
+
+/* ── Enciclopedia ───────────────────────────────────────── */
+function showEnc(id) {
+  document.querySelectorAll('#view-enc .enc-article').forEach(a => a.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('#enc-sidebar .nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[onclick="showEnc('${id}')"]`).classList.add('active');
+  document.getElementById('content-area').scrollTop = 0;
+  currentEnc = id;
+}
+
+/* ── Bridge: enciclopedia → calculadora ─────────────────── */
+function goToCalc(boxType, contextMsg) {
+  setView('calc');
+  document.getElementById('boxType').value = boxType;
+  toggleBoxOpts();
+  const banner = document.getElementById('context-banner');
+  const msg    = document.getElementById('context-msg');
+  const sectionNames = {
+    'sec-cerradas': 'Cajas Cerradas','sec-reflex':'Bass-Reflex',
+    'sec-ts':'Parámetros T/S','sec-puertos':'Diseño del Puerto',
+    'sec-materiales':'Materiales y Proporciones',
+  };
+  msg.textContent = `Vinculado desde: Enciclopedia → ${sectionNames[currentEnc] || 'Enciclopedia'}`;
+  banner.classList.add('show');
+  document.getElementById('content-area').scrollTop = 0;
+}
+
+function dismissContext() {
+  document.getElementById('context-banner').classList.remove('show');
+}
+
+/* ── Tooltip de concepto ────────────────────────────────── */
+const TIPS = {
+  Fs:  { title:'Fs — Resonancia Libre', body:'Frecuencia donde el cono resuena naturalmente. La caja reflex la eleva a Fc. Por debajo de Fs la respuesta cae abruptamente.' },
+  Vas: { title:'Vas — Volumen Equivalente', body:'Elasticidad de la suspensión expresada en litros de aire. No es el volumen de la caja. Vas alto = suspensión blanda = caja grande.' },
+  Qts: { title:'Qts — Factor de Calidad', body:'Amortiguamiento en resonancia. Qts < 0.4 → Bass-Reflex. Qts > 0.4 → Sellada. Qts = Qes·Qms/(Qes+Qms).' },
+  Xmax:{ title:'Xmax — Excursión Máxima', body:'Desplazamiento lineal máximo (mm) por dirección. Con Sd determina Vd = Sd×Xmax y el SPL máximo alcanzable en graves.' },
+  Sd:  { title:'Sd — Área Efectiva', body:'Superficie radiante del cono (cm²). Con Xmax: Vd = Sd × Xmax. Mayor Sd = más aire movido a igual excursión.' },
+  TipoCaja: { title:'Tipo de recinto', body:'Reflex: mayor extensión y eficiencia, ideal Qts<0.4. Sellada: bajos más precisos y controlados, ideal Qts 0.4-0.7.' },
+  Alineacion: { title:'Alineación Thiele-Small', body:'QB3: equilibrio general. SBB4: extensión máxima, más volumen. B4: Butterworth clásico, más plano.' },
+  FactorK: { title:'Corrección de extremo k', body:'Compensación por la masa de aire extra en las bocas del tubo. 0.732 es el valor estándar para tubo con un extremo abierto y otro flangado.' },
+  Qtc:    { title:'Qtc objetivo (Caja Sellada)', body:'0.577 (Bessel): transitorios perfectos pero caja muy grande. 0.707 (Butterworth): plano óptimo. 1.0 (Chebyshev): pico +1.2 dB, caja pequeña.' },
+};
+
+function openTip(key) {
+  const tip = TIPS[key];
+  if (!tip) return;
+  const el = document.getElementById('enc-tooltip');
+  el.innerHTML = `<strong>${tip.title}</strong>${tip.body}
+    <br><a href="#" onclick="goToEncSection('${key}');return false" style="color:var(--blue);font-size:0.8rem;margin-top:0.4rem;display:inline-block">Ver en la Enciclopedia →</a>`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('tip')) {
+    document.getElementById('enc-tooltip').classList.remove('show');
+  }
+});
+
+function goToEncSection(key) {
+  const map = { Fs:'sec-ts', Vas:'sec-ts', Qts:'sec-ts', Xmax:'sec-ts', Sd:'sec-ts',
+                TipoCaja:'sec-reflex', Alineacion:'sec-simulador', FactorK:'sec-puertos', Qtc:'sec-cerradas' };
+  const sec = map[key] || 'sec-ts';
+  setView('enc');
+  showEnc(sec);
+}
+
+/* ── Búsqueda de altavoces ──────────────────────────────── */
+function filterDB(q) {
+  const dd = document.getElementById('spk-dropdown');
+  if (!q || q.length < 2) { dd.classList.remove('open'); return; }
+  const hits = DB.filter(s =>
+    (s.brand + ' ' + s.model).toLowerCase().includes(q.toLowerCase())
+  );
+  if (!hits.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = hits.map((s,i) => `
+    <div class="dd-item" onclick="loadSpeaker(${DB.indexOf(s)})">
+      <div><span class="dd-brand">${s.brand}</span><br><span class="dd-model">${s.model}</span></div>
+      <div style="font-size:0.75rem;color:var(--ink-muted)">${s.inches}" · ${s.align}</div>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+
+function loadSpeaker(idx) {
+  const s = DB[idx];
+  document.getElementById('fs').value     = s.fs;
+  document.getElementById('vas').value    = s.vas;
+  document.getElementById('qts').value    = s.qts;
+  document.getElementById('qes').value    = s.qes;
+  document.getElementById('qms').value    = s.qms;
+  document.getElementById('xmax').value   = s.xmax;
+  document.getElementById('sd').value     = s.sd;
+  document.getElementById('spl').value    = s.spl;
+  document.getElementById('inches').value = s.inches;
+  document.getElementById('alignment').value = s.align;
+  document.getElementById('spk-search').value = s.brand + ' ' + s.model;
+  document.getElementById('spk-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrapper'))
+    document.getElementById('spk-dropdown').classList.remove('open');
+});
+
+/* ── Toggles de UI ──────────────────────────────────────── */
+function toggleBoxOpts() {
+  const isReflex = document.getElementById('boxType').value === 'reflex';
+  document.getElementById('reflex-opts').style.display  = isReflex ? '' : 'none';
+  document.getElementById('closed-opts').style.display  = isReflex ? 'none' : '';
+}
+function togglePortOpts() {
+  const isCirc = document.getElementById('portType').value === 'circular';
+  document.getElementById('port-circular').style.display = isCirc ? '' : 'none';
+  document.getElementById('port-slot').style.display     = isCirc ? 'none' : '';
+}
+
+function switchTab(id) {
+  ['tab-diag','tab-port','tab-dim','tab-chart','tab-cuts','tab-compare'].forEach(t => {
+    const el = document.getElementById(t);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).style.display = 'block';
+  event.currentTarget.classList.add('active');
+  if (id === 'tab-chart' && calcResults) drawChart(calcResults);
+}
+
+/* ── Interpolación T/S ──────────────────────────────────── */
+function interpolate(table, qts) {
+  qts = Math.max(0.2, Math.min(0.5, qts));
+  for (let i = 0; i < table.length - 1; i++) {
+    if (qts >= table[i].qts && qts <= table[i+1].qts) {
+      const t = (qts - table[i].qts) / (table[i+1].qts - table[i].qts);
+      return { a: table[i].a + t*(table[i+1].a-table[i].a),
+               h: table[i].h + t*(table[i+1].h-table[i].h),
+               f3:table[i].f3+ t*(table[i+1].f3-table[i].f3) };
+    }
+  }
+  return table[table.length-1];
+}
+
+function n(v, d=1) { return (v !== null && v !== undefined && !isNaN(v)) ? v.toFixed(d) : '—'; }
+
+/* ── CÁLCULO PRINCIPAL ──────────────────────────────────── */
+function calculate() {
+  const fs  = parseFloat(document.getElementById('fs').value);
+  const vas = parseFloat(document.getElementById('vas').value);
+  const qts = parseFloat(document.getElementById('qts').value);
+  if (!fs || !vas || !qts) { alert('Introduce al menos Fs, Vas y Qts'); return; }
+
+  const qes    = parseFloat(document.getElementById('qes').value) || null;
+  const xmax   = parseFloat(document.getElementById('xmax').value) || null;
+  const sd     = parseFloat(document.getElementById('sd').value) || null;
+  const inches = parseFloat(document.getElementById('inches').value) || 10;
+  const T      = parseFloat(document.getElementById('material').value) / 10;
+  const boxType= document.getElementById('boxType').value;
+
+  let r = { fs, vas, qts, T, boxType };
+
+  if (boxType === 'reflex') {
+    const alignment = document.getElementById('alignment').value;
+    const portType  = document.getElementById('portType').value;
+    const portDiam  = parseFloat(document.getElementById('portDiam').value) || 7;
+    const slotW     = parseFloat(document.getElementById('slotW').value) || 10;
+    const slotH     = parseFloat(document.getElementById('slotH').value) || 5;
+    const k         = parseFloat(document.getElementById('kFactor').value);
+    const N         = parseInt(document.getElementById('numPorts').value) || 1;
+
+    const interp    = interpolate(TABLES[alignment], Math.max(0.2, Math.min(0.5, qts)));
+    const Vb        = vas / interp.a;
+    const Fb        = interp.h * fs;
+    const F3        = interp.f3 * fs;
+
+    let Sp, d_eq;
+    if (portType === 'circular') { Sp = Math.PI*(portDiam/2)**2; d_eq = portDiam; }
+    else { Sp = slotW*slotH; d_eq = 2*Math.sqrt(Sp/Math.PI); }
+    const SpTotal = N * Sp;
+    const L       = (29974.86*N*Sp)/(Fb**2*Vb) - k*d_eq;
+    const portVel = (sd && xmax) ? (Fb*2*Math.PI * (xmax/1000 * 0.4) * sd) / SpTotal : null;
+    const Vport   = N*Sp*Math.max(L,1)/1000;
+    const Vdriver = 0.0035*inches**2.8;
+    const Vb_bruto= Vb+Vport+Vdriver+0.05*Vb;
+    const Vd      = (sd&&xmax) ? sd*(xmax/10) : null;
+    const SPLmax  = Vd ? 112.2+20*Math.log10((Vd/1e6)*Fb**2) : null;
+    const EBP     = qes ? fs/qes : null;
+
+    Object.assign(r, { alignment,Vb,Fb,F3,Sp,SpTotal,d_eq,L,portVel,Vb_bruto,Vd,SPLmax,EBP,N,portType,portDiam,slotW,slotH,Vdriver,qes,xmax,sd,inches });
+  } else {
+    const qtcTarget = parseFloat(document.getElementById('qtcTarget').value);
+    const Vb        = vas / ((qtcTarget/qts)**2-1);
+    const Qtc_real  = qts * Math.sqrt(vas/Vb+1);
+    const disc      = (1/Qtc_real**2-2)**2+4;
+    const F3        = Math.sqrt((-(1/Qtc_real**2-2)+Math.sqrt(disc))/2) * Math.sqrt(vas/Vb+1) * fs;
+    const Vdriver   = 0.0035*inches**2.8;
+    const Vb_bruto  = Vb+Vdriver+0.05*Vb;
+    const Vd        = (sd&&xmax) ? sd*(xmax/10) : null;
+    Object.assign(r, { qtcTarget,Qtc_real,Vb,F3,Vb_bruto,Vdriver,Vd,xmax,sd,inches });
+  }
+
+  calcResults = r;
+
+  // Mostrar resultados
+  document.getElementById('empty-state').style.display    = 'none';
+  document.getElementById('results-content').style.display = 'block';
+
+  // Hero cards
+  document.getElementById('r-vb').innerHTML  = `${n(r.Vb)} <span class="hc-unit">L</span>`;
+  document.getElementById('r-vb-sub').textContent = `Bruto para cortes: ${n(r.Vb_bruto)} L`;
+  if (r.boxType === 'reflex') {
+    document.getElementById('r-fb-label').textContent = 'Sintonía Fb';
+    document.getElementById('r-fb').innerHTML = `${n(r.Fb)} <span class="hc-unit">Hz</span>`;
+    document.getElementById('r-fb-sub').textContent = `Alineación ${r.alignment}`;
+    document.getElementById('r-f3-sub').textContent = `f3/Fs = ${n(r.F3/r.fs,3)}`;
+  } else {
+    document.getElementById('r-fb-label').textContent = 'Qtc real';
+    document.getElementById('r-fb').innerHTML = `${n(r.Qtc_real,3)}`;
+    document.getElementById('r-fb-sub').textContent = `Objetivo: ${r.qtcTarget}`;
+    document.getElementById('r-f3-sub').textContent = 'Derivación Butterworth exacta';
+  }
+  document.getElementById('r-f3').innerHTML = `${n(r.F3)} <span class="hc-unit">Hz</span>`;
+
+  renderDiag(r);
+  renderPort(r);
+  renderDim(r);
+  renderCuts(r);
+
+  // Activar primer tab visible
+  document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+  document.querySelector('.calc-tab').classList.add('active');
+  ['tab-diag','tab-port','tab-dim','tab-chart','tab-cuts','tab-compare'].forEach(t => {
+    const el = document.getElementById(t);
+    if(el) el.style.display = 'none';
+  });
+  document.getElementById('tab-diag').style.display = 'block';
+}
+
+/* ── Renderizado ────────────────────────────────────────── */
+function renderDiag(r) {
+  const items = [];
+  if (r.EBP) {
+    const c = r.EBP>100?'g':r.EBP>50?'y':'r';
+    const m = r.EBP>100?'Ideal Bass-Reflex':r.EBP>50?'Ambos tipos sirven':'Preferir Sellada';
+    items.push({label:'EBP (Fs/Qes)',val:`${n(r.EBP,0)} — ${m}`,c});
+  }
+  if (r.portVel!=null) {
+    const c = r.portVel<12?'g':r.portVel<17?'y':'r';
+    const m = r.portVel<12?'Sin turbulencia':r.portVel<17?'Límite aceptable':'⚠ Turbulencia!';
+    items.push({label:'Velocidad puerto',val:`${n(r.portVel)} m/s — ${m}`,c});
+  }
+  if (r.SPLmax) items.push({label:'SPL máximo (Keele 1975)',val:`${n(r.SPLmax)} dB @ 1m / 1W`,c:'g'});
+  if (r.Vd)     items.push({label:'Vd = Sd × Xmax',val:`${n(r.Vd,0)} cm³ — ${r.Vd>100?'Subwoofer serio':'Woofer medio'}`,c:r.Vd>100?'g':'y'});
+  if (r.Qtc_real) {
+    const c=r.Qtc_real<0.8?'g':r.Qtc_real<1?'y':'r';
+    items.push({label:'Qtc real',val:`${n(r.Qtc_real,3)} — ${r.Qtc_real<0.8?'Respuesta plana':'Pico en Fc'}`,c});
+  }
+  const qok = r.qts>=0.2 && r.qts<=0.5;
+  items.push({label:'Rango Qts (tablas Thiele)',val:`${r.qts} — ${qok?'Válido':'Fuera de tablas'}`,c:qok?'g':'y'});
+
+  document.getElementById('diag-grid').innerHTML = items.map(d=>`
+    <div class="diag-item">
+      <div class="diag-dot ${d.c}"></div>
+      <div>
+        <div class="diag-label">${d.label}</div>
+        <div class="diag-value">${d.val}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPort(r) {
+  if (r.boxType !== 'reflex') { document.getElementById('tab-port').style.display='none'; return; }
+  const Fpipe = r.L ? 34400/(2*r.L) : null;
+  const portDesc = r.portType==='circular'
+    ? `<div class="data-row"><span class="dr-label">Diámetro del tubo</span><span class="dr-val">${r.portDiam} cm</span></div>`
+    : `<div class="data-row"><span class="dr-label">Slot ${r.slotW}×${r.slotH} cm</span><span class="dr-val">Área ${n(r.Sp)} cm²</span></div>`;
+
+  document.getElementById('port-body').innerHTML = `
+    <div class="data-row"><span class="dr-label">Longitud del tubo / slot</span><span class="dr-val">${n(r.L)} cm &nbsp;(${n(r.L*10,0)} mm)</span></div>
+    <div class="data-row"><span class="dr-label">Área por puerto (Sp)</span><span class="dr-val">${n(r.Sp)} cm²</span></div>
+    <div class="data-row"><span class="dr-label">Área total (${r.N} puerto/s)</span><span class="dr-val">${n(r.SpTotal)} cm²</span></div>
+    <div class="data-row"><span class="dr-label">Diámetro equivalente</span><span class="dr-val">${n(r.d_eq)} cm</span></div>
+    ${portDesc}
+    ${Fpipe?`<div class="data-row"><span class="dr-label">Resonancia tubo (Pipe)</span><span class="dr-val" style="color:var(--orange)">${n(Fpipe)} Hz — rellenar 1/3 con espuma</span></div>`:''}
+    <div class="data-row"><span class="dr-label">Filtro subsónico recomendado</span><span class="dr-val">${n(r.Fb*0.7)} Hz (0.7×Fb)</span></div>
+  `;
+}
+
+function renderDim(r) {
+  const T=r.T, Vb=r.Vb_bruto;
+  const Di = Math.cbrt(Vb*1000/(1.59*1.26));
+  const Wi = 1.26*Di, Hi = 1.59*Di;
+  const De = Di+2*T, We = Wi+2*T, He = Hi+2*T;
+  const Fbsc = 115/(We/100);
+  document.getElementById('dim-body').innerHTML = `
+    <div class="data-row"><span class="dr-label">Interior H × W × D</span><span class="dr-val">${n(Hi)} × ${n(Wi)} × ${n(Di)} cm</span></div>
+    <div class="data-row"><span class="dr-label">Exterior H × W × D</span><span class="dr-val">${n(He)} × ${n(We)} × ${n(De)} cm</span></div>
+    <div class="data-row"><span class="dr-label">Grosor de pared (T)</span><span class="dr-val">${r.T*10} mm</span></div>
+    <div class="data-row"><span class="dr-label">Baffle Step (F_bsc)</span><span class="dr-val">${n(Fbsc)} Hz — compensar con shelving</span></div>
+    <div class="data-row"><span class="dr-label">Proporción H:W:D (áurea)</span><span class="dr-val">1.59 : 1.26 : 1.00</span></div>
+  `;
+}
+
+function renderCuts(r) {
+  const T=r.T, Vb=r.Vb_bruto;
+  const Di=Math.cbrt(Vb*1000/(1.59*1.26));
+  const Wi=1.26*Di, Hi=1.59*Di;
+  const De=Di+2*T, We=Wi+2*T, He=Hi+2*T;
+
+  const pcs = [
+    {name:'Frontal',         cant:1, w:n(We),       h:n(He),       note:'Orificio del altavoz (ver ∅ nominal)'},
+    {name:'Trasera',         cant:1, w:n(We),       h:n(He),       note:'Terminal de bornes'},
+    {name:'Tapa (superior)', cant:1, w:n(We-2*T),   h:n(De),       note:'Encaja entre frontal y trasera'},
+    {name:'Base (inferior)', cant:1, w:n(We-2*T),   h:n(De),       note:'Encaja entre frontal y trasera'},
+    {name:'Laterales',       cant:2, w:n(He),       h:n(De),       note:'Piezas idénticas ×2'},
+  ];
+
+  document.getElementById('cuts-table').innerHTML = `
+    <thead><tr><th>Pieza</th><th>Cant.</th><th>Ancho (cm)</th><th>Alto (cm)</th><th>Notas</th></tr></thead>
+    <tbody>${pcs.map(p=>`<tr>
+      <td class="piece">${p.name}</td><td>${p.cant}</td>
+      <td class="dims">${p.w}</td><td class="dims">${p.h}</td>
+      <td class="note">${p.note}</td>
+    </tr>`).join('')}</tbody>`;
+
+  const area = (2*(We*He)+2*((We-2*T)*De)+2*(He*De))/10000;
+  document.getElementById('cuts-summary').innerHTML = `
+    <div class="sum-item"><div class="sv">${n(Vb)} L</div><div class="sl">Vb bruto</div></div>
+    <div class="sum-item"><div class="sv">${n(area*1.15,3)} m²</div><div class="sl">Tablero (+15% merma)</div></div>
+    <div class="sum-item"><div class="sv">${n(We)}×${n(He)}×${n(De)}</div><div class="sl">Exterior (cm)</div></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INTEGRACIÓN SCIPY — llamada al backend FastAPI
+   ════════════════════════════════════════════════════════ */
+const API_BASE = 'http://localhost:8000';   // ← cambiar por tu dominio en producción
+let  sciPyData = null;                       // caché del último resultado de la API
+
+/* Construye el payload a partir del formulario actual */
+function buildDriverPayload() {
+  const r = calcResults;
+  if (!r) return null;
+  return {
+    driver: {
+      fs:           r.fs,
+      vas:          r.vas,
+      qts:          r.qts,
+      qes:          r.qes  || undefined,
+      xmax:         r.xmax || undefined,
+      sd:           r.sd   || undefined,
+      spl:          parseFloat(document.getElementById('spl').value) || 86,
+      inches:       r.inches,
+      model_name:   document.getElementById('spk-search').value || 'Altavoz',
+      box_type:     r.boxType,
+      alignment:    r.alignment   || undefined,
+      qtc_target:   r.qtcTarget   || undefined,
+      material_mm:  r.T * 10,
+      port_type:    r.portType    || undefined,
+      port_diam_cm: r.portDiam    || undefined,
+      slot_w_cm:    r.slotW       || undefined,
+      slot_h_cm:    r.slotH       || undefined,
+      num_ports:    r.N           || undefined,
+      k_factor:     parseFloat(document.getElementById('kFactor').value) || 0.732,
+    },
+    freq_min:    15,
+    freq_max:    800,
+    freq_points: 500,
+    eg_volts:    2.83,
+  };
+}
+
+/* Llama a POST /api/simulate y actualiza la gráfica */
+async function runScipy() {
+  const payload = buildDriverPayload();
+  if (!payload) { alert('Calcula primero antes de simular con scipy.'); return; }
+
+  const errEl     = document.getElementById('chart-api-error');
+  const loadEl    = document.getElementById('chart-loading');
+  const canvasEl  = document.getElementById('freqChart');
+  const badge     = document.getElementById('chart-mode-badge');
+  const btnScipy  = document.getElementById('btn-scipy');
+
+  errEl.style.display    = 'none';
+  loadEl.style.display   = 'block';
+  canvasEl.style.display = 'none';
+  btnScipy.disabled      = true;
+  btnScipy.textContent   = '⏳ Calculando…';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/simulate`, {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    sciPyData = await res.json();
+
+    // Actualizar métricas hero con valores scipy (más precisos)
+    const m = sciPyData.metrics;
+    document.getElementById('r-f3').innerHTML = `${m.f3} <span class="hc-unit">Hz</span>`;
+    document.getElementById('r-f3-sub').textContent = `scipy · F6=${m.f6}Hz`;
+    if (m.fb) {
+      document.getElementById('r-fb').innerHTML = `${m.fb} <span class="hc-unit">Hz</span>`;
+    }
+
+    // Actualizar badge
+    badge.textContent = '⚗️ scipy / Small 1973';
+    badge.style.background = 'rgba(0,184,148,0.15)';
+    badge.style.borderColor = 'var(--green)';
+    badge.style.color = '#00836a';
+
+    // Mostrar avisos si los hay
+    if (sciPyData.warnings?.length) {
+      errEl.innerHTML = '⚠️ ' + sciPyData.warnings.join('<br>⚠️ ');
+      errEl.style.display = 'block';
+      errEl.style.background = 'rgba(253,203,110,0.3)';
+      errEl.style.borderColor = '#e5a700';
+      errEl.style.color = '#7a5500';
+    }
+
+    loadEl.style.display   = 'none';
+    canvasEl.style.display = 'block';
+    drawChartFromData(sciPyData);
+    renderExcursionChart(sciPyData);
+
+  } catch (err) {
+    loadEl.style.display   = 'none';
+    canvasEl.style.display = 'block';
+    // Backend no disponible — mostrar aviso suave, no error rojo
+    const isConnErr = err.message === 'Failed to fetch' || err.message.includes('NetworkError');
+    if (isConnErr) {
+      errEl.innerHTML = `⚗️ Backend scipy no conectado — mostrando gráfica JS aproximada.
+        <a href="https://github.com" target="_blank" style="color:var(--blue-dark);font-size:0.8rem;margin-left:0.5rem">
+        Ver instrucciones de arranque →</a>`;
+      errEl.style.background  = 'rgba(253,203,110,0.25)';
+      errEl.style.borderColor = 'rgba(0,0,0,0.1)';
+      errEl.style.color       = 'var(--ink-muted)';
+      errEl.style.borderTop   = '1px solid rgba(0,0,0,0.08)';
+    } else {
+      errEl.innerHTML = `❌ Error scipy: <strong>${err.message}</strong>`;
+      errEl.style.background  = 'var(--red-bg)';
+      errEl.style.borderColor = 'var(--red)';
+      errEl.style.color       = 'var(--red)';
+    }
+    errEl.style.display = 'block';
+    drawChart(calcResults);   // fallback a la gráfica JS
+  } finally {
+    btnScipy.disabled    = false;
+    btnScipy.textContent = '⚗️ Simular con scipy';
+  }
+}
+
+/* ── Llama a POST /api/compare y genera la gráfica comparativa ── */
+async function runCompare() {
+  const payload = buildDriverPayload();
+  if (!payload) return;
+  const btn = document.getElementById('btn-compare');
+  const errEl = document.getElementById('compare-error');
+  btn.textContent = '⏳ Analizando...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/compare`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload.driver)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    
+    const tbody = document.getElementById('compare-tbody');
+    let html = '';
+    const colors = { 'QB3': '#0984e3', 'SBB4': '#00b894', 'B4': '#e17055', 'Closed': '#d63031' };
+    
+    for (const align of ["QB3", "SBB4", "B4", "Closed"]) {
+      const info = data.curves[align];
+      if (!info || info.error) continue;
+      html += `<tr>
+        <td style="color:${colors[align]};font-weight:bold">${align} ${align==='Closed'?'(Sellada)':''}</td>
+        <td class="dims">${n(info.vb)} L</td>
+        <td class="dims">${align==='Closed' ? 'Qtc '+n(info.qtc,3) : n(info.fb)+' Hz'}</td>
+        <td class="dims">${n(info.f3)} Hz</td>
+      </tr>`;
+    }
+    tbody.innerHTML = html;
+    
+    const canvas = document.getElementById('compareChart');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2 || 1200; canvas.height = 640; ctx.scale(2,2);
+    const W = canvas.width/2, H = canvas.height/2;
+    ctx.clearRect(0,0, W, H);
+    ctx.fillStyle = '#fcfbf8'; ctx.fillRect(0,0, W, H);
+    
+    const PAD = {l:40, r:15, t:15, b:25};
+    const fw = W - PAD.l - PAD.r, fh = H - PAD.t - PAD.b;
+    const logMin = Math.log10(15), logMax = Math.log10(600);
+    const xPos = f => PAD.l + (Math.log10(Math.max(f,15)) - logMin)/(logMax-logMin)*fw;
+    const ref = 0; // Relative layout for comparison
+    const yPos = db => PAD.t + fh/2 - (db-ref) * (fh/30);
+    
+    [20,30,50,100,200,500].forEach(f => {
+      let x = xPos(f);
+      if (x < PAD.l || x > PAD.l+fw) return;
+      ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+fh); ctx.stroke();
+      ctx.fillStyle='#5a6a72'; ctx.font='10px Kalam,cursive'; ctx.textAlign='center'; ctx.fillText(f+'Hz', x, H-5);
+    });
+    
+    [-12,-9,-6,-3,0,3].forEach(db => {
+      let y = yPos(db);
+      ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+fw,y); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillStyle='#5a6a72'; ctx.fillText(db+'dB', PAD.l-4, y+4);
+    });
+    
+    // Draw 0dB reference thicker
+    ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(PAD.l,yPos(0)); ctx.lineTo(PAD.l+fw,yPos(0)); ctx.stroke();
+    
+    for (const align of ["Closed", "B4", "SBB4", "QB3"]) { // draw QB3 last so it's on top
+       const info = data.curves[align];
+       if (!info || info.error) continue;
+       ctx.strokeStyle = colors[align]; ctx.lineWidth = 2.2; ctx.beginPath();
+       info.spl.forEach((db, i) => {
+          let Math_db = db - (data.curves["QB3"] ? data.curves["QB3"].spl[data.freqs.length-1] : 0); // normalize DB optionally? Nah, data is already scaled to spl sens ref
+          Math_db = db - (info.spl[info.spl.length-1] - 0); // Normalize high-freq to 0dB for comparison
+          let x = xPos(data.freqs[i]), y = yPos(Math_db);
+          if (x >= PAD.l && x <= PAD.l+fw) {
+              if (i===0) ctx.moveTo(x,Math.min(Math.max(y,PAD.t),PAD.t+fh)); else ctx.lineTo(x,Math.min(Math.max(y,PAD.t),PAD.t+fh));
+          }
+       });
+       ctx.stroke();
+    }
+    
+    document.getElementById('compare-results').style.display = 'block';
+  } catch(e) {
+    errEl.textContent = '❌ Error de API: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Analizar las 4 alineaciones (Scipy)';
+    btn.disabled = false;
+  }
+}
+
+/* ── Función de renderizado del canvas — acepta datos scipy O datos JS ── */
+function _drawCanvasCore(canvas, freqs, splArr, markers, sensRef) {
+  const ctx = canvas.getContext('2d');
+  canvas.width  = canvas.offsetWidth * 2 || 1200;
+  canvas.height = 480;
+  ctx.scale(2, 2);
+  const W = canvas.width/2, H = canvas.height/2;
+  ctx.clearRect(0, 0, W, H);
+
+  // Fondo papel cuadriculado
+  ctx.fillStyle = '#fcfbf8';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(0,0,0,0.055)';
+  ctx.lineWidth = 0.5;
+  for (let y=0; y<H; y+=22) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x=0; x<W; x+=22) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+
+  const PAD = {l:54,r:22,t:24,b:38};
+  const fw = W-PAD.l-PAD.r, fh = H-PAD.t-PAD.b;
+  const logMin = Math.log10(15), logMax = Math.log10(900);
+  const xPos = f => PAD.l + (Math.log10(Math.max(f,15)) - logMin) / (logMax-logMin) * fw;
+  const ref   = sensRef || 0;
+  const dbRange = 30;
+  const yPos = db => PAD.t + fh/2 - (db-ref) * (fh / dbRange);
+
+  // Grid frecuencias
+  const gridFreqs = [20,30,40,50,70,100,150,200,300,500,700];
+  ctx.font = '10px Kalam,cursive'; ctx.fillStyle = '#5a6a72'; ctx.textAlign = 'center';
+  gridFreqs.forEach(f => {
+    const x = xPos(f);
+    if (x < PAD.l || x > PAD.l+fw) return;
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 0.7;
+    ctx.beginPath(); ctx.setLineDash([3,3]); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+fh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(f+'Hz', x, PAD.t+fh+22);
+  });
+
+  // Grid dB
+  const dbLines = ref
+    ? [ref-12, ref-9, ref-6, ref-3, ref, ref+3]
+    : [-12,-9,-6,-3,0,3];
+  dbLines.forEach(db => {
+    const y = yPos(db);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 0.7;
+    ctx.beginPath(); ctx.setLineDash([3,3]); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+fw,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#5a6a72';
+    ctx.fillText((ref ? (db-ref) : db)+'dB', PAD.l-5, y+4);
+  });
+
+  // Curva SPL — tinta azul blueprint
+  const pts = freqs.map((f,i) => ({ x: xPos(f), y: yPos(splArr[i]) }))
+                   .filter(p => p.x >= PAD.l && p.x <= PAD.l+fw);
+
+  // Relleno
+  ctx.beginPath();
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, PAD.t+fh);
+  ctx.lineTo(pts[0].x, PAD.t+fh);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(9,132,227,0.08)'; ctx.fill();
+
+  ctx.beginPath(); ctx.strokeStyle = '#0984e3'; ctx.lineWidth = 2.2; ctx.setLineDash([]);
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+
+  // Línea de referencia −3dB
+  const y3 = yPos(ref - 3);
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(PAD.l,y3); ctx.lineTo(PAD.l+fw,y3); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Marcadores verticales (F3, Fb, etc.)
+  markers.forEach(({f, label, color}) => {
+    if (!f || f<15 || f>900) return;
+    const x = xPos(f);
+    ctx.strokeStyle = color; ctx.lineWidth = 1.3; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+fh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color; ctx.font = 'bold 10px Kalam,cursive'; ctx.textAlign = 'left';
+    ctx.fillText(label, x+4, PAD.t+20);
+  });
+
+  // Labels de ejes
+  ctx.fillStyle = '#5a6a72'; ctx.font = '11px Kalam,cursive'; ctx.textAlign = 'center';
+  ctx.fillText('Frecuencia (Hz)', PAD.l+fw/2, H-4);
+  ctx.save(); ctx.translate(14, PAD.t+fh/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Nivel (dB)', 0, 0); ctx.restore();
+}
+
+/* Gráfica con datos del backend scipy */
+function drawChartFromData(data) {
+  const canvas = document.getElementById('freqChart');
+  const m      = data.metrics;
+  const markers = [
+    { f: m.f3,  label: `F3=${m.f3}Hz`,  color: '#d63031' },
+    { f: m.f6,  label: `F6=${m.f6}Hz`,  color: 'rgba(214,48,49,0.5)' },
+    { f: m.fb,  label: `Fb=${m.fb}Hz`,  color: '#0984e3' },
+  ].filter(mk => mk.f);
+  _drawCanvasCore(canvas, data.freqs, data.spl, markers, m.sens_band);
+  document.getElementById('extra-charts').style.display = 'block';
+}
+
+/* Gráfica de excursión + velocidad de puerto */
+function renderExcursionChart(data) {
+  const canvas = document.getElementById('excChart');
+  canvas.width  = canvas.offsetWidth * 2 || 1200;
+  canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  const W = canvas.width/2, H = canvas.height/2;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#fcfbf8'; ctx.fillRect(0,0,W,H);
+
+  const PAD = {l:54,r:22,t:16,b:34};
+  const fw = W-PAD.l-PAD.r, fh = H-PAD.t-PAD.b;
+  const logMin = Math.log10(15), logMax = Math.log10(900);
+  const xPos = f => PAD.l + (Math.log10(Math.max(f,15)) - logMin)/(logMax-logMin) * fw;
+
+  // Excursión (eje izquierdo)
+  const maxExc = Math.max(...data.excursion) * 1.3 || 20;
+  const yExc   = v => PAD.t + fh - (v / maxExc) * fh;
+
+  ctx.fillStyle = 'rgba(9,132,227,0.07)';
+  ctx.beginPath();
+  data.freqs.forEach((f,i) => {
+    const x = xPos(f), y = yExc(data.excursion[i]);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.lineTo(xPos(data.freqs[data.freqs.length-1]), PAD.t+fh);
+  ctx.lineTo(xPos(data.freqs[0]), PAD.t+fh);
+  ctx.closePath(); ctx.fill();
+
+  ctx.beginPath(); ctx.strokeStyle='#0984e3'; ctx.lineWidth=1.8; ctx.setLineDash([]);
+  data.freqs.forEach((f,i) => {
+    const x=xPos(f), y=yExc(data.excursion[i]);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Línea Xmax
+  const xmaxMm = calcResults?.xmax || null;
+  if (xmaxMm) {
+    const yx = yExc(xmaxMm);
+    ctx.strokeStyle='#e5a700'; ctx.lineWidth=1.2; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(PAD.l,yx); ctx.lineTo(PAD.l+fw,yx); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#7a5500'; ctx.font='bold 9px Kalam,cursive'; ctx.textAlign='left';
+    ctx.fillText(`Xmax=${xmaxMm}mm`, PAD.l+4, yx-3);
+  }
+
+  // Velocidad de puerto (eje derecho, naranja)
+  if (data.port_vel) {
+    const maxVel = Math.max(Math.max(...data.port_vel) * 1.3, 20);
+    const yVel = v => PAD.t + fh - (v / maxVel) * fh;
+
+    ctx.beginPath(); ctx.strokeStyle='rgba(225,112,85,0.7)'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+    data.freqs.forEach((f,i) => {
+      const x=xPos(f), y=yVel(data.port_vel[i]);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Límite 17 m/s
+    const y17 = yVel(17);
+    ctx.strokeStyle='rgba(214,48,49,0.5)'; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y17); ctx.lineTo(PAD.l+fw,y17); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#d63031'; ctx.font='9px Kalam,cursive'; ctx.textAlign='right';
+    ctx.fillText('17m/s turbulencia', PAD.l+fw-4, y17-3);
+  }
+
+  // Leyenda
+  ctx.font='10px Kalam,cursive';
+  ctx.fillStyle='#0984e3'; ctx.textAlign='left'; ctx.fillText('── Excursión (mm)', PAD.l+8, PAD.t+14);
+  if (data.port_vel) {
+    ctx.fillStyle='#e17055'; ctx.fillText('- - Vel. puerto (m/s)', PAD.l+8, PAD.t+28);
+  }
+
+  // Eje X
+  [20,30,50,100,200,500].forEach(f => {
+    const x = xPos(f);
+    ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+fh); ctx.stroke();
+    ctx.fillStyle='#5a6a72'; ctx.font='9px Kalam,cursive'; ctx.textAlign='center';
+    ctx.fillText(f+'Hz', x, PAD.t+fh+20);
+  });
+}
+
+/* Gráfica de fallback con aproximación JS (sin scipy) */
+function drawChart(r) {
+  if (!r) return;
+  const canvas = document.getElementById('freqChart');
+
+  // Construir arrays desde la aproximación JS
+  const freqArr=[], splArr=[];
+  for (let fi=15; fi<=850; fi *= 1.015) {
+    let db;
+    if (r.boxType==='reflex') {
+      db = -10*Math.log10(1+(r.F3/fi)**8)*0.4;
+      if (fi < r.Fb*0.5) db -= 15*(r.Fb*0.5/fi-1);
+    } else {
+      const Qtc=r.Qtc_real||0.707, ratio=fi/r.F3;
+      const denom=(1-ratio**2)**2+ratio**2/Qtc**2;
+      db = denom>0 ? 10*Math.log10(ratio**4/denom) : -30;
+      db = Math.max(db,-28);
+    }
+    freqArr.push(fi); splArr.push(db);
+  }
+
+  const markers = [
+    { f: r.F3, label: `F3=${n(r.F3,0)}Hz`, color: '#d63031' },
+    { f: r.Fb, label: `Fb=${n(r.Fb,0)}Hz`, color: '#0984e3' },
+  ].filter(m => m.f);
+
+  _drawCanvasCore(canvas, freqArr, splArr, markers, 0);
+}
+
+/* ── Base de Datos view ─────────────────────────────────── */
+function renderDB() {
+  const tbody = document.getElementById('db-tbody');
+  tbody.innerHTML = DB.map((s,i)=>`<tr>
+    <td class="brand">${s.brand}</td>
+    <td>${s.model}</td>
+    <td style="text-align:center">${s.inches}"</td>
+    <td class="num">${s.fs}</td>
+    <td class="num">${s.vas}</td>
+    <td class="num">${s.qts}</td>
+    <td class="num">${s.qes}</td>
+    <td class="num">${s.xmax}</td>
+    <td class="num">${s.sd}</td>
+    <td class="num">${s.spl}</td>
+    <td><span class="align-badge ${s.align}">${s.align}</span></td>
+    <td><button class="db-use-btn" onclick="useFromDB(${i})">Usar →</button></td>
+  </tr>`).join('');
+}
+
+function useFromDB(idx) {
+  loadSpeaker(idx);
+  setView('calc');
+  const s = DB[idx];
+  const banner = document.getElementById('context-banner');
+  document.getElementById('context-msg').textContent = `Cargado desde la Base de Datos: ${s.brand} ${s.model}`;
+  banner.classList.add('show');
+}
+
+/* ── Simulador enciclopedia ─────────────────────────────── */
+const alignments = {
+  "1":{ path:"M 50 190 C 130 190, 140 38, 220 75 L 550 75", title:"Vb Pequeño (Chebyshev — Sub-amortiguado)", desc:"Produce un pico audible antes del decaimiento. Sonido 'boomy' a una sola nota. Respuesta transitoria pobre." },
+  "2":{ path:"M 50 190 C 118 190, 140 75, 220 75 L 550 75", title:"Vb Óptimo (Butterworth — Máximamente Plano)", desc:"Curva plana ideal. Mejor compromiso extensión/transitorios. Caída brusca a 24 dB/oct. La referencia de diseño." },
+  "3":{ path:"M 50 190 C 70 190, 155 98, 220 75 L 550 75",  title:"Vb Grande (Bessel — Sobre-amortiguado)", desc:"Caída suave que empieza antes. Pierde impacto en el rango medio-grave pero ofrece los mejores transitorios posibles." },
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('align-slider');
+  if (slider) slider.addEventListener('input', function() {
+    const a = alignments[this.value];
+    document.getElementById('curve-path').setAttribute('d', a.path);
+    document.getElementById('align-label').textContent = a.title;
+    document.getElementById('align-desc').innerHTML = `<strong>${a.title}:</strong><br>${a.desc}`;
+  });
+  const desc = document.getElementById('align-desc');
+  if (desc) desc.innerHTML = `<strong>${alignments["2"].title}:</strong><br>${alignments["2"].desc}`;
+});
+
+/* ── Tabs enciclopedia ──────────────────────────────────── */
+function openTab(evt, tabId, groupClass) {
+  document.querySelectorAll('.tab-content.'+groupClass).forEach(t=>t.classList.remove('active'));
+  evt.currentTarget.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  evt.currentTarget.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLUJO DE PAGO — Stripe + PayPal
+   ════════════════════════════════════════════════════════ */
+
+let _stripe        = null;
+let _stripeCard    = null;
+let _stripeIntent  = null;
+let _paypalMounted = false;
+let _apiConfig     = null;
+
+async function unlockPro() {
+  if (!calcResults) { alert('Primero calcula la caja de tu altavoz.'); return; }
+  if (!_apiConfig) {
+    try {
+      const r = await fetch(`${API_BASE}/api/config`);
+      if (r.ok) _apiConfig = await r.json();
+    } catch (_) {}
+  }
+  const price = _apiConfig?.price_usd || 10;
+  document.getElementById('modal-price').textContent = `$${price.toFixed(2)}`;
+  const isTest = !_apiConfig || (_apiConfig.stripe_publishable_key || '').startsWith('pk_test');
+  document.getElementById('dev-mode-badge').style.display = isTest ? 'block' : 'none';
+  document.getElementById('payment-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  await _mountStripe();
+}
+
+function closePaymentModal() {
+  document.getElementById('payment-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('pay-error').style.display   = 'none';
+  document.getElementById('pay-success').style.display = 'none';
+}
+
+// Listeners del modal — se registran tras DOMContentLoaded porque el modal
+// está al final del body y el script corre antes de que exista en el DOM
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePaymentModal(); });
+  const modal = document.getElementById('payment-modal');
+  if (modal) modal.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closePaymentModal();
+  });
+});
+
+function switchPayTab(tab) {
+  document.getElementById('pay-stripe').style.display  = tab === 'stripe' ? 'block' : 'none';
+  document.getElementById('pay-paypal').style.display  = tab === 'paypal' ? 'block' : 'none';
+  document.getElementById('tab-stripe-btn').classList.toggle('active', tab === 'stripe');
+  document.getElementById('tab-paypal-btn').classList.toggle('active', tab === 'paypal');
+  if (tab === 'paypal') _mountPayPal();
+}
+
+/* ── STRIPE ─────────────────────────────────────────────── */
+async function _mountStripe() {
+  const pk = _apiConfig?.stripe_publishable_key || 'pk_test_REPLACE_ME';
+  if (!_stripe) _stripe = Stripe(pk);
+  if (!_stripeCard) {
+    const elements = _stripe.elements();
+    _stripeCard = elements.create('card', {
+      style: { base: { fontFamily: 'Space Mono, monospace', fontSize: '15px',
+                       color: '#1e272e', '::placeholder': { color: '#5a6a72' } } },
+    });
+    _stripeCard.mount('#stripe-card-element');
+    _stripeCard.on('change', e => {
+      document.getElementById('stripe-card-errors').textContent = e.error?.message || '';
+    });
+  }
+  if (!_stripeIntent) {
+    try {
+      const p = buildDriverPayload();
+      const r = await fetch(`${API_BASE}/api/payment/stripe/create-intent`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ driver_snapshot: p?.driver }),
+      });
+      if (r.ok) _stripeIntent = await r.json();
+    } catch (_) {}
+  }
+}
+
+async function submitStripe() {
+  const btn   = document.getElementById('btn-pay-stripe');
+  const errEl = document.getElementById('pay-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = '⏳ Procesando…';
+
+  // Modo dev (sin backend real o sin PaymentIntent)
+  if (!_stripeIntent?.client_secret) {
+    await _downloadPDF('dev_unlock');
+    btn.disabled = false; btn.textContent = 'Pagar y Descargar PDF';
+    return;
+  }
+
+  try {
+    const { paymentIntent, error } = await _stripe.confirmCardPayment(
+      _stripeIntent.client_secret,
+      { payment_method: { card: _stripeCard } }
+    );
+    if (error) throw new Error(error.message);
+    if (paymentIntent.status !== 'succeeded') throw new Error('Estado: ' + paymentIntent.status);
+
+    btn.textContent = '⏳ Verificando pago…';
+    let accessToken = null;
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const r2 = await fetch(`${API_BASE}/api/payment/stripe/poll-token?pi=${paymentIntent.id}`);
+      const d  = await r2.json();
+      if (d.access_token) { accessToken = d.access_token; break; }
+    }
+    if (!accessToken) throw new Error('Timeout esperando confirmación del servidor.');
+
+    document.getElementById('pay-success').style.display = 'block';
+    _stripeIntent = null;
+    btn.textContent = '⏳ Generando PDF…';
+    await _downloadPDF(accessToken);
+  } catch (err) {
+    errEl.textContent = '❌ ' + err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Pagar y Descargar PDF';
+  }
+}
+
+/* ── PAYPAL ──────────────────────────────────────────────── */
+function _mountPayPal() {
+  if (_paypalMounted) return;
+  _paypalMounted = true;
+  if (_apiConfig?.paypal_client_id && _apiConfig.paypal_client_id !== 'REPLACE_ME') {
+    const sdk = document.getElementById('paypal-sdk');
+    if (sdk) sdk.src = `https://www.paypal.com/sdk/js?client-id=${_apiConfig.paypal_client_id}&currency=USD`;
+  }
+  const tryMount = () => {
+    if (typeof paypal === 'undefined') { setTimeout(tryMount, 400); return; }
+    paypal.Buttons({
+      style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+      async createOrder() {
+        const p = buildDriverPayload();
+        const r = await fetch(`${API_BASE}/api/payment/paypal/create-order`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ driver_snapshot: p?.driver }),
+        });
+        if (!r.ok) throw new Error('No se pudo crear la orden PayPal');
+        return (await r.json()).order_id;
+      },
+      async onApprove(data) {
+        document.getElementById('pay-error').style.display = 'none';
+        try {
+          const r = await fetch(`${API_BASE}/api/payment/paypal/capture`, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ order_id: data.orderID }),
+          });
+          if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Captura fallida'); }
+          const d = await r.json();
+          document.getElementById('pay-success').style.display = 'block';
+          await _downloadPDF(d.access_token);
+        } catch (err) {
+          document.getElementById('pay-error').textContent = '❌ ' + err.message;
+          document.getElementById('pay-error').style.display = 'block';
+        }
+      },
+      onError(err) {
+        document.getElementById('pay-error').textContent = '❌ PayPal: ' + err;
+        document.getElementById('pay-error').style.display = 'block';
+      },
+    }).render('#paypal-button-container');
+  };
+  tryMount();
+}
+
+/* ── Descarga del PDF ────────────────────────────────────── */
+async function _downloadPDF(accessToken) {
+  const payload = buildDriverPayload();
+  if (!payload) return;
+  try {
+    const r = await fetch(`${API_BASE}/api/pdf`, {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({ driver: payload.driver, access_token: accessToken }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || `HTTP ${r.status}`); }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    const model = (document.getElementById('spk-search').value||'altavoz').replace(/\s+/g,'_');
+    a.download = `speakerlab_${model}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(closePaymentModal, 1500);
+  } catch (err) {
+    const errEl = document.getElementById('pay-error');
+    errEl.innerHTML = `❌ ${err.message}<br><small>¿Backend corriendo? <code>uvicorn main:app --port 8000</code></small>`;
+    errEl.style.display = 'block';
+  }
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  toggleBoxOpts();
+  togglePortOpts();
+  _probeBackend();
+  loadDB();
+});
+
+/* Sondea el backend al cargar — muestra/oculta el botón scipy según disponibilidad */
+async function _probeBackend() {
+  const btn   = document.getElementById('btn-scipy');
+  const badge = document.getElementById('chart-mode-badge');
+  try {
+    const r = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
+    if (r.ok) {
+      // Backend disponible — botón scipy visible y activo
+      if (btn)   { btn.style.display = ''; btn.title = 'Backend scipy disponible'; }
+      if (badge) { badge.title = 'Conectado al backend'; }
+      _apiConfig = null;   // fuerza recarga de config en el modal de pago
+    } else {
+      _hideScipy();
+    }
+  } catch (_) {
+    _hideScipy();
+  }
+}
+
+function _hideScipy() {
+  const btn   = document.getElementById('btn-scipy');
+  const badge = document.getElementById('chart-mode-badge');
+  if (btn) {
+    btn.textContent = '⚗️ scipy (sin backend)';
+    btn.title       = 'Arranca uvicorn main:app --port 8000 para activar la simulación precisa';
+    btn.style.opacity    = '0.45';
+    btn.style.cursor     = 'default';
+    btn.onclick          = () => {
+      document.getElementById('chart-api-error').innerHTML =
+        `⚗️ El backend Python no está corriendo.<br>
+         <small>Lanza: <code>cd backend && uvicorn main:app --reload --port 8000</code></small>`;
+      document.getElementById('chart-api-error').style.cssText =
+        'display:block;padding:0.8rem 1.2rem;background:rgba(253,203,110,0.25);border-top:1px solid rgba(0,0,0,0.08);font-size:0.85rem;color:var(--ink-muted)';
+    };
+  }
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL DE PAGO
+═══════════════════════════════════════════════════════════ -->
+<div id="payment-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center">
+  <div style="background:var(--paper-light);border:2.5px solid var(--ink);border-radius:8px;width:min(520px,94vw);padding:2rem;position:relative;box-shadow:8px 10px 0 rgba(0,0,0,0.12);max-height:90vh;overflow-y:auto">
+
+    <!-- Cierre -->
+    <button onclick="closePaymentModal()" style="position:absolute;top:0.8rem;right:1rem;font-size:1.5rem;background:none;border:none;cursor:pointer;color:var(--ink-muted)">✕</button>
+
+    <!-- Cabecera -->
+    <h2 style="font-family:'Kalam',cursive;font-size:1.7rem;margin-bottom:0.3rem">Desbloquear PDF Profesional</h2>
+    <p style="color:var(--ink-muted);font-size:0.9rem;margin-bottom:1.4rem">Planos exactos en mm · diagrama isométrico · gráfica scipy · notas de ensamblaje</p>
+
+    <!-- Precio -->
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.4rem;padding:0.8rem 1.2rem;background:var(--green-bg);border:2px dashed var(--green);border-radius:var(--r-sketch)">
+      <span style="font-size:2rem">📄</span>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700" id="modal-price">$10.00</div>
+        <div style="font-size:0.8rem;color:var(--ink-muted)">pago único · descarga inmediata</div>
+      </div>
+    </div>
+
+    <!-- Errores / estado -->
+    <div id="pay-error" style="display:none;background:var(--red-bg);border:1.5px solid var(--red);border-radius:4px;padding:0.7rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:var(--red)"></div>
+    <div id="pay-success" style="display:none;background:var(--green-bg);border:1.5px solid var(--green);border-radius:4px;padding:0.7rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:#00836a;text-align:center">
+      ✅ <strong>Pago confirmado.</strong> Generando tu PDF…
+    </div>
+
+    <!-- Tabs de método de pago -->
+    <div style="display:flex;gap:0.4rem;margin-bottom:1.2rem" id="pay-tabs">
+      <button class="tab-btn active" id="tab-stripe-btn" onclick="switchPayTab('stripe')">💳 Tarjeta</button>
+      <button class="tab-btn" id="tab-paypal-btn" onclick="switchPayTab('paypal')">🅿️ PayPal</button>
+    </div>
+
+    <!-- STRIPE -->
+    <div id="pay-stripe" style="display:block">
+      <div id="stripe-card-element" style="padding:0.7rem;border:2px dashed var(--ink);border-radius:var(--r-sketch-alt);background:var(--paper);min-height:44px"></div>
+      <div id="stripe-card-errors" style="color:var(--red);font-size:0.82rem;margin-top:0.4rem;min-height:18px"></div>
+      <button id="btn-pay-stripe" onclick="submitStripe()" style="width:100%;margin-top:1rem;padding:0.85rem;background:var(--ink);color:var(--paper-light);border:none;border-radius:var(--r-sketch);font-family:'Kalam',cursive;font-size:1.3rem;cursor:pointer;transition:background 0.2s">
+        Pagar y Descargar PDF
+      </button>
+      <p style="font-size:0.75rem;color:var(--ink-muted);text-align:center;margin-top:0.5rem">🔒 Pago seguro vía Stripe · No guardamos datos de tarjeta</p>
+    </div>
+
+    <!-- PAYPAL -->
+    <div id="pay-paypal" style="display:none">
+      <div id="paypal-button-container" style="min-height:50px"></div>
+      <p style="font-size:0.75rem;color:var(--ink-muted);text-align:center;margin-top:0.5rem">Serás redirigido a PayPal para completar el pago</p>
+    </div>
+
+    <!-- DEV MODE indicator -->
+    <div id="dev-mode-badge" style="display:none;text-align:center;margin-top:0.8rem;font-size:0.75rem;background:rgba(253,203,110,0.4);padding:0.3rem;border-radius:3px;color:#7a5500">
+      🧪 Modo test — usa tarjeta Stripe: <code>4242 4242 4242 4242</code>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
+<footer style="text-align: center; padding: 2.5rem 1rem; background: var(--paper-light); border-top: 2.5px solid var(--ink); color: var(--ink-muted); font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 600; margin-top: auto; display: block;">
+  © 2024 - Ingeniería y Diseño Acústico | Ing. Carlos Benavente
+</footer>
+
+</body>
+</html>
