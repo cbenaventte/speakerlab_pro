@@ -11,7 +11,7 @@ stripe==10.8.0
 
 # Simulación acústica
 numpy==1.26.4
-scipy==1.13.1
+scipy==1.11.4
 matplotlib==3.9.1
 
 # Generación de PDF
