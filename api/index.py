@@ -171,7 +171,7 @@ async def frontend_config():
 @app.get("/api/speakers")
 async def get_speakers():
     """Devuelve la base de datos de altavoces mapeada desde el Excel."""
-    db_path = Path(__file__).parent.parent / "frontend" / "speakers_db.json"
+    db_path = Path(__file__).parent / "speakers_db.json"
     if db_path.exists():
         return json.loads(db_path.read_text())
     return []
