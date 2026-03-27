@@ -1884,7 +1884,7 @@ function renderCuts(r) {
 /* ═══════════════════════════════════════════════════════════
    INTEGRACIÓN SCIPY — llamada al backend FastAPI
    ════════════════════════════════════════════════════════ */
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';   // Elude a localhost en desarrollo, relativo en producción (Vercel)
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://speakerlab-backend.onrender.com';   // Elude a localhost en desarrollo, relativo en producción (Vercel)
 let  sciPyData = null;                       // caché del último resultado de la API
 
 /* Construye el payload a partir del formulario actual */
