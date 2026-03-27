@@ -6,6 +6,8 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 python-multipart==0.0.9
 pydantic==2.8.0
+httpx==0.28.1
+stripe==10.8.0
 
 # Simulación acústica
 numpy==1.26.4
@@ -14,10 +16,6 @@ matplotlib==3.9.1
 
 # Generación de PDF
 reportlab==4.2.2
-
-# Pago (descomentar según plataforma)
-# stripe==10.8.0
-# paypalrestsdk==1.13.3
 
 # Producción (opcional)
 # gunicorn==22.0.0
