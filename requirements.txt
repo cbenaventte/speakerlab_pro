@@ -1,0 +1,24 @@
+# SpeakerLab Pro — Backend Dependencies
+# Instalar con: pip install -r requirements.txt
+
+# API
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+pydantic==2.8.0
+
+# Simulación acústica
+numpy==1.26.4
+scipy==1.13.1
+matplotlib==3.9.1
+
+# Generación de PDF
+reportlab==4.2.2
+
+# Pago (descomentar según plataforma)
+# stripe==10.8.0
+# paypalrestsdk==1.13.3
+
+# Producción (opcional)
+# gunicorn==22.0.0
+# redis==5.0.8          # para guardar tokens de pago
