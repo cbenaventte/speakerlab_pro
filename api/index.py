@@ -16,9 +16,9 @@ from pydantic import BaseModel, Field
 import httpx
 
 sys.path.insert(0, str(Path(__file__).parent))  # acoustic_sim y pdf_generator están aquí
-from .acoustic_sim import simulate
-from .alignments import AlignmentEngine
-from .pdf_generator import generate_pdf
+from acoustic_sim import simulate
+from alignments import AlignmentEngine
+from pdf_generator import generate_pdf
 
 logger = logging.getLogger("speakerlab")
 logging.basicConfig(level=logging.INFO)
