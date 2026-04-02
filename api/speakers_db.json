@@ -110,13 +110,13 @@
   {
     "manufacturer": "Faital Pro",
     "model_name": "15PR400",
-    "fs": 43.0,
-    "vas": 85.0,
-    "qts": 0.28,
-    "qes": 0.3,
-    "qms": 4.9,
-    "xmax": 8.0,
-    "sd": 880.0,
+    "fs": 37.0,
+    "vas": 210.0,
+    "qts": 0.33,
+    "qes": 0.36,
+    "qms": 4.30,
+    "xmax": 5.5,
+    "sd": 855.0,
     "spl": 99.0
   },
   {
