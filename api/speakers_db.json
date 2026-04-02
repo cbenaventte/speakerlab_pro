@@ -1,15 +1,15 @@
 [
   {
     "manufacturer": "Dayton Audio",
-    "model_name": "RSS315HO-4",
-    "fs": 18.1,
-    "vas": 213.6,
-    "qts": 0.269,
-    "qes": 0.284,
-    "qms": 4.82,
-    "xmax": 24.0,
-    "sd": 855.0,
-    "spl": 86.3
+    "model_name": "RS180-8",
+    "fs": 38.5,
+    "vas": 21,
+    "qts": 0.38,
+    "qes": 0.45,
+    "qms": 2.5,
+    "xmax": 7,
+    "sd": 132,
+    "spl": 87
   },
   {
     "manufacturer": "Dayton Audio",
