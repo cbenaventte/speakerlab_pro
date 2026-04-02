@@ -2,13 +2,13 @@
   {
     "manufacturer": "Dayton Audio",
     "model_name": "RS180-8",
-    "fs": 38.5,
-    "vas": 21,
-    "qts": 0.38,
-    "qes": 0.45,
-    "qms": 2.5,
-    "xmax": 7,
-    "sd": 132,
+    "fs": 35.7,
+    "vas": 24.4,
+    "qts": 0.31,
+    "qes": 0.42,
+    "qms": 1.22,
+    "xmax": 6,
+    "sd": 124.7,
     "spl": 87
   },
   {
