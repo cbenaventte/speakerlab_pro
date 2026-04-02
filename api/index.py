@@ -111,7 +111,7 @@ class DriverParams(BaseModel):
     sd:           Optional[float] = None
     re:           Optional[float] = None
     spl:          Optional[float] = None
-    inches:       Optional[int]   = 10
+    inches:       Optional[float]   = 10
     model_name:   Optional[str]   = "Altavoz"
     box_type:     str             = "reflex"
     alignment:    Optional[str]   = "QB3"
