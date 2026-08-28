@@ -1,5 +1,7 @@
 import asyncio
+import json
 import unittest
+from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -64,6 +66,17 @@ class OperationalGuardTests(unittest.TestCase):
         response = asyncio.run(api.operational_guards(request_for(), next_handler))
         self.assertEqual(response.status_code, 429)
         self.assertEqual(response.headers["retry-after"], "60")
+
+    def test_vercel_static_routes_have_security_headers(self):
+        config = json.loads((Path(__file__).resolve().parents[1] / "vercel.json").read_text())
+        headers = {
+            item["key"].lower(): item["value"]
+            for rule in config["headers"]
+            for item in rule["headers"]
+        }
+        self.assertEqual(headers["x-content-type-options"], "nosniff")
+        self.assertEqual(headers["x-frame-options"], "DENY")
+        self.assertIn("frame-ancestors 'none'", headers["content-security-policy"])
 
 
 if __name__ == "__main__":
