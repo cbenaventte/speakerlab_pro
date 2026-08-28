@@ -39,6 +39,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
+from acoustic_sim import simulate
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
@@ -136,22 +138,22 @@ def validate_input(d: dict) -> dict:
 # ══════════════════════════════════════════════════════════════
 ALIGNMENT_TABLES = {
     "QB3": [
-        (0.20, 8.80, 1.87, 1.55), (0.25, 6.13, 1.67, 1.45),
-        (0.30, 4.42, 1.50, 1.36), (0.35, 3.22, 1.35, 1.27),
-        (0.40, 2.35, 1.22, 1.19), (0.45, 1.70, 1.10, 1.10),
-        (0.50, 1.20, 1.00, 1.00),
+        (0.20, 3.42, 1.87, 1.55), (0.25, 2.71, 1.67, 1.45),
+        (0.30, 2.17, 1.50, 1.36), (0.35, 1.74, 1.35, 1.27),
+        (0.40, 1.38, 1.22, 1.19), (0.45, 1.07, 1.10, 1.10),
+        (0.50, 0.81, 1.00, 1.00),
     ],
     "SBB4": [
-        (0.20, 16.32, 2.09, 1.00), (0.25, 10.04, 1.85, 1.00),
-        (0.30, 6.57, 1.64, 1.00),  (0.35, 4.50, 1.46, 1.00),
-        (0.40, 3.18, 1.30, 1.00),  (0.45, 2.29, 1.16, 1.00),
-        (0.50, 1.67, 1.04, 1.00),
+        (0.20, 4.60, 2.09, 1.00), (0.25, 2.87, 1.85, 1.00),
+        (0.30, 1.83, 1.64, 1.00), (0.35, 1.18, 1.46, 1.00),
+        (0.40, 0.76, 1.30, 1.00), (0.45, 0.48, 1.16, 1.00),
+        (0.50, 0.29, 1.04, 1.00),
     ],
     "B4": [
-        (0.20, 6.97, 1.56, 1.56), (0.25, 4.47, 1.41, 1.41),
-        (0.30, 3.05, 1.28, 1.28), (0.35, 2.17, 1.16, 1.16),
-        (0.40, 1.58, 1.07, 1.07), (0.45, 1.18, 0.98, 0.98),
-        (0.50, 0.89, 0.91, 0.91),
+        (0.20, 2.98, 1.56, 1.56), (0.25, 2.05, 1.41, 1.41),
+        (0.30, 1.41, 1.28, 1.28), (0.35, 0.96, 1.16, 1.16),
+        (0.40, 0.64, 1.07, 1.07), (0.45, 0.41, 0.98, 0.98),
+        (0.50, 0.24, 0.91, 0.91),
     ],
 }
 
@@ -167,6 +169,7 @@ def interpolate_alignment(table_name: str, qts: float) -> Tuple[float, float, fl
     return rows[-1][1], rows[-1][2], rows[-1][3]
 
 def calc_acoustics(d: dict) -> dict:
+    sim = simulate(d)
     fs    = d["fs"]
     vas   = d["vas"]
     qts   = d["qts"]
@@ -192,10 +195,23 @@ def calc_acoustics(d: dict) -> dict:
     EBP = fs / qes if qes else None
 
     if box == "reflex":
-        alpha, h, f3_ratio = interpolate_alignment(align, qts)
-        Vb = vas / alpha
-        Fb = h * fs
-        F3 = f3_ratio * fs
+        if align == "B4":
+            qb = 7.0
+            alpha = 1.4142 - (1.0 / (qts * qb))
+            if alpha > 0:
+                Vb = vas / alpha
+                Fb = fs
+                F3 = fs
+            else:
+                alpha, h, f3_ratio = interpolate_alignment("QB3", qts)
+                Vb = vas / alpha
+                Fb = h * fs
+                F3 = f3_ratio * fs
+        else:
+            alpha, h, f3_ratio = interpolate_alignment(align, qts)
+            Vb = vas / alpha
+            Fb = h * fs
+            F3 = f3_ratio * fs
 
         if port_type == "circular":
             Sp   = math.pi * (port_diam / 2.0) ** 2
@@ -235,13 +251,14 @@ def calc_acoustics(d: dict) -> dict:
         Fpipe = 34400.0 / (2.0 * L) if L > 0 else None
 
         r.update({
-            "alignment": align, "Vb": Vb, "Fb": Fb, "F3": F3,
+            "alignment": align, "Vb": Vb, "Fb": sim.get("fb", Fb), "F3": sim.get("f3_from_curve", F3),
             "Sp": Sp, "SpTotal": SpTotal, "d_eq": d_eq, "L": L,
             "portVel": portVel, "Vport": Vport, "Vb_bruto": Vb_bruto,
             "Vd": Vd, "Vdriver": Vdriver, "SPLmax": SPLmax,
             "EBP": EBP, "N": N, "Fpipe": Fpipe,
             "port_type": port_type, "port_diam": port_diam,
             "slot_w": slot_w, "slot_h": slot_h,
+            "sim_data": sim,
         })
     else:
         ratio_sq = (qtc_t / qts) ** 2 - 1
@@ -254,13 +271,14 @@ def calc_acoustics(d: dict) -> dict:
 
         r.update({
             "qtc_target": qtc_t, "Qtc_real": Qtc_real,
-            "Fc": Fc, "Vb": Vb, "F3": F3,
+            "Fc": Fc, "Vb": Vb, "F3": sim.get("f3_from_curve", F3),
             "Vb_bruto": Vb_bruto, "Vdriver": Vdriver, "Vd": Vd, "EBP": EBP,
+            "sim_data": sim,
         })
 
-    # Dimensiones (proporciones áureas φ y √φ)
-    RATIO_H = 1.618
-    RATIO_W = 1.272
+    # Dimensiones (proporciones áureas acústicas)
+    RATIO_H = 1.59
+    RATIO_W = 1.26
     Vb_bruto_cm3 = r["Vb_bruto"] * 1000.0
     D_int = (Vb_bruto_cm3 / (RATIO_H * RATIO_W)) ** (1.0 / 3.0)
     W_int = RATIO_W * D_int
@@ -297,33 +315,14 @@ def _calc_pieces(W_ext, H_ext, D_ext, T, r) -> List[dict]:
 # ══════════════════════════════════════════════════════════════
 #  2. GRÁFICA DE RESPUESTA EN FRECUENCIA (vectorizada)
 # ══════════════════════════════════════════════════════════════
-def _calc_response_reflex(freqs, F3, Fb):
-    ratio = F3 / freqs
-    db = -10.0 * np.log10(1.0 + ratio ** 8)
-    below_fb = freqs < Fb
-    if np.any(below_fb):
-        db[below_fb] -= 6.0 * (Fb / freqs[below_fb] - 1.0) ** 1.5
-    return np.clip(db, -40, 10)
-
-def _calc_response_sealed(freqs, Fc, Qtc):
-    fn = freqs / Fc
-    fn2 = fn ** 2
-    denom = (1.0 - fn2) ** 2 + fn2 / (Qtc ** 2)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        h_sq = np.where(denom > 1e-20, fn ** 4 / denom, 1e-20)
-    db = 10.0 * np.log10(np.maximum(h_sq, 1e-20))
-    return np.clip(db, -40, 10)
-
 def make_freq_chart(r, width_px=900, height_px=320):
     fig, ax = plt.subplots(figsize=(width_px / 100, height_px / 100), dpi=120)
     fig.patch.set_facecolor("#12151c")
     ax.set_facecolor("#12151c")
-    freqs = np.geomspace(10, 800, 1500)
 
-    if r["box_type"] == "reflex":
-        db_arr = _calc_response_reflex(freqs, r["F3"], r["Fb"])
-    else:
-        db_arr = _calc_response_sealed(freqs, r["Fc"], r["Qtc_real"])
+    sim = r["sim_data"]
+    freqs = sim["freqs"]
+    db_arr = np.clip(sim["spl"] - sim["sens_band"], -40, 10)
 
     ax.fill_between(freqs, db_arr, -40, color="#00e5a0", alpha=0.10)
     ax.plot(freqs, db_arr, color="#00e5a0", linewidth=2.2, zorder=5)
@@ -680,7 +679,7 @@ def section_cut_sheet(r, d, S):
     mat = d.get("material_name", f"MDF {r['T_mm']}mm")
     elems.append(Paragraph(
         f"Material: <b>{mat}</b>  ·  Grosor T = {r['T_mm']} mm  ·  "
-        f"Proporciones áureas H:W:D = 1.618:1.272:1.000", S["body"]))
+        f"Proporciones acústicas H:W:D = 1.59:1.26:1.00", S["body"]))
     elems.append(Spacer(1, 3*mm))
 
     pieces = r["pieces"]
@@ -911,7 +910,8 @@ def generate_pdf(input_data: dict, output_path: str = "plano_caja.pdf"):
 EXAMPLE_DAYTON = {
     "model_name": "Dayton Audio RSS315HO-4",
     "fs": 18.1, "vas": 213.6, "qts": 0.269, "qes": 0.284, "qms": 4.82,
-    "xmax": 24, "sd": 855, "inches": 12, "spl": 86.3,
+    "xmax": 24, "sd": 855, "inches": 12, "spl": 86.3, "re": 4.0,
+    "mms": 94.7, "bl": 11.3,
     "box_type": "reflex", "alignment": "SBB4",
     "material_mm": 18, "material_name": "MDF 18mm",
     "port_type": "circular", "port_diam_cm": 10.0, "num_ports": 1, "k_factor": 0.732,
@@ -920,7 +920,8 @@ EXAMPLE_DAYTON = {
 EXAMPLE_TANG_BAND = {
     "model_name": "Tang Band W6-1139SI",
     "fs": 52, "vas": 8.3, "qts": 0.41, "qes": 0.46,
-    "xmax": 5.5, "sd": 133, "inches": 6, "spl": 88,
+    "xmax": 5.5, "sd": 133, "inches": 6, "spl": 88, "re": 6.2,
+    "mms": 8.5, "bl": 5.8,
     "box_type": "reflex", "alignment": "B4",
     "material_mm": 18, "material_name": "MDF 18mm",
     "port_type": "circular", "port_diam_cm": 5.0, "num_ports": 1, "k_factor": 0.732,

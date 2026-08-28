@@ -21,12 +21,11 @@ Uso rápido:
 
 import numpy as np
 from scipy import signal
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from matplotlib.ticker import LogFormatter, MultipleLocator
 import warnings
+try:
+    from .alignments import AlignmentEngine
+except ImportError:  # Ejecución directa: python api/acoustic_sim.py
+    from alignments import AlignmentEngine
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
@@ -40,29 +39,6 @@ PI      = np.pi
 
 
 # ══════════════════════════════════════════════════════════════
-#  TABLAS DE ALINEACIÓN (Thiele 1971 / Small 1973)
-# ══════════════════════════════════════════════════════════════
-_ALIGN_TABLES = {
-    "QB3":  [(.20,8.80,1.87,1.55),(.25,6.13,1.67,1.45),(.30,4.42,1.50,1.36),
-             (.35,3.22,1.35,1.27),(.40,2.35,1.22,1.19),(.45,1.70,1.10,1.10),(.50,1.20,1.00,1.00)],
-    "SBB4": [(.20,16.32,2.09,1.00),(.25,10.04,1.85,1.00),(.30,6.57,1.64,1.00),
-             (.35,4.50,1.46,1.00),(.40,3.18,1.30,1.00),(.45,2.29,1.16,1.00),(.50,1.67,1.04,1.00)],
-    "B4":   [(.20,6.97,1.56,1.56),(.25,4.47,1.41,1.41),(.30,3.05,1.28,1.28),
-             (.35,2.17,1.16,1.16),(.40,1.58,1.07,1.07),(.45,1.18,0.98,0.98),(.50,0.89,0.91,0.91)],
-}
-
-def _interp_align(table_name, qts):
-    qts = np.clip(qts, 0.2, 0.5)
-    rows = _ALIGN_TABLES[table_name]
-    for i in range(len(rows)-1):
-        q0,a0,h0,f0 = rows[i]; q1,a1,h1,f1 = rows[i+1]
-        if q0 <= qts <= q1:
-            t = (qts-q0)/(q1-q0)
-            return a0+t*(a1-a0), h0+t*(h1-h0), f0+t*(f1-f0)
-    return rows[-1][1:]
-
-
-# ══════════════════════════════════════════════════════════════
 #  DERIVACIÓN DE PARÁMETROS FÍSICOS DESDE T/S
 # ══════════════════════════════════════════════════════════════
 
@@ -70,40 +46,42 @@ def ts_to_physical(d: dict) -> dict:
     """
     Convierte parámetros Thiele/Small a parámetros físicos del circuito
     equivalente (impedancias mecánicas y acústicas).
-
-    Parámetros de entrada necesarios:
-        fs   : frecuencia de resonancia libre (Hz)
-        vas  : volumen equivalente de aire (L)
-        qts  : factor de calidad total
-        qes  : factor de calidad eléctrico
-        qms  : factor de calidad mecánico
-        sd   : área efectiva del cono (cm²)
-        re   : resistencia de la bobina (Ω) — default 6Ω
-        bl   : factor de fuerza (T·m) — estimado si no se provee
-        mms  : masa del cono (g) — estimada si no se provee
+    Prioriza Mms y Bl del fabricante si están disponibles.
     """
     fs   = float(d["fs"])
     vas  = float(d["vas"]) * 1e-3          # litros → m³
     qts  = float(d["qts"])
     qes  = float(d.get("qes", qts * 1.1))
-    qms  = float(d.get("qms", qts / (1/qts - 1/qes + 1e-9) if qes != qts else 10))
     sd   = float(d.get("sd", 530)) * 1e-4  # cm² → m²
     re   = float(d.get("re", 6.0))         # Ω
     xmax = float(d.get("xmax", 10)) * 1e-3 # mm → m
 
-    ws = 2 * PI * fs
+    ws  = 2 * PI * fs
+    cas = vas / (RHO * C_AIR**2)           # compliance acústica (m^5/N)
 
-    # Masa móvil Mms (kg) — desde Vas y Sd
-    # Cas = Vas / (rho * c²)  →  Mms = 1 / (ws² * Cas * Sd²)  simplificado
-    cas = vas / (RHO * C_AIR**2)           # m^5/N (compliance acústica)
-    cms = cas / sd**2                       # m/N  (compliance mecánica)
-    mms = 1.0 / (ws**2 * cms)              # kg
+    # ── Mms: priorizar dato del fabricante ──
+    if "mms" in d and d["mms"] is not None:
+        mms = float(d["mms"]) * 1e-3       # g → kg
+        cms = 1.0 / (ws**2 * mms)          # derivar Cms de Mms
+    else:
+        cms = cas / sd**2                   # derivar de Vas/Sd
+        mms = 1.0 / (ws**2 * cms)          # derivar Mms de Cms
 
-    # Factor de fuerza Bl (T·m)
-    # Bl = Re * Mms * ws / Qes
-    bl  = np.sqrt(re * mms * ws / qes)
+    # ── Bl: priorizar dato del fabricante ──
+    if "bl" in d and d["bl"] is not None:
+        bl = float(d["bl"])
+    else:
+        # Bl = sqrt(ωs · Mms · Re / Qes)
+        bl = np.sqrt(re * mms * ws / qes)
 
-    # Resistencia mecánica Rms (N·s/m)
+    # ── Qms: priorizar dato del fabricante ──
+    if "qms" in d and d["qms"] is not None:
+        qms = float(d["qms"])
+    elif qes > qts:
+        qms = (qts * qes) / (qes - qts)
+    else:
+        qms = 10.0
+
     rms = mms * ws / qms
 
     return {
@@ -111,8 +89,7 @@ def ts_to_physical(d: dict) -> dict:
         "vas": vas, "sd": sd, "re": re, "bl": bl,
         "mms": mms, "cms": cms, "rms": rms,
         "qts": qts, "qes": qes, "qms": qms,
-        "xmax": xmax,
-        "cas": cas,
+        "xmax": xmax, "cas": cas,
     }
 
 
@@ -133,6 +110,11 @@ def tf_closed(p: dict, vb_liters: float = None, qtc_target: float = None):
     fs   = p["fs"]
 
     if qtc_target is not None:
+        if qtc_target <= qts:
+            raise ValueError(
+                f"Qtc ({qtc_target}) debe ser > Qts ({qts}). "
+                f"Mínimo posible: {qts:.3f} (Vb→∞)"
+            )
         vb_liters = round(float(vas * 1e3 / ((qtc_target / qts)**2 - 1)), 1)
         vb = vb_liters * 1e-3
     elif vb_liters is not None:
@@ -169,19 +151,33 @@ def tf_closed(p: dict, vb_liters: float = None, qtc_target: float = None):
 #    Qb = factor de calidad del tubo (usualmente 7–15, default 10)
 # ══════════════════════════════════════════════════════════════
 
-def get_small_coefficients(p: dict, vb_liters: float, fb_hz: float, qb: float = 10.0):
-    wa = 2 * PI * p["fs"]
-    wb = 2 * PI * fb_hz
-    qts = p["qts"]
-    alpha = p["vas"] / (vb_liters * 1e-3)
+def get_small_coefficients(p: dict, vb_liters: float, fb_hz: float, qb: float = 7.0):
+    """
+    Coeficientes del polinomio de 4º orden de Small (1973).
     
+    Qb típico: 5-10 para puertos circulares bien diseñados.
+    Default 7.0 produce B4 sin pico con tablas estándar.
+    
+    Nota: p["vas"] debe estar en m³ (convertido en ts_to_physical).
+          vb_liters se recibe en litros y se convierte aquí.
+    """
+    wa    = 2 * PI * p["fs"]
+    wb    = 2 * PI * fb_hz
+    qts   = p["qts"]
+
+    # alpha = Vas/Vb (adimensional)
+    # p["vas"] está en m³, vb en litros → convertir a m³
+    vb_m3 = vb_liters * 1e-3
+    alpha  = p["vas"] / vb_m3
+
     a3 = wb/qb + wa/qts
-    a2 = wb**2 + wa**2 * (1 + alpha) + (wa * wb)/(qts * qb)
-    a1 = (wa * wb**2)/qts + (wa**2 * wb)/qb
+    a2 = wb**2 + wa**2 * (1 + alpha) + (wa * wb) / (qts * qb)
+    a1 = (wa * wb**2) / qts + (wa**2 * wb) / qb
     a0 = wa**2 * wb**2
+
     return wa, wb, a3, a2, a1, a0
 
-def tf_reflex(p: dict, vb_liters: float, fb_hz: float, qb: float = 10.0):
+def tf_reflex(p: dict, vb_liters: float, fb_hz: float, qb: float = 7.0):
     """
     Función de transferencia 4º orden para caja bass-reflex.
     Devuelve scipy.signal.TransferFunction normalizada.
@@ -219,7 +215,7 @@ def cone_excursion(p: dict, freqs: np.ndarray, vb_liters: float,
     x_dc = (eg_volts * p["bl"] * p["cms"]) / p["re"]
 
     if box_type == "reflex" and fb_hz:
-        qb = 10.0
+        qb = 7.0
         wa_c, wb, a3, a2, a1, a0 = get_small_coefficients(p, vb_liters, fb_hz, qb)
         D = s**4 + a3*s**3 + a2*s**2 + a1*s + a0
         # Hx para reflex es el filtro de 2º orden sobre el cajón de 4º
@@ -249,9 +245,8 @@ def port_velocity(p: dict, freqs: np.ndarray, sp_cm2: float,
     w = 2 * PI * freqs
     s = 1j * w
     x_dc = (eg_volts * p["bl"] * p["cms"]) / p["re"]
-    qb = 10.0
     
-    wa, wb, a3, a2, a1, a0 = get_small_coefficients(p, vb_liters, fb_hz, qb)
+    wa, wb, a3, a2, a1, a0 = get_small_coefficients(p, vb_liters, fb_hz)
     D = s**4 + a3*s**3 + a2*s**2 + a1*s + a0
     
     sp_m2_val = sp_cm2 * 1e-4
@@ -271,15 +266,19 @@ def impedance(p: dict, freqs: np.ndarray, box_type: str,
               vb_liters: float, fb_hz: float = None) -> np.ndarray:
     """
     Impedancia de entrada del altavoz montado en la caja.
-    Pico en Fs para sellada; dos picos alrededor de Fb para reflex.
+    Modelo de circuito equivalente mecánico completo.
     """
-    re   = p["re"]
-    bl   = p["bl"]
-    mms  = p["mms"]
-    rms  = p["rms"]
-    cms  = p["cms"]
-    sd   = p["sd"]
-    le   = p.get("le", 0.5e-3)     # inductancia de la bobina (H) — default 0.5 mH
+    re  = p["re"]
+    bl  = p["bl"]
+    mms = p["mms"]
+    rms = p["rms"]
+    cms = p["cms"]
+    sd  = p["sd"]
+    le  = p.get("le", 0.5e-3)     # inductancia bobina (H) — default 0.5 mH
+
+    vb  = vb_liters * 1e-3
+    cab = vb / (RHO * C_AIR**2)    # compliance acústica de la caja
+    cmb = cab / sd**2               # compliance mecánica equivalente
 
     z = np.zeros(len(freqs), dtype=complex)
 
@@ -287,25 +286,70 @@ def impedance(p: dict, freqs: np.ndarray, box_type: str,
         w = 2 * PI * f
         s = 1j * w
 
-        # Impedancia mecánica
-        zmec = rms + s * mms + 1.0 / (s * cms)
+        # Impedancia mecánica del driver libre
+        z_driver = rms + s * mms + 1.0 / (s * cms)
 
         if box_type == "reflex" and fb_hz:
+            # Masa del puerto derivada de fb y compliance de la caja
             wb  = 2 * PI * fb_hz
-            vb  = vb_liters * 1e-3
-            cab = vb / (RHO * C_AIR**2)
-            # Puerto (Helmholtz) en paralelo con la compliance de la caja
-            # Simplificado: efecto como admitancia en paralelo con Zmec
-            z_helmholtz = 1j * w * RHO * C_AIR**2 / (vb * sd**2) / w**2
-            zmec_total  = zmec + bl**2 / (sd**2) * (1j * w)
-        else:
-            zmec_total = zmec
+            map_ac = 1.0 / (wb**2 * cab)    # masa acústica del puerto
+            mmp = map_ac * sd**2              # masa mecánica equivalente
+            qb  = 7.0
+            rmp = wb * mmp / qb               # pérdidas del puerto
 
-        # Impedancia vista desde los bornes: Ze = Re + jωLe + Bl²/Zmec
-        ze = re + s * le + bl**2 / zmec_total
+            # Puerto: serie Mmp + Rmp
+            z_port = s * mmp + rmp
+
+            # Caja: compliance 1/(s·Cmb)
+            z_box = 1.0 / (s * cmb)
+
+            # Puerto en paralelo con caja
+            z_load = (z_port * z_box) / (z_port + z_box)
+
+            # Total mecánico
+            z_mec = z_driver + z_load
+
+        else:  # Sellada
+            # La caja añade rigidez
+            z_box = 1.0 / (s * cmb)
+            z_mec = z_driver + z_box
+
+        # Impedancia eléctrica: Ze = Re + sLe + Bl²/Zmec
+        ze = re + s * le + bl**2 / z_mec
         z[i] = ze
 
     return np.abs(z)
+
+
+# ══════════════════════════════════════════════════════════════
+#  ALINEACIONES EXACTAS (ANALÍTICAS)
+# ══════════════════════════════════════════════════════════════
+
+def _b4_exact_params(qts: float, qb: float = 7.0):
+    """
+    B4 (Butterworth 4º orden) con pérdidas, según Small (1973).
+    
+    En B4 la simetría a1=a3=2.6131 exige h=1.0 (Fb=Fs).
+    
+    El Qts requerido exacto para B4 pura es:
+        qts_required = 1 / (2.6131 - 1/qb)
+    
+    Si el driver tiene Qts diferente, no puede hacer B4 pura.
+    alpha se calcula igual pero la respuesta se aproxima a B4.
+    
+    Alpha: de a2=3.4142 con h=1:
+        alpha = 3.4142 - 1 - 1/h² - 1/(qts*qb*h²)
+              = 1.4142 - 1/(qts*qb)
+    """
+    h = 1.0
+    alpha = 1.4142 - (1.0 / (qts * qb))
+    
+    if alpha <= 0:
+        # B4 físicamente imposible para este Qts/Qb
+        # Qts demasiado bajo → recomendar QB3
+        return None, h
+    
+    return alpha, h
 
 
 # ══════════════════════════════════════════════════════════════
@@ -340,10 +384,14 @@ def simulate(driver: dict, freqs: np.ndarray = None,
     # ── REFLEX ──────────────────────────────────────────────
     if box == "reflex":
         align = driver.get("alignment", "QB3")
-        alpha, h_fb, f3_ratio = _interp_align(align, p["qts"])
-        vb_liters = round(float(p["vas"] * 1e3 / alpha), 1)     # litros
-        fb        = round(float(h_fb * p["fs"]), 1)
-        f3        = f3_ratio * p["fs"]
+        target = AlignmentEngine(
+            p["fs"], p["qts"], p["vas"] * 1e3
+        ).get_all_alignments().get(align)
+        if not target or target["vb"] <= 0:
+            raise ValueError(f"Alineamiento no soportado: {align}")
+        vb_liters = target["vb"]
+        fb = target["fb"]
+        f3 = target["f3"]
 
         # Puerto
         port_type = driver.get("port_type", "circular")
@@ -444,19 +492,42 @@ def simulate(driver: dict, freqs: np.ndarray = None,
     spl_arr = result["spl"]
     f_arr   = freqs
 
-    # Sensibilidad media en banda 100–1000 Hz
-    mask_band = (f_arr >= 100) & (f_arr <= 1000)
+    # Sensibilidad de referencia: banda de paso plana (200–500 Hz)
+    # Usar la zona alta evita incluir el roll-off bajo que sesga el
+    # promedio y desplaza F3 respecto a Fb en alineaciones B4.
+    mask_band = (f_arr >= 200) & (f_arr <= 500)
     sens_band = float(np.mean(spl_arr[mask_band]))
 
-    # F3 real desde la curva
+    # F3 real desde la curva — buscar el cruce −3 dB más cercano
+    # a la banda de paso, recorriendo de alta a baja frecuencia.
     target_db = sens_band - 3.0
-    below = np.where(spl_arr < target_db)[0]
-    f3_from_curve = float(f_arr[below[-1]]) if len(below) > 0 else result["f3"]
+    diff_sign = np.diff(np.sign(spl_arr - target_db))
+    crossings = np.where(diff_sign)[0]
+    if len(crossings) > 0:
+        # Tomar el cruce más alto en frecuencia (el más cercano a la
+        # banda de paso) que esté por debajo de la zona plana (~200 Hz).
+        valid = crossings[crossings < np.searchsorted(f_arr, 200)]
+        idx = valid[-1] if len(valid) > 0 else crossings[0]
+        f_lo, f_hi = f_arr[idx], f_arr[idx + 1]
+        s_lo, s_hi = spl_arr[idx], spl_arr[idx + 1]
+        frac = (target_db - s_lo) / (s_hi - s_lo + 1e-30)
+        f3_from_curve = float(f_lo + frac * (f_hi - f_lo))
+    else:
+        f3_from_curve = result["f3"]
 
     # F6 y F10
     for label, delta in [("f6", 6), ("f10", 10)]:
-        below_d = np.where(spl_arr < sens_band - delta)[0]
-        result[label] = float(f_arr[below_d[-1]]) if len(below_d) > 0 else None
+        target_dx = sens_band - delta
+        cross_dx = np.where(np.diff(np.sign(spl_arr - target_dx)))[0]
+        if len(cross_dx) > 0:
+            valid_dx = cross_dx[cross_dx < np.searchsorted(f_arr, 200)]
+            ix = valid_dx[-1] if len(valid_dx) > 0 else cross_dx[0]
+            fl, fh = f_arr[ix], f_arr[ix + 1]
+            sl, sh = spl_arr[ix], spl_arr[ix + 1]
+            fr = (target_dx - sl) / (sh - sl + 1e-30)
+            result[label] = float(fl + fr * (fh - fl))
+        else:
+            result[label] = None
 
     # Xmax excedido
     xmax_mm   = p["xmax"] * 1e3
@@ -489,6 +560,11 @@ def plot_results(r: dict, output_path: str = "simulation.png",
         3. Velocidad en el puerto / Impedancia (Ω)
         4. Retardo de grupo (ms)
     """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.gridspec as gridspec
+
     # ── Paleta ────────────────────────────────────────────
     BG      = "#0a0b0e"
     SURF    = "#12151c"
@@ -645,6 +721,10 @@ def compare_alignments(driver_base: dict, output_path: str = "compare_alignments
     Superpone SPL de QB3, SBB4, B4 y Sellada (0.707) en una sola gráfica.
     Ideal para elegir la alineación óptima.
     """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     BG = "#0a0b0e"; SURF = "#12151c"; BORDER = "#252a38"; MUTED = "#5a6480"; TEXT = "#e8ecf5"
     colors_map = {"QB3":"#00e5a0", "SBB4":"#0099ff", "B4":"#ff6b35", "Closed":"#ffc94d"}
     freqs = np.logspace(np.log10(10), np.log10(1000), 600)
@@ -659,7 +739,6 @@ def compare_alignments(driver_base: dict, output_path: str = "compare_alignments
     for align in ["QB3", "SBB4", "B4"]:
         d = {**driver_base, "box_type": "reflex", "alignment": align}
         r = simulate(d, freqs)
-        offset = 0
         if align == "QB3": # initialize to first execution logically
             reference_spl = float(r["sens_band"])
         spl_plot = r["spl"] - r["sens_band"] + reference_spl
@@ -703,6 +782,7 @@ DAYTON_RSS315HO = {
     "model_name":   "Dayton Audio RSS315HO-4",
     "fs": 18.1, "vas": 213.6, "qts": 0.269, "qes": 0.284, "qms": 4.82,
     "xmax": 24, "sd": 855, "spl": 86.3, "re": 4.0,
+    "mms": 94.7, "bl": 11.3,
     "box_type": "reflex", "alignment": "SBB4",
     "port_diam_cm": 10.0, "num_ports": 1, "k_factor": 0.732,
 }
@@ -710,7 +790,8 @@ DAYTON_RSS315HO = {
 TANG_BAND_W6 = {
     "model_name":   "Tang Band W6-1139SI",
     "fs": 52, "vas": 8.3, "qts": 0.41, "qes": 0.46, "qms": 3.8,
-    "xmax": 5.5, "sd": 133, "spl": 88, "re": 8.0,
+    "xmax": 5.5, "sd": 133, "spl": 88, "re": 6.2,
+    "mms": 8.5, "bl": 5.8,
     "box_type": "reflex", "alignment": "B4",
     "port_diam_cm": 5.0, "num_ports": 1, "k_factor": 0.732,
 }
@@ -718,7 +799,8 @@ TANG_BAND_W6 = {
 PEERLESS_XXLS = {
     "model_name":   "Peerless XXLS 830500",
     "fs": 19, "vas": 155, "qts": 0.26, "qes": 0.27, "qms": 6.2,
-    "xmax": 17, "sd": 855, "spl": 87, "re": 8.0,
+    "xmax": 17, "sd": 855, "spl": 87, "re": 5.6,
+    "mms": 85.0, "bl": 11.6,
     "box_type": "reflex", "alignment": "SBB4",
     "port_diam_cm": 9.0, "num_ports": 1, "k_factor": 0.732,
 }

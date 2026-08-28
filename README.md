@@ -1,66 +1,87 @@
 # SpeakerLab Pro
 
-Calculadora de cajas acústicas DIY con enciclopedia integrada y generación de PDF profesional.
+Calculadora libre de cajas acústicas DIY con enciclopedia, simulación científica y generación gratuita de planos PDF.
 
-```
+## Estructura
+
+```text
 speakerlab-pro/
-├── frontend/
-│   └── index.html          ← App completa (Calculadora + Enciclopedia + DB)
-├── backend/
-│   ├── main.py             ← API FastAPI (simulación + pagos + PDF)
-│   ├── acoustic_sim.py     ← Motor scipy — modelo Small 1973
-│   ├── pdf_generator.py    ← ReportLab — planos profesionales
-│   ├── requirements.txt
-│   └── .env.example        ← Variables de entorno (copiar a .env)
-├── samples/                ← Ejemplos de salida
-└── .gitignore
+├── frontend/index.html     # Estructura de la aplicación
+├── frontend/css/app.css    # Sistema visual y componentes
+├── frontend/js/database.js # Base de datos y tablas de alineamiento
+├── frontend/js/app.js      # Estado, cálculos e integración con la API
+├── api/index.py            # API FastAPI
+├── api/acoustic_sim.py     # Motor acústico Small/Thiele
+├── api/alignments.py       # Alineamientos clásicos
+├── api/pdf_generator.py    # Planos PDF
+├── api/speakers_db.json    # Base utilizada por la API
+├── requirements.txt
+└── vercel.json
 ```
 
 ## Desarrollo local
 
+Requiere Python 3.11 o posterior.
+
 ```bash
-# 1. Entorno
-cd backend
-python -m venv .venv && source .venv/bin/activate  # o .venv\Scripts\activate en Windows
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn api.index:app --reload --port 8000
+```
 
-# 2. Variables de entorno
-cp .env.example .env
-# editar .env con tus claves de Stripe y PayPal
+Abre `http://localhost:8000`. La API sirve también el frontend en la ruta raíz.
 
-# 3. Backend
-uvicorn main:app --reload --port 8000
+Los orígenes adicionales permitidos se configuran mediante una lista separada por comas:
 
-# 4. Frontend
-# Abrir frontend/index.html en el navegador
-# O servir estático:
-cd ../frontend && python -m http.server 3000
+```bash
+ALLOWED_ORIGINS=https://mi-dominio.example,http://localhost:3000
+```
+
+### Proyectos locales
+
+Los diseños pueden nombrarse, guardarse, actualizarse, renombrarse, recuperarse,
+duplicarse, eliminarse e importarse o exportarse como JSON. Se almacenan
+únicamente en el `localStorage` del navegador: no se crean cuentas ni se envían
+proyectos al servidor. El gestor advierte antes de reemplazar un formulario con
+cambios sin guardar.
+
+Límites operacionales opcionales:
+
+```bash
+MAX_REQUEST_BYTES=1048576
+RATE_LIMIT_PER_MINUTE=120
 ```
 
 ## Endpoints
 
 | Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/health` | Estado + modo pago |
-| GET | `/api/config` | Claves públicas al frontend |
-| POST | `/api/simulate` | Curvas scipy completas |
-| POST | `/api/compare` | QB3 vs SBB4 vs B4 vs Sellada |
-| POST | `/api/payment/stripe/create-intent` | Crea PaymentIntent |
-| GET | `/api/payment/stripe/poll-token` | Obtiene access token post-pago |
-| POST | `/api/payment/paypal/create-order` | Crea PayPal Order |
-| POST | `/api/payment/paypal/capture` | Captura y emite token |
-| POST | `/api/pdf` | Descarga PDF (requiere access token) |
-| POST | `/webhooks/stripe` | Webhook firmado de Stripe |
+|---|---|---|
+| GET | `/api/health` | Estado del servicio |
+| GET | `/api/config` | Capacidades públicas |
+| GET | `/api/speakers` | Base de altavoces |
+| POST | `/api/alignments` | Alineamientos calculados por la tabla canónica |
+| POST | `/api/simulate` | Simulación acústica completa |
+| POST | `/api/compare` | Comparación de alineamientos |
+| POST | `/api/pdf` | Generación gratuita del PDF |
 
-Docs interactivos: `http://localhost:8000/docs`
+Documentación interactiva: `http://localhost:8000/docs`.
 
-## Producción (Railway / Render / VPS)
+## Pruebas automatizadas
 
-1. Poner las variables de entorno del `.env.example` en tu plataforma
-2. Registrar el webhook en Stripe → `https://tu-dominio.com/webhooks/stripe`
-3. En `frontend/index.html` cambiar:
-   ```js
-   const API_BASE = 'http://localhost:8000';
-   // → 'https://api.tu-dominio.com'
-   ```
-4. Arrancar: `uvicorn main:app --host 0.0.0.0 --port 8000`
+La suite protege los valores de referencia de los alineamientos, las simulaciones
+sellada y bass-reflex, los límites de entrada y el contrato público de la API.
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Despliegue
+
+`vercel.json` publica el frontend y la función FastAPI. El frontend utiliza `/api/*` en el mismo dominio y no necesita una URL de backend escrita en el código.
+
+El motor carga NumPy, SciPy, Matplotlib y ReportLab. Antes de publicar, confirma que el tamaño y el tiempo de inicio se ajustan a los límites del plan de Vercel utilizado.
+
+## Acceso
+
+La aplicación no integra pagos. La simulación y la descarga de planos PDF son libres.
