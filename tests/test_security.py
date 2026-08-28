@@ -69,14 +69,11 @@ class OperationalGuardTests(unittest.TestCase):
 
     def test_vercel_static_routes_have_security_headers(self):
         config = json.loads((Path(__file__).resolve().parents[1] / "vercel.json").read_text())
-        headers = {
-            item["key"].lower(): item["value"]
-            for rule in config["headers"]
-            for item in rule["headers"]
-        }
-        self.assertEqual(headers["x-content-type-options"], "nosniff")
-        self.assertEqual(headers["x-frame-options"], "DENY")
-        self.assertIn("frame-ancestors 'none'", headers["content-security-policy"])
+        for route in config["routes"]:
+            headers = {key.lower(): value for key, value in route["headers"].items()}
+            self.assertEqual(headers["x-content-type-options"], "nosniff")
+            self.assertEqual(headers["x-frame-options"], "DENY")
+            self.assertIn("frame-ancestors 'none'", headers["content-security-policy"])
 
 
 if __name__ == "__main__":
