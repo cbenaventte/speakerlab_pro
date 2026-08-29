@@ -54,6 +54,11 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn("function initKeyboardAccessibility(", JS)
         self.assertIn(":focus-visible", CSS)
 
+    def test_event_handlers_are_not_embedded_in_html(self):
+        for attribute in ("onclick=", "oninput=", "onchange="):
+            self.assertNotIn(attribute, HTML)
+        self.assertIn("function initDeclarativeEvents()", JS)
+
 
 if __name__ == "__main__":
     unittest.main()

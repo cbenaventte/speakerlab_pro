@@ -55,6 +55,8 @@ class OperationalGuardTests(unittest.TestCase):
         self.assertEqual(response.headers["x-content-type-options"], "nosniff")
         self.assertEqual(response.headers["x-frame-options"], "DENY")
         self.assertIn("frame-ancestors 'none'", response.headers["content-security-policy"])
+        script_policy = response.headers["content-security-policy"].split("script-src", 1)[1].split(";", 1)[0]
+        self.assertNotIn("unsafe-inline", script_policy)
 
     def test_rate_limit_returns_retry_after(self):
         async def next_handler(_request):
@@ -74,6 +76,8 @@ class OperationalGuardTests(unittest.TestCase):
             self.assertEqual(headers["x-content-type-options"], "nosniff")
             self.assertEqual(headers["x-frame-options"], "DENY")
             self.assertIn("frame-ancestors 'none'", headers["content-security-policy"])
+            script_policy = headers["content-security-policy"].split("script-src", 1)[1].split(";", 1)[0]
+            self.assertNotIn("unsafe-inline", script_policy)
 
 
 if __name__ == "__main__":

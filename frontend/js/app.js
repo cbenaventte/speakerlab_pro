@@ -161,7 +161,7 @@
       document.querySelectorAll('#view-enc .enc-article').forEach(a => a.style.display = 'none');
       document.getElementById(id).style.display = 'block';
       document.querySelectorAll('#enc-sidebar .nav-item').forEach(b => b.classList.remove('active'));
-      document.querySelector(`[onclick="showEnc('${id}')"]`).classList.add('active');
+      document.querySelector(`[data-enc="${id}"]`).classList.add('active');
       document.getElementById('content-area').scrollTop = 0;
       currentEnc = id;
       if (window.matchMedia('(max-width: 700px)').matches) closeEncMenu(false);
@@ -208,7 +208,7 @@
       if (!tip) return;
       const el = document.getElementById('enc-tooltip');
       el.innerHTML = `<strong>${tip.title}</strong>${tip.body}
-    <br><a href="#" onclick="goToEncSection('${key}');return false" style="color:var(--blue);font-size:0.8rem;margin-top:0.4rem;display:inline-block">Ver en la Enciclopedia →</a>`;
+    <br><a href="#" data-tip-section="${key}" style="color:var(--blue);font-size:0.8rem;margin-top:0.4rem;display:inline-block">Ver en la Enciclopedia →</a>`;
       el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), 5000);
     }
@@ -240,7 +240,7 @@
       );
       if (!hits.length) { dd.classList.remove('open'); return; }
       dd.innerHTML = hits.map((s, i) => `
-    <div class="dd-item" onclick="loadSpeaker(${DB.indexOf(s)})">
+    <div class="dd-item" data-speaker-index="${DB.indexOf(s)}">
       <div><span class="dd-brand">${s.brand}</span><br><span class="dd-model">${s.model}</span></div>
       <div style="font-size:0.75rem;color:var(--ink-muted)">${s.inches}" · ${s.align}</div>
     </div>`).join('');
@@ -1028,7 +1028,7 @@
     <td class="num">${s.bl || '—'}</td>
     <td class="num">${s.re || '—'}</td>
     <td><span class="align-badge ${s.align}">${s.align}</span></td>
-    <td><button class="db-use-btn" onclick="useFromDB(${i})">Usar →</button></td>
+    <td><button class="db-use-btn" data-use-speaker="${i}">Usar →</button></td>
   </tr>`).join('');
     }
 
@@ -1436,6 +1436,7 @@
         if (element.classList.contains('ts-card')) {
           element.setAttribute('aria-expanded', element.classList.contains('open') ? 'true' : 'false');
           element.addEventListener('click', () => {
+            element.classList.toggle('open');
             element.setAttribute('aria-expanded', element.classList.contains('open') ? 'true' : 'false');
           });
         }
@@ -1489,8 +1490,51 @@
       });
     }
 
+    function initDeclarativeEvents() {
+      const actions = {
+        calculate,
+        closeEncMenu,
+        closeProjectsModal,
+        dismissContext,
+        downloadPDF,
+        exportAllProjects,
+        openEncMenu,
+        openProjectsImport: () => document.getElementById('projects-import').click(),
+        openProjectsModal,
+        runCompare,
+        runScipy,
+        saveLocalProject,
+        updateLocalProject,
+      };
+
+      document.addEventListener('click', event => {
+        const target = event.target.closest(
+          '[data-action], [data-view], [data-enc], [data-tip], [data-calc-box], [data-result-tab], [data-content-tab], [data-speaker-index], [data-use-speaker], [data-tip-section]'
+        );
+        if (!target) return;
+        if (target.dataset.action) actions[target.dataset.action]?.();
+        else if (target.dataset.view) setView(target.dataset.view);
+        else if (target.dataset.enc) showEnc(target.dataset.enc);
+        else if (target.dataset.tip) openTip(target.dataset.tip);
+        else if (target.dataset.calcBox) goToCalc(target.dataset.calcBox);
+        else if (target.dataset.resultTab) switchTab({ currentTarget: target }, target.dataset.resultTab);
+        else if (target.dataset.contentTab) openTab({ currentTarget: target }, target.dataset.contentTab, target.dataset.tabGroup);
+        else if (target.dataset.speakerIndex) loadSpeaker(Number(target.dataset.speakerIndex));
+        else if (target.dataset.useSpeaker) useFromDB(Number(target.dataset.useSpeaker));
+        else if (target.dataset.tipSection) {
+          event.preventDefault();
+          goToEncSection(target.dataset.tipSection);
+        }
+      });
+
+      document.getElementById('spk-search').addEventListener('input', event => filterDB(event.target.value));
+      document.getElementById('boxType').addEventListener('change', toggleBoxOpts);
+      document.getElementById('portType').addEventListener('change', togglePortOpts);
+    }
+
     /* ── Init ───────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
+      initDeclarativeEvents();
       initKeyboardAccessibility();
       Object.entries(FIELD_RULES).forEach(([id, rule]) => {
         const field = document.getElementById(id);

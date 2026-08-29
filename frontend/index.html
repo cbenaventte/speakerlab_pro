@@ -23,24 +23,24 @@
       <span class="author-credits">Desarrollado por Ing. Carlos Benavente</span>
     </div>
     <nav class="tb-nav" aria-label="Navegación principal">
-      <button class="active" onclick="setView('calc')" id="tb-calc">
+      <button class="active" data-view="calc" id="tb-calc">
         <span class="tb-icon">📐</span>Calculadora
       </button>
-      <button onclick="setView('enc')" id="tb-enc">
+      <button data-view="enc" id="tb-enc">
         <span class="tb-icon">📖</span>Enciclopedia
       </button>
-      <button onclick="setView('db')" id="tb-db">
+      <button data-view="db" id="tb-db">
         <span class="tb-icon">🔊</span>Base de Datos
       </button>
     </nav>
     <div class="tb-projects">
-      <button class="btn-projects" type="button" onclick="openProjectsModal()" aria-label="Abrir proyectos"
+      <button class="btn-projects" type="button" data-action="openProjectsModal" aria-label="Abrir proyectos"
         title="Abrir proyectos">
         <span aria-hidden="true">💾</span><span class="tb-action-label">Proyectos</span>
       </button>
     </div>
     <div class="tb-pro">
-      <button class="btn-pro" data-pdf-download onclick="downloadPDF()" aria-label="Descargar planos en PDF"
+      <button class="btn-pro" data-pdf-download data-action="downloadPDF" aria-label="Descargar planos en PDF"
         title="Descargar planos en PDF">
         <span aria-hidden="true">⬇</span><span class="tb-action-label">Descargar planos PDF</span>
       </button>
@@ -54,32 +54,32 @@
     <nav id="enc-sidebar" aria-label="Índice de la enciclopedia">
       <div class="enc-sidebar-mobile-header">
         <strong>Índice</strong>
-        <button class="enc-menu-close" type="button" onclick="closeEncMenu()" aria-label="Cerrar índice">✕</button>
+        <button class="enc-menu-close" type="button" data-action="closeEncMenu" aria-label="Cerrar índice">✕</button>
       </div>
       <div class="nav-section-title">Fundamentos</div>
-      <button class="nav-item active" onclick="showEnc('sec-intro')">1. Anatomía del Altavoz</button>
-      <button class="nav-item" onclick="showEnc('sec-modelo')">2. Modelo Electro-Mecánico</button>
-      <button class="nav-item" onclick="showEnc('sec-ts')">3. Parámetros Thiele-Small</button>
+      <button class="nav-item active" data-enc="sec-intro">1. Anatomía del Altavoz</button>
+      <button class="nav-item" data-enc="sec-modelo">2. Modelo Electro-Mecánico</button>
+      <button class="nav-item" data-enc="sec-ts">3. Parámetros Thiele-Small</button>
 
       <div class="nav-section-title">Tipos de Recintos</div>
-      <button class="nav-item" onclick="showEnc('sec-cerradas')">4. Cajas Cerradas</button>
-      <button class="nav-item" onclick="showEnc('sec-reflex')">5. Cajas Bass-Reflex</button>
-      <button class="nav-item" onclick="showEnc('sec-avanzadas')">6. Bandpass y Líneas</button>
+      <button class="nav-item" data-enc="sec-cerradas">4. Cajas Cerradas</button>
+      <button class="nav-item" data-enc="sec-reflex">5. Cajas Bass-Reflex</button>
+      <button class="nav-item" data-enc="sec-avanzadas">6. Bandpass y Líneas</button>
 
       <div class="nav-section-title">Física de la Caja</div>
-      <button class="nav-item" onclick="showEnc('sec-baffle')">7. Difracción y Baffle Step</button>
-      <button class="nav-item" onclick="showEnc('sec-materiales')">8. Materiales y Proporciones</button>
-      <button class="nav-item" onclick="showEnc('sec-refuerzos')">9. Refuerzos y Amortiguamiento</button>
+      <button class="nav-item" data-enc="sec-baffle">7. Difracción y Baffle Step</button>
+      <button class="nav-item" data-enc="sec-materiales">8. Materiales y Proporciones</button>
+      <button class="nav-item" data-enc="sec-refuerzos">9. Refuerzos y Amortiguamiento</button>
 
       <div class="nav-section-title">Diseño y Cálculo</div>
-      <button class="nav-item" onclick="showEnc('sec-puertos')">10. Diseño del Puerto</button>
-      <button class="nav-item" onclick="showEnc('sec-simulador')">11. Alineamientos</button>
-      <button class="nav-item" onclick="showEnc('sec-pruebas')">12. Medición y Pruebas</button>
+      <button class="nav-item" data-enc="sec-puertos">10. Diseño del Puerto</button>
+      <button class="nav-item" data-enc="sec-simulador">11. Alineamientos</button>
+      <button class="nav-item" data-enc="sec-pruebas">12. Medición y Pruebas</button>
     </nav>
 
-    <button id="enc-menu-toggle" class="enc-menu-toggle" type="button" onclick="openEncMenu()"
+    <button id="enc-menu-toggle" class="enc-menu-toggle" type="button" data-action="openEncMenu"
       aria-controls="enc-sidebar" aria-expanded="false" hidden>☰ Índice</button>
-    <div id="enc-menu-overlay" class="enc-menu-overlay" onclick="closeEncMenu()" hidden></div>
+    <div id="enc-menu-overlay" class="enc-menu-overlay" data-action="closeEncMenu" hidden></div>
 
     <!-- Área de contenido -->
     <main id="content-area" tabindex="-1">
@@ -100,7 +100,7 @@
         <div id="context-banner" class="context-banner">
           <span>📖</span>
           <span id="context-msg">Vinculado desde la Enciclopedia</span>
-          <button onclick="dismissContext()">✕</button>
+          <button data-action="dismissContext">✕</button>
         </div>
 
         <div class="calc-layout">
@@ -112,7 +112,7 @@
             <div class="panel-title">🔊 Altavoz</div>
             <div class="search-wrapper">
               <span class="search-icon">🔍</span>
-              <input type="text" id="spk-search" placeholder="Buscar marca / modelo…" oninput="filterDB(this.value)"
+              <input type="text" id="spk-search" placeholder="Buscar marca / modelo…"
                 autocomplete="off">
               <div id="spk-dropdown" class="search-dropdown"></div>
             </div>
@@ -122,19 +122,19 @@
               <div class="form-section-title">📊 Parámetros Thiele-Small</div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Fs <span class="tip" onclick="openTip('Fs')">?</span></label>
+                  <label>Fs <span class="tip" data-tip="Fs">?</span></label>
                   <input type="number" id="fs" placeholder="p. ej. 28" step="0.1">
                   <span class="unit-hint">Hz — resonancia libre</span>
                 </div>
                 <div class="form-field">
-                  <label>Vas <span class="tip" onclick="openTip('Vas')">?</span></label>
+                  <label>Vas <span class="tip" data-tip="Vas">?</span></label>
                   <input type="number" id="vas" placeholder="p. ej. 75" step="0.1">
                   <span class="unit-hint">Litros — vol. equiv.</span>
                 </div>
               </div>
               <div class="form-row three">
                 <div class="form-field">
-                  <label>Qts <span class="tip" onclick="openTip('Qts')">?</span></label>
+                  <label>Qts <span class="tip" data-tip="Qts">?</span></label>
                   <input type="number" id="qts" placeholder="0.33" step="0.01">
                 </div>
                 <div class="form-field">
@@ -148,12 +148,12 @@
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Xmax <span class="tip" onclick="openTip('Xmax')">?</span></label>
+                  <label>Xmax <span class="tip" data-tip="Xmax">?</span></label>
                   <input type="number" id="xmax" placeholder="12" step="0.5">
                   <span class="unit-hint">mm</span>
                 </div>
                 <div class="form-field">
-                  <label>Sd <span class="tip" onclick="openTip('Sd')">?</span></label>
+                  <label>Sd <span class="tip" data-tip="Sd">?</span></label>
                   <input type="number" id="sd" placeholder="346" step="1">
                   <span class="unit-hint">cm²</span>
                 </div>
@@ -179,12 +179,12 @@
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Mms <span class="tip" onclick="openTip('Mms')">?</span></label>
+                  <label>Mms <span class="tip" data-tip="Mms">?</span></label>
                   <input type="number" id="mms" placeholder="12.3" step="0.1">
                   <span class="unit-hint">g — masa móvil</span>
                 </div>
                 <div class="form-field">
-                  <label>Bl <span class="tip" onclick="openTip('Bl')">?</span></label>
+                  <label>Bl <span class="tip" data-tip="Bl">?</span></label>
                   <input type="number" id="bl" placeholder="7.36" step="0.01">
                   <span class="unit-hint">T·m — factor de fuerza</span>
                 </div>
@@ -208,8 +208,8 @@
               <div class="form-section-title">📦 Recinto</div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Tipo de caja <span class="tip" onclick="openTip('TipoCaja')">?</span></label>
-                  <select id="boxType" onchange="toggleBoxOpts()">
+                  <label>Tipo de caja <span class="tip" data-tip="TipoCaja">?</span></label>
+                  <select id="boxType">
                     <option value="reflex">Bass-Reflex</option>
                     <option value="closed">Cerrada (Sellada)</option>
                   </select>
@@ -229,7 +229,7 @@
               <div id="reflex-opts">
                 <div class="form-row">
                   <div class="form-field">
-                    <label>Alineación <span class="tip" onclick="openTip('Alineacion')">?</span></label>
+                    <label>Alineación <span class="tip" data-tip="Alineacion">?</span></label>
                     <select id="alignment">
                       <option value="QB3">QB3 — Quasi Butterworth</option>
                       <option value="SBB4" selected>SBB4 — Sub-Butterworth</option>
@@ -238,7 +238,7 @@
                   </div>
                   <div class="form-field">
                     <label>Tipo de puerto</label>
-                    <select id="portType" onchange="togglePortOpts()">
+                    <select id="portType">
                       <option value="circular">Circular</option>
                       <option value="slot">Slot (rectangular)</option>
                     </select>
@@ -269,7 +269,7 @@
                 </div>
                 <div class="form-row">
                   <div class="form-field">
-                    <label>Corrección k <span class="tip" onclick="openTip('FactorK')">?</span></label>
+                    <label>Corrección k <span class="tip" data-tip="FactorK">?</span></label>
                     <select id="kFactor">
                       <option value="0.614">0.614 — ambos extremos abiertos</option>
                       <option value="0.732" selected>0.732 — un extremo cerrado</option>
@@ -282,7 +282,7 @@
               <!-- Opciones sellada -->
               <div id="closed-opts" style="display:none">
                 <div class="form-field">
-                  <label>Qtc objetivo <span class="tip" onclick="openTip('Qtc')">?</span></label>
+                  <label>Qtc objetivo <span class="tip" data-tip="Qtc">?</span></label>
                   <select id="qtcTarget">
                     <option value="0.577">0.577 — Bessel (transitorios)</option>
                     <option value="0.707" selected>0.707 — Butterworth (plano)</option>
@@ -292,7 +292,7 @@
               </div>
             </div>
 
-            <button class="btn-calc" id="btn-calculate" onclick="calculate()">
+            <button class="btn-calc" id="btn-calculate" data-action="calculate">
               ✏️ Calcular
             </button>
           </div>
@@ -328,12 +328,12 @@
 
               <!-- Tabs resultados -->
               <div class="calc-tabs" role="tablist" aria-label="Resultados del cálculo">
-                <button class="calc-tab active" onclick="switchTab(event,'tab-diag')">Diagnóstico</button>
-                <button class="calc-tab" onclick="switchTab(event,'tab-port')">Puerto</button>
-                <button class="calc-tab" onclick="switchTab(event,'tab-dim')">Dimensiones</button>
-                <button class="calc-tab" onclick="switchTab(event,'tab-chart')">Gráfica</button>
-                <button class="calc-tab" onclick="switchTab(event,'tab-cuts')">Planos de Corte</button>
-                <button class="calc-tab" onclick="switchTab(event,'tab-compare')">Comparar</button>
+                <button class="calc-tab active" data-result-tab="tab-diag">Diagnóstico</button>
+                <button class="calc-tab" data-result-tab="tab-port">Puerto</button>
+                <button class="calc-tab" data-result-tab="tab-dim">Dimensiones</button>
+                <button class="calc-tab" data-result-tab="tab-chart">Gráfica</button>
+                <button class="calc-tab" data-result-tab="tab-cuts">Planos de Corte</button>
+                <button class="calc-tab" data-result-tab="tab-compare">Comparar</button>
               </div>
 
               <!-- Tab: Diagnóstico -->
@@ -365,7 +365,7 @@
                     <span id="chart-mode-badge"
                       style="font-family:'Space Mono',monospace;font-size:0.72rem;padding:2px 8px;border-radius:3px;background:rgba(253,203,110,0.5);border:1px solid #c4900a;color:#7a5500">JS
                       aproximado</span>
-                    <button id="btn-scipy" onclick="runScipy()"
+                    <button id="btn-scipy" data-action="runScipy"
                       style="font-family:'Kalam',cursive;font-size:0.95rem;padding:3px 10px;border:2px solid var(--blue);background:var(--blue-bg);color:var(--blue-dark);border-radius:var(--r-sketch);cursor:pointer">⚗️
                       Simular con scipy</button>
                   </div>
@@ -399,7 +399,7 @@
                     <h3>PDF Profesional con planos exactos</h3>
                     <p>Medidas en mm precisas, diagrama isométrico, gráfica precisa, notas de ensamblaje</p>
                   </div>
-                  <button class="btn-unlock" data-pdf-download onclick="downloadPDF()">Descargar PDF gratis</button>
+                  <button class="btn-unlock" data-pdf-download data-action="downloadPDF">Descargar PDF gratis</button>
                 </div>
               </div>
 
@@ -408,7 +408,7 @@
                 <div class="result-section">
                   <div class="result-section-header">⚖️ Comparativa de Alineaciones</div>
                   <div class="result-section-body">
-                    <button class="btn-calc" onclick="runCompare()" id="btn-compare"
+                    <button class="btn-calc" data-action="runCompare" id="btn-compare"
                       style="margin-bottom:1rem;background:var(--blue-dark)">
                       Analizar las 4 alineaciones (Scipy)
                     </button>
@@ -482,7 +482,7 @@
             <strong>elasticidad</strong>. Esto forma un resonador masa-resorte con una frecuencia natural de resonancia
             (<em>Fs</em>).
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Ir a la Calculadora</strong>
@@ -529,7 +529,7 @@
           </div>
           <p>El factor de fuerza <strong>Bl</strong> (Teslas × metros) es el "engranaje" que convierte la corriente
             eléctrica en fuerza mecánica. Un Bl alto significa un motor potente — y se refleja en un Qes bajo.</p>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Calcular con estos parámetros</strong>
@@ -545,46 +545,46 @@
           <p>Sin ellos el diseño de la caja es pura adivinanza. Haz clic en cada tarjeta para explorar su función
             técnica.</p>
           <div class="grid-3">
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Fs</h4>
               <p style="text-align:center;font-weight:700">Resonancia Libre</p>
               <div class="ts-content">Frecuencia (Hz) donde la masa del cono resuena con su suspensión al aire libre.
                 Por debajo de Fs la respuesta cae abruptamente. La caja sube esta frecuencia al añadir rigidez
                 neumática.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Qts</h4>
               <p style="text-align:center;font-weight:700">Factor de Calidad Total</p>
               <div class="ts-content">Describe el amortiguamiento del altavoz en Fs. <br>• <strong>Qts &lt;
                   0.4:</strong> motor fuerte, ideal Bass-Reflex.<br>• <strong>Qts &gt; 0.4:</strong> motor débil,
                 necesita la rigidez de caja sellada.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Vas</h4>
               <p style="text-align:center;font-weight:700">Vol. Acústico Equiv.</p>
               <div class="ts-content">Elasticidad de la suspensión expresada en litros de aire. <strong>NO</strong> es
                 el volumen de la caja. Vas alto = suspensión blanda = caja grande necesaria.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Xmax</h4>
               <p style="text-align:center;font-weight:700">Excursión Máxima</p>
               <div class="ts-content">Desplazamiento lineal máximo (mm) en una dirección sin salir del campo magnético.
                 Determina el SPL máximo en graves sin distorsión.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Sd</h4>
               <p style="text-align:center;font-weight:700">Área Efectiva</p>
               <div class="ts-content">Superficie radiante del cono (cm²). Con Xmax define el <em>Volumen de
                   Desplazamiento</em>: Vd = Sd × Xmax. Mayor Sd = más aire movido a igual excursión.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>EBP</h4>
               <p style="text-align:center;font-weight:700">Efficiency Bandwidth Product</p>
               <div class="ts-content">EBP = Fs/Qes. Guía rápida de tipo de recinto ideal:<br>• <strong>&gt;100:</strong>
                 Bass-Reflex claro.<br>• <strong>50-100:</strong> ambos tipos funcionan.<br>• <strong>&lt;50:</strong>
                 Caja sellada.</div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Mms</h4>
               <p style="text-align:center;font-weight:700">Masa Móvil</p>
               <div class="ts-content">Masa total del conjunto móvil (cono + bobina + suspensión) en gramos.
@@ -593,7 +593,7 @@
                 = mayor inercia, menor sensibilidad
               </div>
             </div>
-            <div class="ts-card" onclick="this.classList.toggle('open')">
+            <div class="ts-card" data-toggle-card>
               <h4>Bl</h4>
               <p style="text-align:center;font-weight:700">Factor de Fuerza</p>
               <div class="ts-content">Producto del campo magnético (B) por la longitud del hilo en el entrehierro (l),
@@ -603,7 +603,7 @@
               </div>
             </div>
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Introducir mis parámetros T/S en la calculadora</strong>
@@ -644,7 +644,7 @@
             Qtc = 0.707 (Butterworth) es el compromiso óptimo: máxima planura sin pico. Qtc &lt; 0.577 tiene caída suave
             pero el altavoz necesita una caja muy grande.
           </div>
-          <div class="bridge-cta" onclick="goToCalc('closed')">
+          <div class="bridge-cta" data-calc-box="closed">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Diseñar una caja cerrada</strong>
@@ -684,7 +684,7 @@
               </ul>
             </div>
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Diseñar un Bass-Reflex</strong>
@@ -699,8 +699,8 @@
           <h2>6. Diseños Avanzados</h2>
           <div class="sketch-box">
             <div style="margin-bottom:0.8rem">
-              <button class="tab-btn active" onclick="openTab(event,'tab-bp','adv')">Paso-Banda (4°)</button>
-              <button class="tab-btn" onclick="openTab(event,'tab-tl','adv')">Línea de Transmisión</button>
+              <button class="tab-btn active" data-content-tab="tab-bp" data-tab-group="adv">Paso-Banda (4°)</button>
+              <button class="tab-btn" data-content-tab="tab-tl" data-tab-group="adv">Línea de Transmisión</button>
             </div>
             <div id="tab-bp" class="tab-content adv active grid-2">
               <svg class="enc-svg" viewBox="0 0 200 200">
@@ -805,7 +805,7 @@
               <p>Distribuye los modos de forma suave, evitando picos indeseados en la respuesta interna.</p>
             </div>
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">✂️</div>
             <div class="bridge-text">
               <strong>Calcular planos de corte con proporciones áureas</strong>
@@ -888,7 +888,7 @@
               </svg>
             </div>
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Calcular la longitud exacta del puerto</strong>
@@ -927,7 +927,7 @@
               style="margin-top:1.2rem;padding:1rem;background:var(--paper);border-radius:4px;font-size:0.93rem;min-height:70px">
             </div>
           </div>
-          <div class="bridge-cta" onclick="goToCalc('reflex')">
+          <div class="bridge-cta" data-calc-box="reflex">
             <div class="bridge-icon">📐</div>
             <div class="bridge-text">
               <strong>Simular con mi altavoz real</strong>
@@ -1020,16 +1020,16 @@
   <div id="projects-modal" class="projects-modal" hidden role="dialog" aria-modal="true"
     aria-labelledby="projects-title">
     <div class="projects-dialog">
-      <button class="projects-close" type="button" onclick="closeProjectsModal()" aria-label="Cerrar">✕</button>
+      <button class="projects-close" type="button" data-action="closeProjectsModal" aria-label="Cerrar">✕</button>
       <h2 id="projects-title">Mis proyectos locales</h2>
       <p>Los diseños se guardan únicamente en este navegador.</p>
       <div class="project-create">
         <label for="project-name">Nombre del diseño</label>
         <div class="project-create-row">
           <input id="project-name" type="text" maxlength="80" placeholder="Ej. Subwoofer sala">
-          <button type="button" class="btn-project-action primary" onclick="saveLocalProject()">Guardar nuevo</button>
+          <button type="button" class="btn-project-action primary" data-action="saveLocalProject">Guardar nuevo</button>
           <button type="button" class="btn-project-action" id="btn-update-project"
-            onclick="updateLocalProject()" disabled>Actualizar seleccionado</button>
+            data-action="updateLocalProject" disabled>Actualizar seleccionado</button>
         </div>
         <small id="project-edit-status" class="project-edit-status">Ningún proyecto seleccionado.</small>
       </div>
@@ -1038,8 +1038,8 @@
         <div class="project-actions">
           <input id="projects-import" type="file" accept="application/json,.json" hidden>
           <button type="button" class="btn-project-action"
-            onclick="document.getElementById('projects-import').click()">Importar JSON</button>
-          <button type="button" class="btn-project-action" onclick="exportAllProjects()">Exportar todos</button>
+            data-action="openProjectsImport">Importar JSON</button>
+          <button type="button" class="btn-project-action" data-action="exportAllProjects">Exportar todos</button>
         </div>
       </div>
       <div id="projects-empty" class="projects-empty">Aún no hay proyectos guardados.</div>

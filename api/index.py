@@ -74,7 +74,7 @@ async def operational_guards(request: Request, call_next):
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; "
-        "connect-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'; "
+        "connect-src 'self'; script-src 'self'; object-src 'none'; "
         "base-uri 'self'; frame-ancestors 'none'"
     )
     return response
