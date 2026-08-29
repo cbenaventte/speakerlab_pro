@@ -32,10 +32,16 @@
       </button>
     </nav>
     <div class="tb-projects">
-      <button class="btn-projects" type="button" onclick="openProjectsModal()">💾 Proyectos</button>
+      <button class="btn-projects" type="button" onclick="openProjectsModal()" aria-label="Abrir proyectos"
+        title="Abrir proyectos">
+        <span aria-hidden="true">💾</span><span class="tb-action-label">Proyectos</span>
+      </button>
     </div>
     <div class="tb-pro">
-      <button class="btn-pro" data-pdf-download onclick="downloadPDF()">⬇ Descargar planos PDF</button>
+      <button class="btn-pro" data-pdf-download onclick="downloadPDF()" aria-label="Descargar planos en PDF"
+        title="Descargar planos en PDF">
+        <span aria-hidden="true">⬇</span><span class="tb-action-label">Descargar planos PDF</span>
+      </button>
     </div>
   </header>
 

@@ -133,6 +133,7 @@
     .tb-nav {
       display: flex;
       flex: 1;
+      min-width: 0;
       overflow-x: auto;
     }
 
@@ -1389,9 +1390,74 @@
    RESPONSIVE
 ═══════════════════════════════════════════════════════════ */
     @media(max-width:700px) {
-      .tb-projects { padding-inline: 0.35rem; }
-      .btn-projects { font-size: 0; }
-      .btn-projects::first-letter { font-size: 1rem; }
+      #topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: stretch;
+      }
+
+      .tb-logo {
+        min-width: 0;
+        padding: 0.6rem 0.75rem;
+        border-right: 0;
+      }
+
+      .tb-logo h1 {
+        overflow: hidden;
+        font-size: 1.15rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tb-logo span.subtitle,
+      .tb-logo span.author-credits {
+        display: none;
+      }
+
+      .tb-projects,
+      .tb-pro {
+        display: grid;
+        place-items: center;
+        padding: 0.35rem;
+        border-left: 1.5px solid var(--ink);
+      }
+
+      .btn-projects,
+      .btn-pro {
+        display: grid;
+        min-width: 44px;
+        min-height: 44px;
+        place-items: center;
+        padding: 0.4rem;
+        font-size: 1rem;
+      }
+
+      .tb-action-label {
+        display: none;
+      }
+
+      .tb-nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        border-top: 1.5px solid var(--ink);
+        overflow: visible;
+      }
+
+      .tb-nav button {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0.65rem 0.2rem;
+        font-size: clamp(0.72rem, 3.2vw, 0.9rem);
+        line-height: 1.15;
+      }
+
+      .tb-nav button .tb-icon {
+        display: block;
+        margin: 0 0 0.15rem;
+        font-size: 1rem;
+      }
+
       .project-create-row, .project-item { grid-template-columns: 1fr; flex-direction: column; }
 
       #content-area {
