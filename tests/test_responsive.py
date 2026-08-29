@@ -78,7 +78,7 @@ class ResponsiveBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator("#vas").get_attribute("placeholder"), "e.g. 75")
         self.assertEqual(page.locator("#fs + .unit-hint").inner_text(), "Hz — free-air resonance")
         self.assertEqual(page.locator("#vas + .unit-hint").inner_text(), "Liters — equivalent volume")
-        self.assertEqual(page.locator('label[for="inches"]').inner_text(), "Diameter (in)")
+        self.assertEqual(page.locator('label[for="inches"]').text_content(), "Diameter (in)")
         self.assertEqual(page.locator("#mms + .unit-hint").inner_text(), "g — moving mass")
         self.assertEqual(page.locator("#bl + .unit-hint").inner_text(), "T·m — force factor")
         self.assertEqual(page.locator("#re + .unit-hint").inner_text(), "Ω — DC resistance")
