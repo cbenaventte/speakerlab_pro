@@ -271,6 +271,7 @@
       if (blEl) blEl.value = s.bl || '';
       if (reEl) reEl.value = s.re || '';
       if (leEl) leEl.value = s.le || '';
+      scheduleCalculatorDraft();
     }
 
     document.addEventListener('click', e => {
@@ -1216,6 +1217,7 @@
 
     /* ── Proyectos locales ──────────────────────────────────── */
     const PROJECTS_KEY = 'speakerlab.projects.v1';
+    const CALCULATOR_DRAFT_KEY = 'speakerlab.calculator-draft.v1';
     const PROJECT_FIELD_IDS = [
       'spk-search', 'fs', 'vas', 'qts', 'qes', 'qms', 'xmax', 'sd', 'spl',
       'inches', 'mms', 'bl', 're', 'le', 'boxType', 'material', 'alignment',
@@ -1224,6 +1226,7 @@
     let activeProjectId = null;
     let projectBaseline = null;
     let projectDirty = false;
+    let draftSaveTimer = null;
 
     function readLocalProjects() {
       try {
@@ -1246,6 +1249,56 @@
 
     function collectProjectForm() {
       return Object.fromEntries(PROJECT_FIELD_IDS.map(id => [id, document.getElementById(id)?.value ?? '']));
+    }
+
+    function updateDraftStatus(updatedAt, restored = false) {
+      const status = document.getElementById('draft-status');
+      const date = new Date(updatedAt);
+      document.getElementById('draft-status-text').textContent = `${restored ? 'Borrador recuperado' : 'Borrador guardado'} · ${date.toLocaleString()}`;
+      status.hidden = false;
+    }
+
+    function saveCalculatorDraft() {
+      const form = collectProjectForm();
+      if (!form.fs && !form.vas && !form.qts && !form['spk-search']) {
+        localStorage.removeItem(CALCULATOR_DRAFT_KEY);
+        document.getElementById('draft-status').hidden = true;
+        return;
+      }
+      const updatedAt = new Date().toISOString();
+      try {
+        localStorage.setItem(CALCULATOR_DRAFT_KEY, JSON.stringify({ version: 1, updatedAt, form }));
+        updateDraftStatus(updatedAt);
+      } catch (_) {
+        notify('No se pudo guardar el borrador automático.', 'warning');
+      }
+    }
+
+    function scheduleCalculatorDraft() {
+      window.clearTimeout(draftSaveTimer);
+      draftSaveTimer = window.setTimeout(saveCalculatorDraft, 600);
+    }
+
+    function restoreCalculatorDraft() {
+      try {
+        const draft = JSON.parse(localStorage.getItem(CALCULATOR_DRAFT_KEY));
+        if (draft?.version !== 1 || !draft.form || typeof draft.updatedAt !== 'string') return false;
+        PROJECT_FIELD_IDS.forEach(id => {
+          const field = document.getElementById(id);
+          if (field && Object.hasOwn(draft.form, id)) field.value = String(draft.form[id] ?? '').slice(0, 200);
+        });
+        updateDraftStatus(draft.updatedAt, true);
+        return true;
+      } catch (_) {
+        localStorage.removeItem(CALCULATOR_DRAFT_KEY);
+        return false;
+      }
+    }
+
+    function clearCalculatorDraft() {
+      localStorage.removeItem(CALCULATOR_DRAFT_KEY);
+      document.getElementById('draft-status').hidden = true;
+      notify('La copia automática fue eliminada; el formulario actual no cambió.', 'success');
     }
 
     function currentProjectSummary() {
@@ -1318,6 +1371,7 @@
       activeProjectId = project.id;
       projectBaseline = JSON.stringify(project.form);
       projectDirty = false;
+      saveCalculatorDraft();
       renderProjectsList();
       refreshProjectEditState();
       notify(`Proyecto “${project.name}” guardado localmente.`, 'success');
@@ -1354,6 +1408,7 @@
       activeProjectId = project.id;
       projectBaseline = JSON.stringify(collectProjectForm());
       projectDirty = false;
+      saveCalculatorDraft();
       document.getElementById('project-name').value = project.name;
       setView('calc');
       closeProjectsModal();
@@ -1597,6 +1652,7 @@
     function initDeclarativeEvents() {
       const actions = {
         calculate,
+        clearCalculatorDraft,
         closeEncMenu,
         closeProjectsModal,
         dismissContext,
@@ -1666,9 +1722,12 @@
               ? JSON.stringify(collectProjectForm()) !== projectBaseline
               : true;
             refreshProjectEditState();
+            scheduleCalculatorDraft();
           }
         });
       });
+      document.getElementById('spk-search').addEventListener('input', scheduleCalculatorDraft);
+      restoreCalculatorDraft();
       toggleBoxOpts();
       togglePortOpts();
       _probeBackend();
@@ -1710,6 +1769,8 @@
         importCustomSpeakers(event.target.files?.[0]);
       });
       window.addEventListener('beforeunload', event => {
+        window.clearTimeout(draftSaveTimer);
+        saveCalculatorDraft();
         if (!projectDirty) return;
         event.preventDefault();
         event.returnValue = '';

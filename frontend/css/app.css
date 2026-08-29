@@ -775,6 +775,31 @@
       margin: 0;
     }
 
+    .draft-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding: 0.55rem 0.75rem;
+      border: 1.5px dashed var(--green);
+      border-radius: var(--r-sketch);
+      background: var(--green-bg);
+      color: #006b58;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .draft-status button {
+      flex-shrink: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-weight: 800;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
     .calc-layout {
       display: grid;
       grid-template-columns: 380px 1fr;

@@ -177,6 +177,27 @@ class ResponsiveBrowserTests(unittest.TestCase):
         self.assertEqual(page.evaluate("JSON.parse(localStorage.getItem('speakerlab.custom-speakers.v1')).length"), 0)
         self.assertFalse(page.get_by_text("Woofer 10 MkII", exact=True).is_visible())
 
+    def test_calculator_draft_is_restored_after_reload(self):
+        page = self.open_page({"width": 1440, "height": 900})
+        page.locator("#fs").fill("31.5")
+        page.locator("#vas").fill("72")
+        page.locator("#qts").fill("0.39")
+        page.wait_for_timeout(750)
+        self.assertEqual(
+            page.evaluate("JSON.parse(localStorage.getItem('speakerlab.calculator-draft.v1')).form.fs"),
+            "31.5",
+        )
+
+        page.reload(wait_until="domcontentloaded")
+        self.assertEqual(page.locator("#fs").input_value(), "31.5")
+        self.assertEqual(page.locator("#vas").input_value(), "72")
+        self.assertTrue(page.locator("#draft-status").is_visible())
+        self.assertIn("Borrador recuperado", page.locator("#draft-status-text").inner_text())
+
+        page.get_by_text("Eliminar borrador", exact=True).click()
+        self.assertIsNone(page.evaluate("localStorage.getItem('speakerlab.calculator-draft.v1')"))
+        self.assertEqual(page.locator("#fs").input_value(), "31.5")
+
 
 if __name__ == "__main__":
     unittest.main()

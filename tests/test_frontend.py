@@ -72,6 +72,12 @@ class FrontendExperienceTests(unittest.TestCase):
         ):
             self.assertIn(f"function {function}", JS)
 
+    def test_calculator_draft_supports_autosave_and_recovery(self):
+        self.assertIn('id="draft-status"', HTML)
+        self.assertIn("speakerlab.calculator-draft.v1", JS)
+        for function in ("saveCalculatorDraft", "restoreCalculatorDraft", "clearCalculatorDraft"):
+            self.assertIn(f"function {function}", JS)
+
 
 if __name__ == "__main__":
     unittest.main()

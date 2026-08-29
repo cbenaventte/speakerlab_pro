@@ -44,7 +44,8 @@ Los diseños pueden nombrarse, guardarse, actualizarse, renombrarse, recuperarse
 duplicarse, eliminarse e importarse o exportarse como JSON. Se almacenan
 únicamente en el `localStorage` del navegador: no se crean cuentas ni se envían
 proyectos al servidor. El gestor advierte antes de reemplazar un formulario con
-cambios sin guardar.
+cambios sin guardar. Además, la calculadora mantiene automáticamente un borrador
+del formulario y lo recupera después de cerrar o recargar la página.
 
 ### Altavoces personalizados
 
