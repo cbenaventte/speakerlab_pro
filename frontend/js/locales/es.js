@@ -248,6 +248,12 @@
     align_optimal_title: 'Vb Óptimo (Butterworth — Máximamente Plano)',
     align_optimal_desc: 'Curva plana ideal. Mejor compromiso extensión/transitorios. Caída brusca a 24 dB/oct. La referencia de diseño.',
     align_large_title: 'Vb Grande (Bessel — Sobre-amortiguado)',
-    align_large_desc: 'Caída suave que empieza antes. Pierde impacto en el rango medio-grave pero ofrece los mejores transitorios posibles.'
+    align_large_desc: 'Caída suave que empieza antes. Pierde impacto en el rango medio-grave pero ofrece los mejores transitorios posibles.',
+    linked_encyclopedia: 'Vinculado desde la Enciclopedia',
+    example_fs: 'p. ej. 28', example_vas: 'p. ej. 75',
+    hint_fs: 'Hz — resonancia libre', hint_vas: 'Litros — vol. equiv.',
+    diameter_inches_short: 'Pulgadas (∅)', hint_mms: 'g — masa móvil',
+    hint_bl: 'T·m — factor de fuerza', hint_re: 'Ω — resistencia DC',
+    hint_le: 'mH — inductancia bobina'
   };
 }());

@@ -39,10 +39,10 @@
       bl: { min: 0.01, max: 50, label: 'Bl' },
       re: { min: 0.1, max: 100, label: 'Re' },
       le: { min: 0.01, max: 10, label: 'Le' },
-      portDiam: { min: 0.5, max: 50, label: 'Diámetro del puerto' },
-      numPorts: { min: 1, max: 8, label: 'Número de puertos' },
-      slotW: { min: 0.5, max: 200, label: 'Ancho del slot' },
-      slotH: { min: 0.5, max: 200, label: 'Alto del slot' },
+      portDiam: { min: 0.5, max: 50, labelKey: 'port_diameter' },
+      numPorts: { min: 1, max: 8, labelKey: 'port_count' },
+      slotW: { min: 0.5, max: 200, labelKey: 'slot_width' },
+      slotH: { min: 0.5, max: 200, labelKey: 'slot_height' },
     };
 
     function clearFieldErrors() {
@@ -78,17 +78,18 @@
       Object.entries(FIELD_RULES).forEach(([id, rule]) => {
         if (inactive.has(id)) return;
         const field = document.getElementById(id);
+        const fieldLabel = rule.labelKey ? t(rule.labelKey) : rule.label;
         const raw = field?.value.trim();
         if (!raw) {
           if (rule.required) {
-            showFieldError(id, t('required', { field: rule.label }));
+            showFieldError(id, t('required', { field: fieldLabel }));
             valid = false;
           }
           return;
         }
         const value = Number(raw);
         if (!Number.isFinite(value) || value < rule.min || value > rule.max) {
-          showFieldError(id, t('range', { field: rule.label, min: rule.min, max: rule.max }));
+          showFieldError(id, t('range', { field: fieldLabel, min: rule.min, max: rule.max }));
           valid = false;
         }
       });

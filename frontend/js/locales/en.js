@@ -248,6 +248,12 @@
     align_optimal_title: 'Optimum Vb (Butterworth — Maximally Flat)',
     align_optimal_desc: 'Ideal flat curve and the best extension/transient compromise. Steep 24 dB/octave roll-off; the design reference.',
     align_large_title: 'Large Vb (Bessel — Overdamped)',
-    align_large_desc: 'A gentle roll-off that begins earlier. It loses some mid-bass impact but offers the best transient response.'
+    align_large_desc: 'A gentle roll-off that begins earlier. It loses some mid-bass impact but offers the best transient response.',
+    linked_encyclopedia: 'Linked from the Encyclopedia',
+    example_fs: 'e.g. 28', example_vas: 'e.g. 75',
+    hint_fs: 'Hz — free-air resonance', hint_vas: 'Liters — equivalent volume',
+    diameter_inches_short: 'Diameter (in)', hint_mms: 'g — moving mass',
+    hint_bl: 'T·m — force factor', hint_re: 'Ω — DC resistance',
+    hint_le: 'mH — voice-coil inductance'
   };
 }());

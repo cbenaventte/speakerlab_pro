@@ -66,6 +66,15 @@ class FrontendExperienceTests(unittest.TestCase):
         for field_id in ("fs", "vas", "qts", "qes", "qms", "xmax", "sd", "boxType", "material"):
             self.assertIn(f'for="{field_id}"', HTML)
 
+    def test_input_parameter_descriptions_are_localized(self):
+        for key in (
+            "example_fs", "example_vas", "hint_fs", "hint_vas",
+            "diameter_inches_short", "hint_mms", "hint_bl", "hint_re", "hint_le",
+        ):
+            self.assertIn(f'data-i18n="{key}"', HTML) if not key.startswith("example_") else self.assertIn(f'data-i18n-placeholder="{key}"', HTML)
+            self.assertIn(key, LOCALE_ES)
+            self.assertIn(key, LOCALE_EN)
+
     def test_blocking_browser_alerts_are_not_used(self):
         self.assertNotIn("alert(", JS)
         self.assertIn("function notify(", JS)
