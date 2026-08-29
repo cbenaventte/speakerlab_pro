@@ -130,8 +130,30 @@
 
       const sidebar = document.getElementById('enc-sidebar');
       sidebar.classList.toggle('hidden', v !== 'enc');
+      document.getElementById('enc-menu-toggle').hidden = v !== 'enc';
+      if (v !== 'enc') closeEncMenu(false);
 
       if (v === 'db') renderDB();
+    }
+
+    function openEncMenu() {
+      const sidebar = document.getElementById('enc-sidebar');
+      const toggle = document.getElementById('enc-menu-toggle');
+      sidebar.classList.add('mobile-open');
+      document.getElementById('enc-menu-overlay').hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('enc-menu-open');
+      sidebar.querySelector('.enc-menu-close')?.focus();
+    }
+
+    function closeEncMenu(restoreFocus = true) {
+      const sidebar = document.getElementById('enc-sidebar');
+      const toggle = document.getElementById('enc-menu-toggle');
+      sidebar.classList.remove('mobile-open');
+      document.getElementById('enc-menu-overlay').hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('enc-menu-open');
+      if (restoreFocus && !toggle.hidden) toggle.focus();
     }
 
     /* ── Enciclopedia ───────────────────────────────────────── */
@@ -142,6 +164,7 @@
       document.querySelector(`[onclick="showEnc('${id}')"]`).classList.add('active');
       document.getElementById('content-area').scrollTop = 0;
       currentEnc = id;
+      if (window.matchMedia('(max-width: 700px)').matches) closeEncMenu(false);
     }
 
     /* ── Bridge: enciclopedia → calculadora ─────────────────── */
@@ -1405,6 +1428,9 @@
       });
       document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && !projectsModal.hidden) closeProjectsModal();
+        if (event.key === 'Escape' && document.getElementById('enc-sidebar').classList.contains('mobile-open')) {
+          closeEncMenu();
+        }
       });
       document.getElementById('project-name').addEventListener('keydown', event => {
         if (event.key === 'Enter') {

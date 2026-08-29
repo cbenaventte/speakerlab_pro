@@ -49,7 +49,11 @@
   <div id="app">
 
     <!-- Sidebar Enciclopedia -->
-    <nav id="enc-sidebar">
+    <nav id="enc-sidebar" aria-label="Índice de la enciclopedia">
+      <div class="enc-sidebar-mobile-header">
+        <strong>Índice</strong>
+        <button class="enc-menu-close" type="button" onclick="closeEncMenu()" aria-label="Cerrar índice">✕</button>
+      </div>
       <div class="nav-section-title">Fundamentos</div>
       <button class="nav-item active" onclick="showEnc('sec-intro')">1. Anatomía del Altavoz</button>
       <button class="nav-item" onclick="showEnc('sec-modelo')">2. Modelo Electro-Mecánico</button>
@@ -70,6 +74,10 @@
       <button class="nav-item" onclick="showEnc('sec-simulador')">11. Alineamientos</button>
       <button class="nav-item" onclick="showEnc('sec-pruebas')">12. Medición y Pruebas</button>
     </nav>
+
+    <button id="enc-menu-toggle" class="enc-menu-toggle" type="button" onclick="openEncMenu()"
+      aria-controls="enc-sidebar" aria-expanded="false" hidden>☰ Índice</button>
+    <div id="enc-menu-overlay" class="enc-menu-overlay" onclick="closeEncMenu()" hidden></div>
 
     <!-- Área de contenido -->
     <main id="content-area">
