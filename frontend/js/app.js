@@ -1345,7 +1345,7 @@
       refreshProjectEditState();
       document.getElementById('projects-modal').hidden = false;
       document.body.classList.add('modal-open');
-      window.setTimeout(() => document.getElementById('project-name').focus(), 0);
+      document.getElementById('project-name').focus();
     }
 
     function closeProjectsModal() {
