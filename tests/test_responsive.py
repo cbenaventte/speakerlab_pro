@@ -87,7 +87,7 @@ class ResponsiveBrowserTests(unittest.TestCase):
                 self.assertEqual(toggle.get_attribute("aria-expanded"), "false")
 
                 toggle.click()
-                self.assertTrue(page.locator("#enc-sidebar").is_visible())
+                page.locator("#enc-sidebar").wait_for(state="visible")
                 self.assertTrue(page.locator("#enc-menu-overlay").is_visible())
                 self.assertEqual(toggle.get_attribute("aria-expanded"), "true")
 
