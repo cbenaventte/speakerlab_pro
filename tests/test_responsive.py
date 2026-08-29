@@ -110,11 +110,11 @@ class ResponsiveBrowserTests(unittest.TestCase):
             with self.subTest(viewport=viewport):
                 page = self.open_page(viewport)
                 page.locator(".btn-projects").click()
-                dialog = page.locator(".projects-dialog").bounding_box()
+                dialog = page.locator("#projects-modal .projects-dialog").bounding_box()
                 self.assertIsNotNone(dialog)
                 self.assertLessEqual(dialog["width"], viewport["width"])
                 self.assertLessEqual(dialog["height"], viewport["height"])
-                page.locator(".projects-close").click()
+                page.locator("#projects-modal .projects-close").click()
 
     def test_desktop_keeps_permanent_encyclopedia_sidebar(self):
         page = self.open_page({"width": 1440, "height": 900})
@@ -150,8 +150,32 @@ class ResponsiveBrowserTests(unittest.TestCase):
         trigger.focus()
         trigger.click()
         self.assertTrue(page.locator("#project-name").evaluate("el => el === document.activeElement"))
-        page.locator(".projects-close").click()
+        page.locator("#projects-modal .projects-close").click()
         self.assertTrue(trigger.evaluate("el => el === document.activeElement"))
+
+    def test_custom_speaker_can_be_created_edited_and_deleted_locally(self):
+        page = self.open_page({"width": 1440, "height": 900})
+        page.locator("#tb-db").click()
+        page.get_by_text("Añadir altavoz", exact=True).click()
+        values = {
+            "custom-brand": "Prueba Local", "custom-model": "Woofer 10",
+            "custom-inches": "10", "custom-fs": "28", "custom-vas": "65",
+            "custom-qts": "0.36", "custom-sd": "345",
+        }
+        for field, value in values.items():
+            page.locator(f"#{field}").fill(value)
+        page.get_by_text("Guardar altavoz", exact=True).click()
+        self.assertTrue(page.get_by_text("Prueba Local", exact=False).is_visible())
+        self.assertEqual(page.evaluate("JSON.parse(localStorage.getItem('speakerlab.custom-speakers.v1')).length"), 1)
+
+        page.get_by_text("Editar", exact=True).click()
+        page.locator("#custom-model").fill("Woofer 10 MkII")
+        page.get_by_text("Guardar altavoz", exact=True).click()
+        self.assertTrue(page.get_by_text("Woofer 10 MkII", exact=True).is_visible())
+
+        page.get_by_text("Eliminar", exact=True).click()
+        self.assertEqual(page.evaluate("JSON.parse(localStorage.getItem('speakerlab.custom-speakers.v1')).length"), 0)
+        self.assertFalse(page.get_by_text("Woofer 10 MkII", exact=True).is_visible())
 
 
 if __name__ == "__main__":

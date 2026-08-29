@@ -352,6 +352,40 @@
     .btn-project-action.primary { background: var(--ink); color: var(--paper-light); }
     .btn-project-action.danger { border-color: var(--red); color: var(--red); }
 
+    .speaker-db-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-bottom: 1rem;
+    }
+
+    .speaker-dialog { width: min(820px, 96vw); }
+    .speaker-form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .speaker-form-grid label { font-weight: 800; }
+    .speaker-form-grid input { width: 100%; margin-top: 0.25rem; }
+    .speaker-form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.55rem;
+      margin-top: 1.2rem;
+    }
+    .db-source {
+      display: inline-block;
+      margin-left: 0.35rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      background: var(--green-bg);
+      color: #00755f;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+    .db-row-actions { display: flex; gap: 0.35rem; }
+
     .btn-pro {
       background: var(--ink);
       color: var(--paper-light);
@@ -1548,6 +1582,7 @@
       }
 
       .project-create-row, .project-item { grid-template-columns: 1fr; flex-direction: column; }
+      .speaker-form-grid { grid-template-columns: 1fr 1fr; }
 
       #content-area {
         padding: 1.2rem;

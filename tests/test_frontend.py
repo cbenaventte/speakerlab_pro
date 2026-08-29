@@ -64,6 +64,14 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertNotIn(".style.", JS)
         self.assertIn('href="/css/utilities.css"', HTML)
 
+    def test_custom_speaker_database_supports_local_management(self):
+        self.assertIn('id="speaker-modal"', HTML)
+        for function in (
+            "saveCustomSpeaker", "deleteCustomSpeaker", "exportCustomSpeakers",
+            "importCustomSpeakers", "openSpeakerModal",
+        ):
+            self.assertIn(f"function {function}", JS)
+
 
 if __name__ == "__main__":
     unittest.main()

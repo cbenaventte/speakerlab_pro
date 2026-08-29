@@ -972,8 +972,13 @@
     ════════════════════════════════════════════════════ -->
       <div id="view-db" class="view">
         <h2 class="u-inline-28">Base de Datos de Altavoces</h2>
-        <p class="u-inline-29">15 altavoces verificados · parámetros
-          T/S · alineación recomendada</p>
+        <p id="db-summary" class="u-inline-29">Altavoces verificados y personalizados · parámetros T/S</p>
+        <div class="speaker-db-toolbar">
+          <button class="btn-project-action primary" type="button" data-action="openSpeakerModal">Añadir altavoz</button>
+          <input id="speakers-import" type="file" accept="application/json,.json" hidden>
+          <button class="btn-project-action" type="button" data-action="openSpeakersImport">Importar JSON</button>
+          <button class="btn-project-action" type="button" data-action="exportCustomSpeakers">Exportar personalizados</button>
+        </div>
         <div class="u-inline-30">
           <table class="db-table" id="db-table">
             <thead>
@@ -1035,6 +1040,37 @@
       </div>
       <div id="projects-empty" class="projects-empty">Aún no hay proyectos guardados.</div>
       <div id="projects-list" class="projects-list"></div>
+    </div>
+  </div>
+
+  <div id="speaker-modal" class="projects-modal" hidden role="dialog" aria-modal="true"
+    aria-labelledby="speaker-modal-title">
+    <div class="projects-dialog speaker-dialog">
+      <button class="projects-close" type="button" data-action="closeSpeakerModal" aria-label="Cerrar">✕</button>
+      <h2 id="speaker-modal-title">Altavoz personalizado</h2>
+      <p>Se guardará únicamente en este navegador.</p>
+      <input id="custom-speaker-id" type="hidden">
+      <div class="speaker-form-grid">
+        <label>Marca<input id="custom-brand" maxlength="60" required></label>
+        <label>Modelo<input id="custom-model" maxlength="80" required></label>
+        <label>Diámetro (pulgadas)<input id="custom-inches" type="number" min="1" max="30" step="0.5" required></label>
+        <label>Fs (Hz)<input id="custom-fs" type="number" min="5" max="500" step="0.1" required></label>
+        <label>Vas (L)<input id="custom-vas" type="number" min="0.1" max="2000" step="0.1" required></label>
+        <label>Qts<input id="custom-qts" type="number" min="0.05" max="2" step="0.001" required></label>
+        <label>Qes<input id="custom-qes" type="number" min="0.05" max="5" step="0.001"></label>
+        <label>Qms<input id="custom-qms" type="number" min="0.1" max="100" step="0.01"></label>
+        <label>Xmax (mm)<input id="custom-xmax" type="number" min="0.01" max="100" step="0.1"></label>
+        <label>Sd (cm²)<input id="custom-sd" type="number" min="1" max="5000" step="0.1" required></label>
+        <label>SPL (dB)<input id="custom-spl" type="number" min="50" max="130" step="0.1"></label>
+        <label>Mms (g)<input id="custom-mms" type="number" min="0.01" max="1000" step="0.1"></label>
+        <label>Bl (T·m)<input id="custom-bl" type="number" min="0.01" max="50" step="0.01"></label>
+        <label>Re (Ω)<input id="custom-re" type="number" min="0.1" max="100" step="0.01"></label>
+        <label>Le (mH)<input id="custom-le" type="number" min="0.01" max="10" step="0.01"></label>
+      </div>
+      <div class="speaker-form-actions">
+        <button class="btn-project-action" type="button" data-action="closeSpeakerModal">Cancelar</button>
+        <button class="btn-project-action primary" type="button" data-action="saveCustomSpeaker">Guardar altavoz</button>
+      </div>
     </div>
   </div>
 

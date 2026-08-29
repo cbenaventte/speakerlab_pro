@@ -46,6 +46,13 @@ duplicarse, eliminarse e importarse o exportarse como JSON. Se almacenan
 proyectos al servidor. El gestor advierte antes de reemplazar un formulario con
 cambios sin guardar.
 
+### Altavoces personalizados
+
+La base oficial permanece intacta. Desde la vista **Base de Datos** se pueden
+crear, editar y eliminar altavoces propios, además de importarlos o exportarlos
+como JSON. Estos registros se identifican con la etiqueta `Local` y se almacenan
+únicamente en el `localStorage` del dispositivo.
+
 Límites operacionales opcionales:
 
 ```bash

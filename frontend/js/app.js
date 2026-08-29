@@ -241,7 +241,7 @@
       if (!hits.length) { dd.classList.remove('open'); return; }
       dd.innerHTML = hits.map((s, i) => `
     <div class="dd-item" data-speaker-index="${DB.indexOf(s)}">
-      <div><span class="dd-brand">${s.brand}</span><br><span class="dd-model">${s.model}</span></div>
+      <div><span class="dd-brand">${escapeHtml(s.brand)}</span><br><span class="dd-model">${escapeHtml(s.model)}</span></div>
       <div class="speaker-search-meta">${s.inches}" · ${s.align}</div>
     </div>`).join('');
       dd.classList.add('open');
@@ -1002,11 +1002,124 @@
     }
 
     /* ── Base de Datos view ─────────────────────────────────── */
+    const CUSTOM_SPEAKER_FIELDS = ['inches', 'fs', 'vas', 'qts', 'qes', 'qms', 'xmax', 'sd', 'spl', 'mms', 'bl', 're', 'le'];
+    let speakerModalTrigger = null;
+
+    function openSpeakerModal(id = '') {
+      speakerModalTrigger = document.activeElement;
+      const custom = id ? readCustomSpeakers().find(speaker => speaker.id === id) : null;
+      document.getElementById('custom-speaker-id').value = custom?.id || '';
+      document.getElementById('custom-brand').value = custom?.brand || '';
+      document.getElementById('custom-model').value = custom?.model || '';
+      CUSTOM_SPEAKER_FIELDS.forEach(field => {
+        const calculator = document.getElementById(field);
+        document.getElementById(`custom-${field}`).value = custom?.[field] ?? calculator?.value ?? '';
+      });
+      document.getElementById('speaker-modal-title').textContent = custom ? 'Editar altavoz personalizado' : 'Añadir altavoz personalizado';
+      document.getElementById('speaker-modal').hidden = false;
+      document.body.classList.add('modal-open');
+      document.getElementById('custom-brand').focus();
+    }
+
+    function closeSpeakerModal() {
+      document.getElementById('speaker-modal').hidden = true;
+      document.body.classList.remove('modal-open');
+      speakerModalTrigger?.focus();
+      speakerModalTrigger = null;
+    }
+
+    function collectCustomSpeaker() {
+      const brand = document.getElementById('custom-brand').value.trim();
+      const model = document.getElementById('custom-model').value.trim();
+      if (!brand || !model) throw new Error('Marca y modelo son obligatorios.');
+      const speaker = { brand: brand.slice(0, 60), model: model.slice(0, 80) };
+      CUSTOM_SPEAKER_FIELDS.forEach(field => {
+        const input = document.getElementById(`custom-${field}`);
+        if (!input.value && !input.required) return speaker[field] = null;
+        if (!input.checkValidity()) throw new Error(`Revisa el campo ${input.closest('label').firstChild.textContent.trim()}.`);
+        speaker[field] = Number(input.value);
+      });
+      return speaker;
+    }
+
+    function saveCustomSpeaker() {
+      try {
+        const speaker = collectCustomSpeaker();
+        const idField = document.getElementById('custom-speaker-id');
+        const speakers = readCustomSpeakers();
+        const existing = speakers.findIndex(item => item.id === idField.value);
+        const record = {
+          ...speaker,
+          id: existing >= 0 ? speakers[existing].id : (crypto.randomUUID?.() || `speaker-${Date.now()}`),
+          updatedAt: new Date().toISOString(),
+        };
+        if (existing >= 0) speakers[existing] = record;
+        else speakers.push(record);
+        writeCustomSpeakers(speakers);
+        closeSpeakerModal();
+        notify(existing >= 0 ? 'Altavoz actualizado.' : 'Altavoz personalizado guardado.', 'success');
+      } catch (error) {
+        notify(error.message, 'warning');
+      }
+    }
+
+    function deleteCustomSpeaker(id) {
+      const speakers = readCustomSpeakers();
+      const speaker = speakers.find(item => item.id === id);
+      if (!speaker) return;
+      writeCustomSpeakers(speakers.filter(item => item.id !== id));
+      notify(`${speaker.brand} ${speaker.model} fue eliminado.`, 'success');
+    }
+
+    function exportCustomSpeakers() {
+      const speakers = readCustomSpeakers();
+      if (!speakers.length) return notify('No hay altavoces personalizados para exportar.', 'warning');
+      downloadJson({ version: 1, exportedAt: new Date().toISOString(), speakers }, 'speakerlab_altavoces.json');
+    }
+
+    async function importCustomSpeakers(file) {
+      if (!file) return;
+      try {
+        if (file.size > 2 * 1024 * 1024) throw new Error('El archivo supera el máximo de 2 MB.');
+        const parsed = JSON.parse(await file.text());
+        if (parsed?.version !== 1 || !Array.isArray(parsed.speakers) || parsed.speakers.length > 500) {
+          throw new Error('El archivo de altavoces no es compatible.');
+        }
+        const imported = parsed.speakers.map(raw => {
+          const brand = String(raw.brand || '').trim().slice(0, 60);
+          const model = String(raw.model || '').trim().slice(0, 80);
+          const fs = Number(raw.fs), vas = Number(raw.vas), qts = Number(raw.qts), sd = Number(raw.sd), inches = Number(raw.inches);
+          if (!brand || !model || fs < 5 || fs > 500 || vas < 0.1 || vas > 2000 || qts < 0.05 || qts > 2 || sd < 1 || sd > 5000 || inches < 1 || inches > 30) {
+            throw new Error(`Registro inválido: ${brand || 'sin marca'} ${model || 'sin modelo'}.`);
+          }
+          const record = { ...raw, brand, model, fs, vas, qts, sd, inches };
+          CUSTOM_SPEAKER_FIELDS.forEach(field => {
+            record[field] = record[field] === null || record[field] === '' ? null : Number(record[field]);
+          });
+          record.id = crypto.randomUUID?.() || `speaker-${Date.now()}-${Math.random()}`;
+          record.updatedAt = new Date().toISOString();
+          return record;
+        });
+        writeCustomSpeakers([...imported, ...readCustomSpeakers()]);
+        notify(`${imported.length} altavoces importados.`, 'success');
+      } catch (error) {
+        notify(`No se pudo importar: ${error.message}`, 'error', 6000);
+      } finally {
+        document.getElementById('speakers-import').value = '';
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+    }
+
     function renderDB() {
       const tbody = document.getElementById('db-tbody');
+      const customCount = DB.filter(speaker => speaker.custom).length;
+      document.getElementById('db-summary').textContent = `${BUILTIN_DB.length} verificados · ${customCount} personalizados · parámetros T/S`;
       tbody.innerHTML = DB.map((s, i) => `<tr>
-    <td class="brand">${s.brand}</td>
-    <td>${s.model}</td>
+    <td class="brand">${escapeHtml(s.brand)}${s.custom ? '<span class="db-source">Local</span>' : ''}</td>
+    <td>${escapeHtml(s.model)}</td>
     <td class="db-size-cell">${s.inches}"</td>
     <td class="num">${s.fs}</td>
     <td class="num">${s.vas}</td>
@@ -1019,7 +1132,7 @@
     <td class="num">${s.bl || '—'}</td>
     <td class="num">${s.re || '—'}</td>
     <td><span class="align-badge ${s.align}">${s.align}</span></td>
-    <td><button class="db-use-btn" data-use-speaker="${i}">Usar →</button></td>
+    <td><div class="db-row-actions"><button class="db-use-btn" data-use-speaker="${i}">Usar →</button>${s.custom ? `<button class="btn-project-action" data-edit-speaker="${s.id}">Editar</button><button class="btn-project-action danger" data-delete-speaker="${s.id}">Eliminar</button>` : ''}</div></td>
   </tr>`).join('');
     }
 
@@ -1492,16 +1605,21 @@
         openEncMenu,
         openProjectsImport: () => document.getElementById('projects-import').click(),
         openProjectsModal,
+        openSpeakerModal,
+        openSpeakersImport: () => document.getElementById('speakers-import').click(),
         runCompare,
         runScipy,
         saveLocalProject,
+        saveCustomSpeaker,
         showBackendInstructions,
+        closeSpeakerModal,
+        exportCustomSpeakers,
         updateLocalProject,
       };
 
       document.addEventListener('click', event => {
         const target = event.target.closest(
-          '[data-action], [data-view], [data-enc], [data-tip], [data-calc-box], [data-result-tab], [data-content-tab], [data-speaker-index], [data-use-speaker], [data-tip-section]'
+          '[data-action], [data-view], [data-enc], [data-tip], [data-calc-box], [data-result-tab], [data-content-tab], [data-speaker-index], [data-use-speaker], [data-tip-section], [data-edit-speaker], [data-delete-speaker]'
         );
         if (!target) return;
         if (target.dataset.action) actions[target.dataset.action]?.();
@@ -1513,6 +1631,8 @@
         else if (target.dataset.contentTab) openTab({ currentTarget: target }, target.dataset.contentTab, target.dataset.tabGroup);
         else if (target.dataset.speakerIndex) loadSpeaker(Number(target.dataset.speakerIndex));
         else if (target.dataset.useSpeaker) useFromDB(Number(target.dataset.useSpeaker));
+        else if (target.dataset.editSpeaker) openSpeakerModal(target.dataset.editSpeaker);
+        else if (target.dataset.deleteSpeaker) deleteCustomSpeaker(target.dataset.deleteSpeaker);
         else if (target.dataset.tipSection) {
           event.preventDefault();
           goToEncSection(target.dataset.tipSection);
@@ -1554,15 +1674,21 @@
       _probeBackend();
       loadDB();
       const projectsModal = document.getElementById('projects-modal');
+      const speakerModal = document.getElementById('speaker-modal');
       projectsModal.addEventListener('click', event => {
         if (event.target === projectsModal) closeProjectsModal();
       });
+      speakerModal.addEventListener('click', event => {
+        if (event.target === speakerModal) closeSpeakerModal();
+      });
       document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && !projectsModal.hidden) closeProjectsModal();
+        if (event.key === 'Escape' && !speakerModal.hidden) closeSpeakerModal();
         if (event.key === 'Escape' && document.getElementById('enc-sidebar').classList.contains('mobile-open')) {
           closeEncMenu();
         }
         if (!projectsModal.hidden) trapFocus(projectsModal, event);
+        if (!speakerModal.hidden) trapFocus(speakerModal, event);
         const encSidebar = document.getElementById('enc-sidebar');
         if (encSidebar.classList.contains('mobile-open')) trapFocus(encSidebar, event);
       });
@@ -1579,6 +1705,9 @@
       });
       document.getElementById('projects-import').addEventListener('change', event => {
         importProjectsFile(event.target.files?.[0]);
+      });
+      document.getElementById('speakers-import').addEventListener('change', event => {
+        importCustomSpeakers(event.target.files?.[0]);
       });
       window.addEventListener('beforeunload', event => {
         if (!projectDirty) return;
