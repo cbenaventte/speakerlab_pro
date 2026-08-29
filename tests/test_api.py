@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from api.index import (
     AlignmentRequest,
     DriverParams,
+    PDFRequest,
     SimulateRequest,
     api_simulate,
     frontend_config,
@@ -44,6 +45,13 @@ class ApiContractTests(unittest.TestCase):
         response = asyncio.run(frontend_config())
         self.assertEqual(response["access"], "free")
         self.assertTrue(response["pdf_enabled"])
+
+    def test_simulation_and_pdf_accept_supported_languages(self):
+        driver = reference_driver()
+        self.assertEqual(SimulateRequest(driver=driver, language="en").language, "en")
+        self.assertEqual(PDFRequest(driver=driver, language="en").language, "en")
+        with self.assertRaises(ValidationError):
+            PDFRequest(driver=driver, language="fr")
 
     def test_canonical_speaker_database_is_available(self):
         speakers = asyncio.run(get_speakers())

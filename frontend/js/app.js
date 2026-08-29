@@ -529,15 +529,15 @@
       const De = Di + 2 * T, We = Wi + 2 * T, He = Hi + 2 * T;
 
       const pcs = [
-        { name: 'Frontal', cant: 1, w: n(We), h: n(He), note: 'Orificio del altavoz (ver ∅ nominal)' },
-        { name: 'Trasera', cant: 1, w: n(We), h: n(He), note: 'Terminal de bornes' },
-        { name: 'Tapa (superior)', cant: 1, w: n(We - 2 * T), h: n(De), note: 'Encaja entre frontal y trasera' },
-        { name: 'Base (inferior)', cant: 1, w: n(We - 2 * T), h: n(De), note: 'Encaja entre frontal y trasera' },
-        { name: 'Laterales', cant: 2, w: n(He), h: n(De), note: 'Piezas idénticas ×2' },
+        { name: t('piece_front'), cant: 1, w: n(We), h: n(He), note: t('note_speaker_hole') },
+        { name: t('piece_rear'), cant: 1, w: n(We), h: n(He), note: t('note_terminal') },
+        { name: t('piece_top'), cant: 1, w: n(We - 2 * T), h: n(De), note: t('note_between_front_rear') },
+        { name: t('piece_base'), cant: 1, w: n(We - 2 * T), h: n(De), note: t('note_between_front_rear') },
+        { name: t('piece_sides'), cant: 2, w: n(He), h: n(De), note: t('note_identical') },
       ];
 
       document.getElementById('cuts-table').innerHTML = `
-    <thead><tr><th>Pieza</th><th>Cant.</th><th>Ancho (cm)</th><th>Alto (cm)</th><th>Notas</th></tr></thead>
+    <thead><tr><th>${t('cut_piece')}</th><th>${t('quantity_short')}</th><th>${t('width_cm')}</th><th>${t('height_cm')}</th><th>${t('notes')}</th></tr></thead>
     <tbody>${pcs.map(p => `<tr>
       <td class="piece">${p.name}</td><td>${p.cant}</td>
       <td class="dims">${p.w}</td><td class="dims">${p.h}</td>
@@ -546,9 +546,9 @@
 
       const area = (2 * (We * He) + 2 * ((We - 2 * T) * De) + 2 * (He * De)) / 10000;
       document.getElementById('cuts-summary').innerHTML = `
-    <div class="sum-item"><div class="sv">${n(Vb)} L</div><div class="sl">Vb bruto</div></div>
-    <div class="sum-item"><div class="sv">${n(area * 1.15, 3)} m²</div><div class="sl">Tablero (+15% merma)</div></div>
-    <div class="sum-item"><div class="sv">${n(We)}×${n(He)}×${n(De)}</div><div class="sl">Exterior (cm)</div></div>`;
+    <div class="sum-item"><div class="sv">${n(Vb)} L</div><div class="sl">${t('gross_vb')}</div></div>
+    <div class="sum-item"><div class="sv">${n(area * 1.15, 3)} m²</div><div class="sl">${t('board_waste')}</div></div>
+    <div class="sum-item"><div class="sv">${n(We)}×${n(He)}×${n(De)}</div><div class="sl">${t('exterior_cm')}</div></div>`;
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -573,7 +573,7 @@
         spl: parseFloat(document.getElementById('spl').value) || 86,
         re: r.re || undefined,
         inches: r.inches,
-        model_name: document.getElementById('spk-search').value || 'Altavoz',
+        model_name: document.getElementById('spk-search').value || t('unnamed_driver'),
         box_type: r.boxType,
         alignment: r.alignment || undefined,
         qtc_target: r.qtcTarget || undefined,
@@ -597,6 +597,7 @@
         freq_max: 800,
         freq_points: 500,
         eg_volts: 2.83,
+        language: getLanguage(),
       };
     }
 
@@ -604,7 +605,7 @@
     async function runScipy() {
       const payload = buildDriverPayload();
       if (!payload) {
-        notify('Calcula primero antes de ejecutar la simulación científica.', 'warning');
+        notify(t('calculate_before_simulation'), 'warning');
         return;
       }
 
@@ -618,7 +619,7 @@
       loadEl.hidden = false;
       canvasEl.hidden = true;
       btnScipy.disabled = true;
-      btnScipy.textContent = '⏳ Calculando…';
+      btnScipy.textContent = `⏳ ${t('calculating')}`;
 
       try {
         const res = await fetch(`${API_BASE}/api/simulate`, {
@@ -657,7 +658,7 @@
         canvasEl.hidden = false;
         drawChartFromData(sciPyData);
         renderExcursionChart(sciPyData);
-        notify('Simulación científica completada.', 'success');
+        notify(t('simulation_success'), 'success');
 
       } catch (err) {
         loadEl.hidden = true;
@@ -665,20 +666,20 @@
         // Backend no disponible — mostrar aviso suave, no error rojo
         const isConnErr = err.message === 'Failed to fetch' || err.message.includes('NetworkError');
         if (isConnErr) {
-          errEl.innerHTML = `⚗️ Backend scipy no conectado — mostrando gráfica JS aproximada.
+          errEl.innerHTML = `⚗️ ${t('scipy_disconnected')}
         <a href="https://github.com/cbenaventte/speakerlab_pro" target="_blank" rel="noopener" class="simulation-help-link">
-        Ver instrucciones de arranque →</a>`;
+        ${t('startup_instructions')}</a>`;
           errEl.className = 'u-inline-09 simulation-message-info';
         } else {
-          errEl.innerHTML = `❌ Error scipy: <strong>${err.message}</strong>`;
-          notify(`Error de simulación: ${err.message}`, 'error');
+          errEl.innerHTML = `❌ <strong>${t('scipy_error', { error: err.message })}</strong>`;
+          notify(t('simulation_error', { error: err.message }), 'error');
           errEl.className = 'u-inline-09 simulation-message-error';
         }
         errEl.hidden = false;
         drawChart(calcResults);   // fallback a la gráfica JS
       } finally {
         btnScipy.disabled = false;
-        btnScipy.textContent = '⚗️ Simular con scipy';
+        btnScipy.innerHTML = `⚗️ <span data-i18n="simulate_scipy">${t('simulate_scipy')}</span>`;
       }
     }
 
@@ -686,12 +687,12 @@
     async function runCompare() {
       const payload = buildDriverPayload();
       if (!payload) {
-        notify('Calcula primero para poder comparar alineamientos.', 'warning');
+        notify(t('calculate_before_compare'), 'warning');
         return;
       }
       const btn = document.getElementById('btn-compare');
       const errEl = document.getElementById('compare-error');
-      btn.textContent = '⏳ Analizando...';
+      btn.textContent = `⏳ ${t('analyze')}`;
       btn.disabled = true;
       errEl.hidden = true;
 
@@ -711,7 +712,7 @@
           const info = data.curves[align];
           if (!info || info.error) continue;
           html += `<tr>
-        <td class="compare-align compare-align-${align.toLowerCase()}">${align} ${align === 'Closed' ? '(Sellada)' : ''}</td>
+        <td class="compare-align compare-align-${align.toLowerCase()}">${align} ${align === 'Closed' ? `(${t('sealed')})` : ''}</td>
         <td class="dims">${n(info.vb)} L</td>
         <td class="dims">${align === 'Closed' ? 'Qtc ' + n(info.qtc, 3) : n(info.fb) + ' Hz'}</td>
         <td class="dims">${n(info.f3)} Hz</td>
@@ -783,13 +784,13 @@
         }
 
         document.getElementById('compare-results').hidden = false;
-        notify('Comparación de alineamientos completada.', 'success');
+        notify(t('comparison_success'), 'success');
       } catch (e) {
-        errEl.textContent = '❌ Error de API: ' + e.message;
+        errEl.textContent = `❌ ${t('api_error', { error: e.message })}`;
         errEl.hidden = false;
-        notify(`No se pudo completar la comparación: ${e.message}`, 'error');
+        notify(t('comparison_error', { error: e.message }), 'error');
       } finally {
-        btn.textContent = 'Analizar las 4 alineaciones (Scipy)';
+        btn.innerHTML = `<span data-i18n="compare_four">${t('compare_four')}</span>`;
         btn.disabled = false;
       }
     }
@@ -1026,7 +1027,7 @@
         const calculator = document.getElementById(field);
         document.getElementById(`custom-${field}`).value = custom?.[field] ?? calculator?.value ?? '';
       });
-      document.getElementById('speaker-modal-title').textContent = custom ? 'Editar altavoz personalizado' : 'Añadir altavoz personalizado';
+      document.getElementById('speaker-modal-title').textContent = custom ? t('custom_speaker_edit') : t('custom_speaker_add');
       document.getElementById('speaker-modal').hidden = false;
       document.body.classList.add('modal-open');
       document.getElementById('custom-brand').focus();
@@ -1042,12 +1043,12 @@
     function collectCustomSpeaker() {
       const brand = document.getElementById('custom-brand').value.trim();
       const model = document.getElementById('custom-model').value.trim();
-      if (!brand || !model) throw new Error('Marca y modelo son obligatorios.');
+      if (!brand || !model) throw new Error(t('brand_model_required'));
       const speaker = { brand: brand.slice(0, 60), model: model.slice(0, 80) };
       CUSTOM_SPEAKER_FIELDS.forEach(field => {
         const input = document.getElementById(`custom-${field}`);
         if (!input.value && !input.required) return speaker[field] = null;
-        if (!input.checkValidity()) throw new Error(`Revisa el campo ${input.closest('label').firstChild.textContent.trim()}.`);
+        if (!input.checkValidity()) throw new Error(t('review_field', { field: input.closest('label').firstChild.textContent.trim() }));
         speaker[field] = Number(input.value);
       });
       return speaker;
@@ -1068,7 +1069,7 @@
         else speakers.push(record);
         writeCustomSpeakers(speakers);
         closeSpeakerModal();
-        notify(existing >= 0 ? 'Altavoz actualizado.' : 'Altavoz personalizado guardado.', 'success');
+        notify(existing >= 0 ? t('speaker_updated') : t('speaker_saved'), 'success');
       } catch (error) {
         notify(error.message, 'warning');
       }
@@ -1079,29 +1080,29 @@
       const speaker = speakers.find(item => item.id === id);
       if (!speaker) return;
       writeCustomSpeakers(speakers.filter(item => item.id !== id));
-      notify(`${speaker.brand} ${speaker.model} fue eliminado.`, 'success');
+      notify(t('speaker_deleted', { speaker: `${speaker.brand} ${speaker.model}` }), 'success');
     }
 
     function exportCustomSpeakers() {
       const speakers = readCustomSpeakers();
-      if (!speakers.length) return notify('No hay altavoces personalizados para exportar.', 'warning');
+      if (!speakers.length) return notify(t('no_custom_speakers'), 'warning');
       downloadJson({ version: 1, exportedAt: new Date().toISOString(), speakers }, 'speakerlab_altavoces.json');
     }
 
     async function importCustomSpeakers(file) {
       if (!file) return;
       try {
-        if (file.size > 2 * 1024 * 1024) throw new Error('El archivo supera el máximo de 2 MB.');
+        if (file.size > 2 * 1024 * 1024) throw new Error(t('file_too_large'));
         const parsed = JSON.parse(await file.text());
         if (parsed?.version !== 1 || !Array.isArray(parsed.speakers) || parsed.speakers.length > 500) {
-          throw new Error('El archivo de altavoces no es compatible.');
+          throw new Error(t('incompatible_speakers'));
         }
         const imported = parsed.speakers.map(raw => {
           const brand = String(raw.brand || '').trim().slice(0, 60);
           const model = String(raw.model || '').trim().slice(0, 80);
           const fs = Number(raw.fs), vas = Number(raw.vas), qts = Number(raw.qts), sd = Number(raw.sd), inches = Number(raw.inches);
           if (!brand || !model || fs < 5 || fs > 500 || vas < 0.1 || vas > 2000 || qts < 0.05 || qts > 2 || sd < 1 || sd > 5000 || inches < 1 || inches > 30) {
-            throw new Error(`Registro inválido: ${brand || 'sin marca'} ${model || 'sin modelo'}.`);
+            throw new Error(t('invalid_record', { brand: brand || t('no_brand'), model: model || t('no_model') }));
           }
           const record = { ...raw, brand, model, fs, vas, qts, sd, inches };
           CUSTOM_SPEAKER_FIELDS.forEach(field => {
@@ -1112,9 +1113,9 @@
           return record;
         });
         writeCustomSpeakers([...imported, ...readCustomSpeakers()]);
-        notify(`${imported.length} altavoces importados.`, 'success');
+        notify(t('speakers_imported', { count: imported.length }), 'success');
       } catch (error) {
-        notify(`No se pudo importar: ${error.message}`, 'error', 6000);
+        notify(t('import_error_short', { error: error.message }), 'error', 6000);
       } finally {
         document.getElementById('speakers-import').value = '';
       }
@@ -1127,9 +1128,9 @@
     function renderDB() {
       const tbody = document.getElementById('db-tbody');
       const customCount = DB.filter(speaker => speaker.custom).length;
-      document.getElementById('db-summary').textContent = `${BUILTIN_DB.length} verificados · ${customCount} personalizados · parámetros T/S`;
+      document.getElementById('db-summary').textContent = t('database_summary', { verified: BUILTIN_DB.length, custom: customCount });
       tbody.innerHTML = DB.map((s, i) => `<tr>
-    <td class="brand">${escapeHtml(s.brand)}${s.custom ? '<span class="db-source">Local</span>' : ''}</td>
+    <td class="brand">${escapeHtml(s.brand)}${s.custom ? `<span class="db-source">${t('local')}</span>` : ''}</td>
     <td>${escapeHtml(s.model)}</td>
     <td class="db-size-cell">${s.inches}"</td>
     <td class="num">${s.fs}</td>
@@ -1143,7 +1144,7 @@
     <td class="num">${s.bl || '—'}</td>
     <td class="num">${s.re || '—'}</td>
     <td><span class="align-badge ${s.align}">${s.align}</span></td>
-    <td><div class="db-row-actions"><button class="db-use-btn" data-use-speaker="${i}">Usar →</button>${s.custom ? `<button class="btn-project-action" data-edit-speaker="${s.id}">Editar</button><button class="btn-project-action danger" data-delete-speaker="${s.id}">Eliminar</button>` : ''}</div></td>
+    <td><div class="db-row-actions"><button class="db-use-btn" data-use-speaker="${i}">${t('use')}</button>${s.custom ? `<button class="btn-project-action" data-edit-speaker="${s.id}">${t('edit')}</button><button class="btn-project-action danger" data-delete-speaker="${s.id}">${t('delete')}</button>` : ''}</div></td>
   </tr>`).join('');
     }
 
@@ -1152,7 +1153,7 @@
       setView('calc');
       const s = DB[idx];
       const banner = document.getElementById('context-banner');
-      document.getElementById('context-msg').textContent = `Cargado desde la Base de Datos: ${s.brand} ${s.model}`;
+      document.getElementById('context-msg').textContent = t('loaded_from_database', { speaker: `${s.brand} ${s.model}` });
       banner.classList.add('show');
     }
 
@@ -1192,18 +1193,18 @@
     /* ── Descarga libre del PDF ──────────────────────────────── */
     async function downloadPDF() {
       if (!calcResults) {
-        notify('Primero calcula la caja de tu altavoz.', 'warning');
+        notify(t('pdf_calculate_first'), 'warning');
         return;
       }
       const payload = buildDriverPayload();
       if (!payload) return;
       const buttons = [...document.querySelectorAll('[data-pdf-download]')];
-      buttons.forEach(button => setButtonBusy(button, true, 'Generando PDF…'));
+      buttons.forEach(button => setButtonBusy(button, true, t('pdf_generating')));
       try {
         const response = await fetch(`${API_BASE}/api/pdf`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ driver: payload.driver }),
+          body: JSON.stringify({ driver: payload.driver, language: getLanguage() }),
         });
         if (!response.ok) {
           const error = await response.json();
@@ -1217,9 +1218,9 @@
         link.download = `speakerlab_${model}.pdf`;
         link.click();
         URL.revokeObjectURL(url);
-        notify('PDF generado. La descarga comenzará automáticamente.', 'success');
+        notify(t('pdf_success'), 'success');
       } catch (error) {
-        notify(`No se pudo generar el PDF: ${error.message}`, 'error', 6000);
+        notify(t('pdf_error', { error: error.message }), 'error', 6000);
       } finally {
         buttons.forEach(button => setButtonBusy(button, false));
       }
@@ -1237,6 +1238,7 @@
     let projectBaseline = null;
     let projectDirty = false;
     let draftSaveTimer = null;
+    let draftWasRestored = false;
 
     function readLocalProjects() {
       try {
@@ -1252,7 +1254,7 @@
         localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
         return true;
       } catch (_) {
-        notify('No hay espacio disponible para guardar más proyectos.', 'error');
+        notify(t('no_storage_space'), 'error');
         return false;
       }
     }
@@ -1264,7 +1266,8 @@
     function updateDraftStatus(updatedAt, restored = false) {
       const status = document.getElementById('draft-status');
       const date = new Date(updatedAt);
-      document.getElementById('draft-status-text').textContent = `${restored ? 'Borrador recuperado' : 'Borrador guardado'} · ${date.toLocaleString()}`;
+      draftWasRestored = restored;
+      document.getElementById('draft-status-text').textContent = `${t(restored ? 'draft_restored' : 'draft_saved')} · ${date.toLocaleString(getLanguage() === 'en' ? 'en-US' : 'es-CL')}`;
       status.hidden = false;
     }
 
@@ -1280,7 +1283,7 @@
         localStorage.setItem(CALCULATOR_DRAFT_KEY, JSON.stringify({ version: 1, updatedAt, form }));
         updateDraftStatus(updatedAt);
       } catch (_) {
-        notify('No se pudo guardar el borrador automático.', 'warning');
+        notify(t('draft_save_error'), 'warning');
       }
     }
 
@@ -1308,7 +1311,7 @@
     function clearCalculatorDraft() {
       localStorage.removeItem(CALCULATOR_DRAFT_KEY);
       document.getElementById('draft-status').hidden = true;
-      notify('La copia automática fue eliminada; el formulario actual no cambió.', 'success');
+      notify(t('draft_deleted'), 'success');
     }
 
     function currentProjectSummary() {
@@ -1326,8 +1329,8 @@
       const status = document.getElementById('project-edit-status');
       updateButton.disabled = !project;
       status.textContent = project
-        ? `Seleccionado: ${project.name}${projectDirty ? ' · cambios sin guardar' : ''}`
-        : 'Ningún proyecto seleccionado.';
+        ? `${t('selected_project', { name: project.name })}${projectDirty ? ` · ${t('unsaved_changes')}` : ''}`
+        : t('no_project_selected');
     }
 
     function projectId() {
@@ -1356,12 +1359,12 @@
       const nameField = document.getElementById('project-name');
       const name = nameField.value.trim();
       if (!calcResults) {
-        notify('Calcula un diseño antes de guardarlo.', 'warning');
+        notify(t('calculate_before_save'), 'warning');
         closeProjectsModal();
         return;
       }
       if (!name) {
-        notify('Escribe un nombre para el proyecto.', 'warning');
+        notify(t('enter_project_name'), 'warning');
         nameField.focus();
         return;
       }
@@ -1384,15 +1387,15 @@
       saveCalculatorDraft();
       renderProjectsList();
       refreshProjectEditState();
-      notify(`Proyecto “${project.name}” guardado localmente.`, 'success');
+      notify(t('project_saved', { name: project.name }), 'success');
     }
 
     function updateLocalProject() {
       const projects = readLocalProjects();
       const project = projects.find(item => item.id === activeProjectId);
-      if (!project) return notify('Selecciona primero un proyecto guardado.', 'warning');
+      if (!project) return notify(t('select_saved_project'), 'warning');
       const name = document.getElementById('project-name').value.trim();
-      if (!name) return notify('Escribe un nombre para el proyecto.', 'warning');
+      if (!name) return notify(t('enter_project_name'), 'warning');
       project.name = name.slice(0, 80);
       project.updatedAt = new Date().toISOString();
       project.form = collectProjectForm();
@@ -1402,13 +1405,13 @@
       projectDirty = false;
       renderProjectsList();
       refreshProjectEditState();
-      notify(`Proyecto “${project.name}” actualizado.`, 'success');
+      notify(t('project_updated', { name: project.name }), 'success');
     }
 
     async function loadLocalProject(id) {
       const project = readLocalProjects().find(item => item.id === id);
-      if (!project) return notify('El proyecto ya no existe.', 'error');
-      if (projectDirty && activeProjectId !== id && !window.confirm('Hay cambios sin guardar. ¿Quieres cargar otro proyecto?')) return;
+      if (!project) return notify(t('project_missing'), 'error');
+      if (projectDirty && activeProjectId !== id && !window.confirm(t('confirm_load_changes'))) return;
       Object.entries(project.form || {}).forEach(([fieldId, value]) => {
         const field = document.getElementById(fieldId);
         if (field) field.value = value;
@@ -1423,14 +1426,14 @@
       setView('calc');
       closeProjectsModal();
       await calculate();
-      notify(`Proyecto “${project.name}” recuperado.`, 'success');
+      notify(t('project_restored', { name: project.name }), 'success');
     }
 
     function deleteLocalProject(id) {
       const projects = readLocalProjects();
       const project = projects.find(item => item.id === id);
-      if (!project) return notify('El proyecto ya no existe.', 'error');
-      if (!window.confirm(`¿Eliminar definitivamente “${project.name}” de este dispositivo?`)) return;
+      if (!project) return notify(t('project_missing'), 'error');
+      if (!window.confirm(t('confirm_delete_project', { name: project.name }))) return;
       const remaining = projects.filter(item => item.id !== id);
       if (!writeLocalProjects(remaining)) return;
       if (activeProjectId === id) {
@@ -1441,18 +1444,18 @@
       }
       renderProjectsList();
       refreshProjectEditState();
-      notify(`Proyecto “${project.name}” eliminado.`, 'success');
+      notify(t('project_deleted', { name: project.name }), 'success');
     }
 
     function duplicateLocalProject(id) {
       const projects = readLocalProjects();
       const source = projects.find(item => item.id === id);
-      if (!source) return notify('El proyecto ya no existe.', 'error');
+      if (!source) return notify(t('project_missing'), 'error');
       const now = new Date().toISOString();
       const copy = {
         ...source,
         id: projectId(),
-        name: `${source.name} — copia`.slice(0, 80),
+        name: `${source.name} — ${t('copy_suffix')}`.slice(0, 80),
         createdAt: now,
         updatedAt: now,
         form: { ...source.form },
@@ -1461,7 +1464,7 @@
       projects.unshift(copy);
       if (writeLocalProjects(projects)) {
         renderProjectsList();
-        notify(`Proyecto duplicado como “${copy.name}”.`, 'success');
+        notify(t('project_duplicated', { name: copy.name }), 'success');
       }
     }
 
@@ -1481,28 +1484,28 @@
 
     function exportLocalProject(id) {
       const project = readLocalProjects().find(item => item.id === id);
-      if (!project) return notify('El proyecto ya no existe.', 'error');
+      if (!project) return notify(t('project_missing'), 'error');
       downloadJson(project, `speakerlab_${safeProjectFilename(project.name)}.json`);
-      notify('Proyecto exportado como JSON.', 'success');
+      notify(t('project_exported'), 'success');
     }
 
     function exportAllProjects() {
       const projects = readLocalProjects();
-      if (!projects.length) return notify('No hay proyectos para exportar.', 'warning');
+      if (!projects.length) return notify(t('no_projects_export'), 'warning');
       downloadJson({ version: 1, exportedAt: new Date().toISOString(), projects }, 'speakerlab_proyectos.json');
-      notify('Todos los proyectos fueron exportados.', 'success');
+      notify(t('all_projects_exported'), 'success');
     }
 
     function normalizeImportedProject(raw) {
       if (!raw || raw.version !== 1 || typeof raw.name !== 'string' || !raw.name.trim() || typeof raw.form !== 'object') {
-        throw new Error('El archivo contiene un proyecto incompatible');
+        throw new Error(t('incompatible_project'));
       }
       const form = {};
       PROJECT_FIELD_IDS.forEach(id => {
         const value = raw.form[id];
         form[id] = value === undefined || value === null ? '' : String(value).slice(0, 200);
       });
-      if (!form.fs || !form.vas || !form.qts) throw new Error(`El proyecto “${raw.name}” no contiene Fs, Vas y Qts`);
+      if (!form.fs || !form.vas || !form.qts) throw new Error(t('project_missing_params', { name: raw.name }));
       const now = new Date().toISOString();
       const summary = raw.summary && typeof raw.summary === 'object' ? raw.summary : {};
       return {
@@ -1523,18 +1526,18 @@
 
     async function importProjectsFile(file) {
       if (!file) return;
-      if (file.size > 2 * 1024 * 1024) return notify('El archivo JSON supera el máximo de 2 MB.', 'error');
+      if (file.size > 2 * 1024 * 1024) return notify(t('projects_file_too_large'), 'error');
       try {
         const parsed = JSON.parse(await file.text());
         const rawProjects = Array.isArray(parsed?.projects) ? parsed.projects : [parsed];
-        if (!rawProjects.length || rawProjects.length > 200) throw new Error('Cantidad de proyectos inválida');
+        if (!rawProjects.length || rawProjects.length > 200) throw new Error(t('invalid_project_count'));
         const imported = rawProjects.map(normalizeImportedProject);
         const projects = [...imported, ...readLocalProjects()];
         if (!writeLocalProjects(projects)) return;
         renderProjectsList();
-        notify(`${imported.length} ${imported.length === 1 ? 'proyecto importado' : 'proyectos importados'}.`, 'success');
+        notify(t(imported.length === 1 ? 'project_imported_one' : 'project_imported_many', { count: imported.length }), 'success');
       } catch (error) {
-        notify(`No se pudo importar el archivo: ${error.message}`, 'error', 6000);
+        notify(t('import_file_error', { error: error.message }), 'error', 6000);
       } finally {
         document.getElementById('projects-import').value = '';
       }
@@ -1553,7 +1556,7 @@
       const projects = readLocalProjects();
       const list = document.getElementById('projects-list');
       const empty = document.getElementById('projects-empty');
-      document.getElementById('projects-count').textContent = `${projects.length} ${projects.length === 1 ? 'proyecto' : 'proyectos'}`;
+      document.getElementById('projects-count').textContent = t(projects.length === 1 ? 'projects_count_one' : 'projects_count_many', { count: projects.length });
       empty.hidden = projects.length > 0;
       list.replaceChildren();
       projects.forEach(project => {
@@ -1565,16 +1568,16 @@
         title.textContent = project.name;
         const details = document.createElement('small');
         const summary = project.summary || {};
-        const updated = project.updatedAt ? new Date(project.updatedAt).toLocaleString() : 'fecha desconocida';
-        details.textContent = `${summary.boxType === 'closed' ? 'Sellada' : 'Bass-reflex'} · Vb ${n(summary.vb)} L · F3 ${n(summary.f3)} Hz · ${updated}`;
+        const updated = project.updatedAt ? new Date(project.updatedAt).toLocaleString(getLanguage() === 'en' ? 'en-US' : 'es-CL') : t('unknown_date');
+        details.textContent = `${summary.boxType === 'closed' ? t('sealed') : 'Bass-reflex'} · Vb ${n(summary.vb)} L · F3 ${n(summary.f3)} Hz · ${updated}`;
         meta.append(title, details);
         const actions = document.createElement('div');
         actions.className = 'project-actions';
         actions.append(
-          projectAction('Cargar', () => loadLocalProject(project.id)),
-          projectAction('Duplicar', () => duplicateLocalProject(project.id)),
+          projectAction(t('load'), () => loadLocalProject(project.id)),
+          projectAction(t('duplicate'), () => duplicateLocalProject(project.id)),
           projectAction('JSON', () => exportLocalProject(project.id)),
-          projectAction('Eliminar', () => deleteLocalProject(project.id), 'danger'),
+          projectAction(t('delete'), () => deleteLocalProject(project.id), 'danger'),
         );
         item.append(meta, actions);
         list.appendChild(item);
@@ -1781,6 +1784,19 @@
       document.addEventListener('speakerlab:languagechange', () => {
         clearFieldErrors();
         if (calcResults) renderCalculationResults(calcResults);
+        renderDB();
+        renderProjectsList();
+        refreshProjectEditState();
+        let draft = null;
+        try { draft = JSON.parse(localStorage.getItem(CALCULATOR_DRAFT_KEY) || 'null'); } catch (_) { /* ignore invalid draft */ }
+        if (draft?.updatedAt && !document.getElementById('draft-status').hidden) {
+          updateDraftStatus(draft.updatedAt, draftWasRestored);
+        }
+        const speakerModal = document.getElementById('speaker-modal');
+        if (!speakerModal.hidden) {
+          document.getElementById('speaker-modal-title').textContent = document.getElementById('custom-speaker-id').value
+            ? t('custom_speaker_edit') : t('custom_speaker_add');
+        }
       });
       window.addEventListener('beforeunload', event => {
         window.clearTimeout(draftSaveTimer);
@@ -1803,9 +1819,9 @@
             btn.hidden = false;
             btn.classList.remove('backend-unavailable');
             btn.dataset.action = 'runScipy';
-            btn.title = 'Backend scipy disponible';
+            btn.title = t('backend_available');
           }
-          if (badge) { badge.title = 'Conectado al backend'; }
+          if (badge) { badge.title = t('backend_connected'); }
         } else {
           _hideScipy();
         }
@@ -1817,8 +1833,8 @@
     function _hideScipy() {
       const btn = document.getElementById('btn-scipy');
       if (btn) {
-        btn.textContent = '⚗️ scipy (sin backend)';
-        btn.title = 'Arranca uvicorn api.index:app --port 8000 para activar la simulación precisa';
+        btn.textContent = `⚗️ ${t('scipy_no_backend')}`;
+        btn.title = t('scipy_start_title');
         btn.classList.add('backend-unavailable');
         btn.dataset.action = 'showBackendInstructions';
       }
@@ -1826,8 +1842,8 @@
 
     function showBackendInstructions() {
       const message = document.getElementById('chart-api-error');
-      message.innerHTML = `⚗️ El backend Python no está corriendo.<br>
-        <small>Lanza: <code>uvicorn api.index:app --reload --port 8000</code></small>`;
+      message.innerHTML = `⚗️ ${t('backend_not_running')}<br>
+        <small>${t('launch_command')} <code>uvicorn api.index:app --reload --port 8000</code></small>`;
       message.className = 'u-inline-09 simulation-message-info';
       message.hidden = false;
     }

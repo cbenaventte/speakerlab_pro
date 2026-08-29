@@ -9,6 +9,7 @@ I18N = (ROOT / "frontend" / "js" / "i18n.js").read_text()
 LOCALE_ES = (ROOT / "frontend" / "js" / "locales" / "es.js").read_text()
 LOCALE_EN = (ROOT / "frontend" / "js" / "locales" / "en.js").read_text()
 CSS = (ROOT / "frontend" / "css" / "app.css").read_text()
+PDF_GENERATOR = (ROOT / "api" / "pdf_generator.py").read_text()
 
 
 class FrontendExperienceTests(unittest.TestCase):
@@ -36,6 +37,19 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn("nav_calculator", LOCALE_EN)
         self.assertIn("function renderCalculationResults", JS)
 
+    def test_second_bilingual_stage_covers_local_tools_and_pdf(self):
+        for key in (
+            "database_title", "local_projects", "speaker_add", "project_saved",
+            "simulation_success", "cut_piece", "pdf_success",
+        ):
+            self.assertIn(key, LOCALE_ES)
+            self.assertIn(key, LOCALE_EN)
+        self.assertIn("language: getLanguage()", JS)
+        self.assertIn("body: JSON.stringify({ driver: payload.driver, language: getLanguage() })", JS)
+        self.assertIn('"language": d.get("language", "es")', PDF_GENERATOR)
+        self.assertIn("PDF_EN", PDF_GENERATOR)
+        self.assertIn('VALID_BOX_TYPES = {"reflex", "closed"}', PDF_GENERATOR)
+
     def test_calculator_controls_have_associated_labels(self):
         self.assertIn('for="spk-search"', HTML)
         for field_id in ("fs", "vas", "qts", "qes", "qms", "xmax", "sd", "boxType", "material"):
@@ -49,7 +63,7 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn('id="btn-calculate"', HTML)
         self.assertGreaterEqual(HTML.count("data-pdf-download"), 2)
         self.assertIn("setButtonBusy(calculateButton, true", JS)
-        self.assertIn("setButtonBusy(button, true, 'Generando PDF…')", JS)
+        self.assertIn("setButtonBusy(button, true, t('pdf_generating'))", JS)
 
     def test_inline_field_validation_is_accessible(self):
         self.assertIn("function validateCalculatorForm()", JS)

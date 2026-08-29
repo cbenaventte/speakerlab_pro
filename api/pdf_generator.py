@@ -55,6 +55,53 @@ from reportlab.pdfgen import canvas as rl_canvas
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("SpeakerLabPro")
 
+PDF_EN = {
+    "unnamed_driver": "Unnamed Driver", "design_plan": "Design Plan", "page": "Page",
+    "box_type": "Enclosure type", "reflex": "Reflex (Bass Reflex)", "sealed": "Sealed (Closed Box)",
+    "alignment": "Alignment", "ts_parameters": "THIELE/SMALL PARAMETERS",
+    "acoustic_results": "ACOUSTIC RESULTS", "tuning_fb": "Fb (tuning)", "actual_qtc": "Actual Qtc",
+    "net_vb": "Net Vb", "gross_vb": "Gross Vb", "max_spl": "Max. SPL",
+    "frequency_response": "SIMULATED FREQUENCY RESPONSE",
+    "chart_note": "Simplified curve based on the Thiele/Small alignment. For accurate simulation (FRD), export the parameters to VituixCAD, WinISD, or REW.",
+    "frequency": "Frequency (Hz)", "level": "Level (dB)", "chart_title": "Simulated Frequency Response",
+    "box_diagram": "ENCLOSURE DIAGRAM (EXTERNAL)", "dimensions": "DIMENSIONS",
+    "external_width": "External width (W)", "external_height": "External height (H)", "external_depth": "External depth (D)",
+    "internal_width": "Internal width", "internal_height": "Internal height", "internal_depth": "Internal depth", "thickness": "Thickness (T)",
+    "pieces_diagram": "CUT PIECES — INDIVIDUAL VIEW", "cut_plans": "CUT PLANS — BUTT-JOINT METHOD",
+    "material_line": "Material: <b>{material}</b>  ·  Thickness T = {thickness} mm  ·  Acoustic ratio H:W:D = 1.59:1.26:1.00",
+    "piece": "PIECE", "qty": "QTY.", "width_cm": "WIDTH (cm)", "height_cm": "HEIGHT (cm)",
+    "width_mm": "WIDTH (mm)", "height_mm": "HEIGHT (mm)", "notes": "NOTES",
+    "board_required": "Board required (no allowance)", "board_recommended": "Recommended board (+15% waste)",
+    "gross_dimensions": "Gross Vb (for dimensions)", "net_acoustic": "Net Vb (acoustic)",
+    "port_section": "BASS REFLEX PORT", "circular": "Circular", "port_length": "Tube/slot length", "port_type": "Port type",
+    "port_area": "Area of each port (Sp)", "total_area": "Total area ({count} port/s)", "equivalent_diameter": "Equivalent diameter",
+    "port_velocity": "Port air velocity", "tuning_frequency": "Tuning frequency Fb", "pipe_resonance": "Pipe resonance",
+    "fill_foam": "{value} Hz — fill 1/3 with foam", "limit": "Limit", "turbulence": "Turbulence",
+    "diagnostics": "DIAGNOSTICS AND STATUS", "parameter": "PARAMETER", "value": "VALUE", "diagnostic": "DIAGNOSTIC",
+    "both": "Either", "prefer_sealed": "Sealed", "no_turbulence": "No turbulence", "acceptable_limit": "Acceptable limit",
+    "keele_estimate": "Keele 1975 estimate", "serious_subwoofer": "High-displacement subwoofer", "medium_woofer": "Medium-displacement woofer",
+    "flat": "Flat", "slight_peak": "Slight peak", "strong_peak": "Pronounced peak", "shelving": "Compensate with a shelving filter",
+    "assembly_notes": "ASSEMBLY NOTES", "not_required_sealed": "Not required (sealed)",
+    "cut_order_title": "1. Recommended cutting order", "cut_order": "Front → Rear → Top → Bottom → Sides. Start with the largest pieces to use the board efficiently.",
+    "driver_hole_title": "2. Driver cutout", "driver_hole": "Estimated cutout diameter: {value} cm (verify against the driver's datasheet). Use a hole saw or jigsaw with a circle guide.",
+    "sealing_title": "3. Sealing", "sealing": "Apply acrylic sealant or silicone to every internal joint before final assembly, especially the rear corners.",
+    "bracing_title": "4. Internal bracing", "bracing": "For enclosures over 20 L, add a central 4×4 cm brace between the side panels to reduce panel resonance (the 5% allowance is already included in gross Vb).",
+    "damping_title": "5. Damping material", "damping": "Fill 30–50% of the internal volume with fiberglass or open-cell foam (do not block the port in reflex enclosures).",
+    "port_note_title": "6. Bass reflex port", "sealed_note_title": "6. Sealed enclosure",
+    "port_note": "Exact tube length: {value} cm. Measure from the inside of the baffle to the end of the tube. The tube must not touch the rear panel.",
+    "sealed_note": "Make sure there are no air leaks. Check the joints by hand while playing music at high volume.",
+    "subsonic_title": "7. Subsonic filter", "terminal_title": "8. Terminal cup",
+    "terminal": "Install it on the rear panel. Use cable with a minimum cross-section of 2.5 mm² for internal wiring.",
+    "piece_front": "Front (Baffle)", "piece_rear": "Rear", "piece_side": "Side (×2)", "piece_top": "Top", "piece_bottom": "Bottom",
+    "speaker_hole": "Driver cutout", "and_port": " + port", "terminal_hole": "Terminal cup cutout",
+    "between_front_rear": "Fits between front and rear", "between_walls": "Fits between the 4 vertical walls"
+}
+
+def pt(source: dict, key: str, es: str | None = None, **values) -> str:
+    if source.get("language") == "en":
+        return PDF_EN.get(key, key).format(**values)
+    return (es or key).format(**values)
+
 # ─────────────────────────────────────────────
 #  Paleta de colores
 # ─────────────────────────────────────────────
@@ -73,7 +120,7 @@ BLACK    = colors.black
 # ══════════════════════════════════════════════════════════════
 #  0. VALIDACIÓN DE ENTRADA
 # ══════════════════════════════════════════════════════════════
-VALID_BOX_TYPES = {"reflex", "sealed"}
+VALID_BOX_TYPES = {"reflex", "closed"}
 VALID_ALIGNMENTS = {"QB3", "SBB4", "B4"}
 VALID_PORT_TYPES = {"circular", "slot"}
 
@@ -129,7 +176,8 @@ def validate_input(d: dict) -> dict:
         if qtc_t <= qts:
             raise ValidationError(f"Para caja sellada, qtc_target ({qtc_t}) debe ser > qts ({qts}).")
 
-    clean.setdefault("model_name", "Altavoz Sin Nombre")
+    clean["language"] = "en" if clean.get("language") == "en" else "es"
+    clean.setdefault("model_name", "Unnamed Driver" if clean["language"] == "en" else "Altavoz Sin Nombre")
     clean.setdefault("material_name", f"MDF {clean['material_mm']}mm")
     return clean
 
@@ -189,7 +237,8 @@ def calc_acoustics(d: dict) -> dict:
     k         = d.get("k_factor", 0.732)
     N         = d.get("num_ports", 1)
 
-    r = {"fs": fs, "vas": vas, "qts": qts, "T": T, "T_mm": T_mm, "box_type": box}
+    r = {"fs": fs, "vas": vas, "qts": qts, "T": T, "T_mm": T_mm, "box_type": box,
+         "language": d.get("language", "es")}
     Vdriver = 0.0035 * inch ** 2.8
     Vd = sd * (xmax / 10.0) if (sd and xmax) else None
     EBP = fs / qes if qes else None
@@ -300,16 +349,16 @@ def calc_acoustics(d: dict) -> dict:
 
 def _calc_pieces(W_ext, H_ext, D_ext, T, r) -> List[dict]:
     return [
-        {"name": "Frontal (Baffle)", "qty": 1, "w_cm": W_ext, "h_cm": H_ext,
-         "note": "Orificio altavoz" + (" + puerto" if r["box_type"] == "reflex" else "")},
-        {"name": "Trasera", "qty": 1, "w_cm": W_ext, "h_cm": H_ext,
-         "note": "Orificio terminal de bornes"},
-        {"name": "Lateral (×2)", "qty": 2, "w_cm": D_ext - 2 * T, "h_cm": H_ext,
-         "note": "Encajan entre frontal y trasera"},
-        {"name": "Tapa (superior)", "qty": 1, "w_cm": W_ext - 2 * T, "h_cm": D_ext - 2 * T,
-         "note": "Encaja entre las 4 paredes verticales"},
-        {"name": "Base (inferior)", "qty": 1, "w_cm": W_ext - 2 * T, "h_cm": D_ext - 2 * T,
-         "note": "Encaja entre las 4 paredes verticales"},
+        {"name": pt(r, "piece_front", es="Frontal (Baffle)"), "qty": 1, "w_cm": W_ext, "h_cm": H_ext,
+         "note": pt(r, "speaker_hole", es="Orificio altavoz") + (pt(r, "and_port", es=" + puerto") if r["box_type"] == "reflex" else "")},
+        {"name": pt(r, "piece_rear", es="Trasera"), "qty": 1, "w_cm": W_ext, "h_cm": H_ext,
+         "note": pt(r, "terminal_hole", es="Orificio terminal de bornes")},
+        {"name": pt(r, "piece_side", es="Lateral (×2)"), "qty": 2, "w_cm": D_ext - 2 * T, "h_cm": H_ext,
+         "note": pt(r, "between_front_rear", es="Encajan entre frontal y trasera")},
+        {"name": pt(r, "piece_top", es="Tapa (superior)"), "qty": 1, "w_cm": W_ext - 2 * T, "h_cm": D_ext - 2 * T,
+         "note": pt(r, "between_walls", es="Encaja entre las 4 paredes verticales")},
+        {"name": pt(r, "piece_bottom", es="Base (inferior)"), "qty": 1, "w_cm": W_ext - 2 * T, "h_cm": D_ext - 2 * T,
+         "note": pt(r, "between_walls", es="Encaja entre las 4 paredes verticales")},
     ]
 
 # ══════════════════════════════════════════════════════════════
@@ -338,8 +387,8 @@ def make_freq_chart(r, width_px=900, height_px=320):
     ax.set_xscale("log")
     ax.set_xlim(15, 700)
     ax.set_ylim(-35, 8)
-    ax.set_xlabel("Frecuencia (Hz)", color="#5a6480", fontsize=9)
-    ax.set_ylabel("Nivel (dB)", color="#5a6480", fontsize=9)
+    ax.set_xlabel(pt(r, "frequency", es="Frecuencia (Hz)"), color="#5a6480", fontsize=9)
+    ax.set_ylabel(pt(r, "level", es="Nivel (dB)"), color="#5a6480", fontsize=9)
     ax.tick_params(colors="#5a6480", labelsize=8)
     ax.set_xticks([20, 30, 50, 70, 100, 150, 200, 300, 500])
     ax.set_xticklabels(["20", "30", "50", "70", "100", "150", "200", "300", "500"])
@@ -347,11 +396,11 @@ def make_freq_chart(r, width_px=900, height_px=320):
         spine.set_edgecolor("#252a38")
     ax.grid(True, color="#252a38", linewidth=0.4, which="both", alpha=0.7)
 
-    title = "Respuesta en Frecuencia Simulada"
+    title = pt(r, "chart_title", es="Respuesta en Frecuencia Simulada")
     if r["box_type"] == "reflex":
         title += f"  —  {r.get('alignment', '')} Reflex"
     else:
-        title += f"  —  Sellada (Qtc={r['Qtc_real']:.3f})"
+        title += f"  —  {pt(r, 'sealed', es='Sellada')} (Qtc={r['Qtc_real']:.3f})"
     ax.set_title(title, color="#e8ecf5", fontsize=10, pad=8, fontweight="bold")
 
     buf = io.BytesIO()
@@ -400,7 +449,7 @@ def make_box_diagram(r, width_px=540, height_px=360):
         port_r = min(r.get("port_diam", 7) * scale * 0.5, W_s * 0.10)
         port_cx, port_cy = ox + W_s * 0.5, oy + H_s * 0.18
         ax.add_patch(plt.Circle((port_cx, port_cy), port_r, fill=False, edgecolor="#ff6b35", linewidth=1.5))
-        ax.text(port_cx, port_cy - port_r * 2.0, "Puerto", color="#ff6b35", fontsize=7, ha="center", fontweight="bold")
+        ax.text(port_cx, port_cy - port_r * 2.0, "Port" if r.get("language") == "en" else "Puerto", color="#ff6b35", fontsize=7, ha="center", fontweight="bold")
 
     # Cotas
     y_cota = oy - H_s * 0.13
@@ -440,7 +489,8 @@ def make_pieces_diagram(r_data, width_px=900, height_px=500):
         if p["qty"] > 1:
             for i in range(p["qty"]):
                 label = p["name"].replace("(×2)", "").strip()
-                expanded.append({**p, "name": f"{label} {'Izq.' if i == 0 else 'Der.'}", "qty": 1})
+                side = ("Left" if i == 0 else "Right") if r_data.get("language") == "en" else ("Izq." if i == 0 else "Der.")
+                expanded.append({**p, "name": f"{label} {side}", "qty": 1})
         else:
             expanded.append(p)
     while len(expanded) < 6:
@@ -496,9 +546,10 @@ def get_styles() -> dict:
 #  5. CANVAS PERSONALIZADO (header/footer)
 # ══════════════════════════════════════════════════════════════
 class SpeakerLabCanvas(rl_canvas.Canvas):
-    def __init__(self, *args, speaker_name: str = "", **kwargs):
+    def __init__(self, *args, speaker_name: str = "", language: str = "es", **kwargs):
         super().__init__(*args, **kwargs)
         self._speaker_name = speaker_name
+        self._language = language
         self._page_num = 0
 
     def showPage(self):
@@ -516,7 +567,8 @@ class SpeakerLabCanvas(rl_canvas.Canvas):
         self.drawString(15 * mm, H - 14 * mm, "SpeakerLab Pro")
         self.setFillColor(TEXT)
         self.setFont("Helvetica", 10)
-        self.drawString(63 * mm, H - 14 * mm, f"— Plano de Diseño: {self._speaker_name}")
+        label = "Design Plan" if self._language == "en" else "Plano de Diseño"
+        self.drawString(63 * mm, H - 14 * mm, f"— {label}: {self._speaker_name}")
         self.setStrokeColor(ACCENT)
         self.setLineWidth(1.5)
         self.line(0, H - 24 * mm, W, H - 24 * mm)
@@ -531,7 +583,8 @@ class SpeakerLabCanvas(rl_canvas.Canvas):
         self.setFillColor(MUTED)
         self.setFont("Helvetica", 7)
         self.drawString(15 * mm, 4 * mm, "SpeakerLab Pro v6.0 · Thiele (1971) / Small (1973) / Keele (1975)")
-        self.drawRightString(W - 15 * mm, 4 * mm, f"Página {self._page_num}")
+        page_label = "Page" if self._language == "en" else "Página"
+        self.drawRightString(W - 15 * mm, 4 * mm, f"{page_label} {self._page_num}")
 
 # ══════════════════════════════════════════════════════════════
 #  6. UTILIDADES
@@ -546,21 +599,21 @@ def fmt(value, decimals: int = 1, unit: str = "") -> str:
 #  7. SECCIONES DEL DOCUMENTO
 # ══════════════════════════════════════════════════════════════
 def section_portada(r, d, S):
-    model = d.get("model_name", "Altavoz")
-    box_label = "Reflex (Bass Reflex)" if r["box_type"] == "reflex" else "Sellada (Closed Box)"
+    model = d.get("model_name", pt(r, "unnamed_driver", es="Altavoz"))
+    box_label = pt(r, "reflex", es="Reflex (Bass Reflex)") if r["box_type"] == "reflex" else pt(r, "sealed", es="Sellada (Closed Box)")
     if r["box_type"] == "reflex":
-        box_label += f" · Alineación {r.get('alignment', '')}"
+        box_label += f" · {pt(r, 'alignment', es='Alineación')} {r.get('alignment', '')}"
 
     elems = [
         Spacer(1, 8 * mm),
         Paragraph(model, S["title"]),
-        Paragraph(f"Tipo de caja: {box_label}", S["subtitle"]),
+        Paragraph(f"{pt(r, 'box_type', es='Tipo de caja')}: {box_label}", S["subtitle"]),
         Spacer(1, 4 * mm),
         HRFlowable(width="100%", thickness=1, color=ACCENT, spaceAfter=6 * mm),
     ]
 
     ts_left = [
-        [Paragraph("PARÁMETROS THIELE/SMALL", S["label"]), ""],
+        [Paragraph(pt(r, "ts_parameters", es="PARÁMETROS THIELE/SMALL"), S["label"]), ""],
         ["Fs",   fmt(d.get("fs"), 1, "Hz")],
         ["Vas",  fmt(d.get("vas"), 1, "L")],
         ["Qts",  fmt(d.get("qts"), 3)],
@@ -569,16 +622,16 @@ def section_portada(r, d, S):
         ["Sd",   fmt(d.get("sd"), 0, "cm²")],
     ]
 
-    fb_qtc_label = "Fb (sintonía)" if r["box_type"] == "reflex" else "Qtc real"
+    fb_qtc_label = pt(r, "tuning_fb", es="Fb (sintonía)") if r["box_type"] == "reflex" else pt(r, "actual_qtc", es="Qtc real")
     fb_qtc_value = fmt(r.get("Fb"), 1, "Hz") if r["box_type"] == "reflex" else fmt(r.get("Qtc_real"), 3)
 
     ts_right = [
-        [Paragraph("RESULTADOS ACÚSTICOS", S["label"]), ""],
-        ["Vb neto",    fmt(r["Vb"], 1, "L")],
+        [Paragraph(pt(r, "acoustic_results", es="RESULTADOS ACÚSTICOS"), S["label"]), ""],
+        [pt(r, "net_vb", es="Vb neto"),    fmt(r["Vb"], 1, "L")],
         ["F3 (−3 dB)", fmt(r["F3"], 1, "Hz")],
         [fb_qtc_label, fb_qtc_value],
-        ["Vb bruto",   fmt(r["Vb_bruto"], 1, "L")],
-        ["SPL máx.",   fmt(r.get("SPLmax"), 1, "dB")],
+        [pt(r, "gross_vb", es="Vb bruto"),   fmt(r["Vb_bruto"], 1, "L")],
+        [pt(r, "max_spl", es="SPL máx."),   fmt(r.get("SPLmax"), 1, "dB")],
         ["EBP",        fmt(r.get("EBP"), 0)],
     ]
 
@@ -613,30 +666,29 @@ def section_portada(r, d, S):
 
 
 def section_freq_chart(r, S):
-    elems = [Paragraph("RESPUESTA EN FRECUENCIA SIMULADA", S["section"])]
+    elems = [Paragraph(pt(r, "frequency_response", es="RESPUESTA EN FRECUENCIA SIMULADA"), S["section"])]
     img_buf = make_freq_chart(r, 860, 300)
     elems.append(Image(img_buf, width=175*mm, height=61*mm))
     elems.append(Paragraph(
-        "Curva simplificada basada en alineación Thiele/Small. "
-        "Para simulación precisa (FRD), exporta los parámetros a VituixCAD, WinISD o REW.", S["note"]))
+        pt(r, "chart_note", es="Curva simplificada basada en alineación Thiele/Small. Para simulación precisa (FRD), exporta los parámetros a VituixCAD, WinISD o REW."), S["note"]))
     elems.append(Spacer(1, 4*mm))
     return elems
 
 
 def section_box_diagram(r, S):
-    elems = [Paragraph("DIAGRAMA DE LA CAJA (EXTERIOR)", S["section"])]
+    elems = [Paragraph(pt(r, "box_diagram", es="DIAGRAMA DE LA CAJA (EXTERIOR)"), S["section"])]
     diag_buf = make_box_diagram(r, 500, 340)
     diag_img = Image(diag_buf, width=102*mm, height=68*mm)
 
     dim_data = [
-        [Paragraph("DIMENSIONES", S["label"]), "", ""],
-        ["Ancho ext. (W)",  f"{r['W_ext']:.1f} cm", f"{r['W_ext']*10:.0f} mm"],
-        ["Alto ext. (H)",   f"{r['H_ext']:.1f} cm", f"{r['H_ext']*10:.0f} mm"],
-        ["Prof. ext. (D)",  f"{r['D_ext']:.1f} cm", f"{r['D_ext']*10:.0f} mm"],
-        ["Ancho int.",      f"{r['W_int']:.1f} cm", f"{r['W_int']*10:.0f} mm"],
-        ["Alto int.",       f"{r['H_int']:.1f} cm", f"{r['H_int']*10:.0f} mm"],
-        ["Prof. int.",      f"{r['D_int']:.1f} cm", f"{r['D_int']*10:.0f} mm"],
-        ["Grosor (T)",      f"{r['T_mm']} mm",       ""],
+        [Paragraph(pt(r, "dimensions", es="DIMENSIONES"), S["label"]), "", ""],
+        [pt(r, "external_width", es="Ancho ext. (W)"),  f"{r['W_ext']:.1f} cm", f"{r['W_ext']*10:.0f} mm"],
+        [pt(r, "external_height", es="Alto ext. (H)"),   f"{r['H_ext']:.1f} cm", f"{r['H_ext']*10:.0f} mm"],
+        [pt(r, "external_depth", es="Prof. ext. (D)"),  f"{r['D_ext']:.1f} cm", f"{r['D_ext']*10:.0f} mm"],
+        [pt(r, "internal_width", es="Ancho int."),      f"{r['W_int']:.1f} cm", f"{r['W_int']*10:.0f} mm"],
+        [pt(r, "internal_height", es="Alto int."),       f"{r['H_int']:.1f} cm", f"{r['H_int']*10:.0f} mm"],
+        [pt(r, "internal_depth", es="Prof. int."),      f"{r['D_int']:.1f} cm", f"{r['D_int']*10:.0f} mm"],
+        [pt(r, "thickness", es="Grosor (T)"),      f"{r['T_mm']} mm",       ""],
     ]
     dim_tbl = Table(dim_data, colWidths=[42*mm, 22*mm, 22*mm], rowHeights=[7*mm]+[6.5*mm]*7)
     dim_tbl.setStyle(TableStyle([
@@ -667,7 +719,7 @@ def section_box_diagram(r, S):
 
 
 def section_pieces_diagram(r, S):
-    elems = [Paragraph("PIEZAS DE CORTE — VISTA INDIVIDUAL", S["section"])]
+    elems = [Paragraph(pt(r, "pieces_diagram", es="PIEZAS DE CORTE — VISTA INDIVIDUAL"), S["section"])]
     img_buf = make_pieces_diagram(r, 860, 480)
     elems.append(Image(img_buf, width=175*mm, height=98*mm))
     elems.append(Spacer(1, 4*mm))
@@ -675,15 +727,14 @@ def section_pieces_diagram(r, S):
 
 
 def section_cut_sheet(r, d, S):
-    elems = [Paragraph("PLANOS DE CORTE — MÉTODO BUTT-JOINT", S["section"])]
+    elems = [Paragraph(pt(r, "cut_plans", es="PLANOS DE CORTE — MÉTODO BUTT-JOINT"), S["section"])]
     mat = d.get("material_name", f"MDF {r['T_mm']}mm")
     elems.append(Paragraph(
-        f"Material: <b>{mat}</b>  ·  Grosor T = {r['T_mm']} mm  ·  "
-        f"Proporciones acústicas H:W:D = 1.59:1.26:1.00", S["body"]))
+        pt(r, "material_line", es="Material: <b>{material}</b>  ·  Grosor T = {thickness} mm  ·  Proporciones acústicas H:W:D = 1.59:1.26:1.00", material=mat, thickness=r['T_mm']), S["body"]))
     elems.append(Spacer(1, 3*mm))
 
     pieces = r["pieces"]
-    header = ["PIEZA", "CANT.", "ANCHO (cm)", "ALTO (cm)", "ANCHO (mm)", "ALTO (mm)", "NOTAS"]
+    header = [pt(r, "piece", es="PIEZA"), pt(r, "qty", es="CANT."), pt(r, "width_cm", es="ANCHO (cm)"), pt(r, "height_cm", es="ALTO (cm)"), pt(r, "width_mm", es="ANCHO (mm)"), pt(r, "height_mm", es="ALTO (mm)"), pt(r, "notes", es="NOTAS")]
     rows = [header]
     for p in pieces:
         rows.append([p["name"], str(p["qty"]),
@@ -718,10 +769,10 @@ def section_cut_sheet(r, d, S):
     elems.append(Spacer(1, 4*mm))
     total_area_with_margin = r["total_area_m2"] * 1.15
     summary_data = [
-        ["Tablero necesario (sin margen)", f"{r['total_area_m2']:.3f} m²"],
-        ["Tablero recomendado (+15% merma)", f"{total_area_with_margin:.3f} m²"],
-        ["Vb bruto (para dimensiones)",     f"{r['Vb_bruto']:.1f} L"],
-        ["Vb neto (acústico)",              f"{r['Vb']:.1f} L"],
+        [pt(r, "board_required", es="Tablero necesario (sin margen)"), f"{r['total_area_m2']:.3f} m²"],
+        [pt(r, "board_recommended", es="Tablero recomendado (+15% merma)"), f"{total_area_with_margin:.3f} m²"],
+        [pt(r, "gross_dimensions", es="Vb bruto (para dimensiones)"),     f"{r['Vb_bruto']:.1f} L"],
+        [pt(r, "net_acoustic", es="Vb neto (acústico)"),              f"{r['Vb']:.1f} L"],
     ]
     sum_tbl = Table(summary_data, colWidths=[80*mm, 40*mm])
     sum_tbl.setStyle(TableStyle([
@@ -743,28 +794,28 @@ def section_cut_sheet(r, d, S):
 def section_port(r, S):
     if r["box_type"] != "reflex":
         return []
-    elems = [Paragraph("PUERTO BASS REFLEX", S["section"])]
+    elems = [Paragraph(pt(r, "port_section", es="PUERTO BASS REFLEX"), S["section"])]
 
-    port_desc = (f"Circular ∅{r.get('port_diam',0):.1f} cm"
+    port_desc = (f"{pt(r, 'circular', es='Circular')} ∅{r.get('port_diam',0):.1f} cm"
                  if r.get("port_type")=="circular"
                  else f"Slot {r.get('slot_w',0):.1f}×{r.get('slot_h',0):.1f} cm")
 
     vel_val = r.get("portVel")
     vel_txt = f"{vel_val:.1f} m/s" if vel_val else "—"
     if vel_val:
-        vel_txt += "  ✓ OK" if vel_val < 12 else ("  ⚠ Límite" if vel_val < 17 else "  ✗ Turbulencia")
+        vel_txt += "  ✓ OK" if vel_val < 12 else (f"  ⚠ {pt(r, 'limit', es='Límite')}" if vel_val < 17 else f"  ✗ {pt(r, 'turbulence', es='Turbulencia')}")
 
     port_data = [
-        ["Longitud del tubo/slot",   f"{r['L']:.1f} cm   ({r['L']*10:.0f} mm)"],
-        ["Tipo de puerto",           port_desc],
-        ["Área de cada puerto (Sp)", f"{r['Sp']:.1f} cm²"],
-        [f"Área total ({r['N']} puerto/s)", f"{r['SpTotal']:.1f} cm²"],
-        ["Diámetro equivalente",     f"{r['d_eq']:.1f} cm"],
-        ["Velocidad en puerto",      vel_txt],
-        ["Frecuencia de sintonía Fb",f"{r['Fb']:.1f} Hz"],
+        [pt(r, "port_length", es="Longitud del tubo/slot"),   f"{r['L']:.1f} cm   ({r['L']*10:.0f} mm)"],
+        [pt(r, "port_type", es="Tipo de puerto"),           port_desc],
+        [pt(r, "port_area", es="Área de cada puerto (Sp)"), f"{r['Sp']:.1f} cm²"],
+        [pt(r, "total_area", es="Área total ({count} puerto/s)", count=r['N']), f"{r['SpTotal']:.1f} cm²"],
+        [pt(r, "equivalent_diameter", es="Diámetro equivalente"),     f"{r['d_eq']:.1f} cm"],
+        [pt(r, "port_velocity", es="Velocidad en puerto"),      vel_txt],
+        [pt(r, "tuning_frequency", es="Frecuencia de sintonía Fb"),f"{r['Fb']:.1f} Hz"],
     ]
     if r.get("Fpipe"):
-        port_data.append(["Resonancia del tubo (Pipe)", f"{r['Fpipe']:.1f} Hz  — rellenar 1/3 con espuma"])
+        port_data.append([pt(r, "pipe_resonance", es="Resonancia del tubo (Pipe)"), pt(r, "fill_foam", es="{value} Hz — rellenar 1/3 con espuma", value=f"{r['Fpipe']:.1f}")])
 
     p_tbl = Table(port_data, colWidths=[75*mm, 80*mm])
     p_tbl.setStyle(TableStyle([
@@ -785,26 +836,26 @@ def section_port(r, S):
 
 
 def section_diagnostics(r, S):
-    elems = [Paragraph("DIAGNÓSTICO Y SEMÁFORO", S["section"])]
+    elems = [Paragraph(pt(r, "diagnostics", es="DIAGNÓSTICO Y SEMÁFORO"), S["section"])]
     diags = []
     if r.get("EBP"):
-        c = "✓ OK" if r["EBP"]>100 else ("△ Ambos" if r["EBP"]>50 else "✗ Sellada")
+        c = "✓ OK" if r["EBP"]>100 else (f"△ {pt(r, 'both', es='Ambos')}" if r["EBP"]>50 else f"✗ {pt(r, 'prefer_sealed', es='Sellada')}")
         diags.append(["EBP (Fs/Qes)", f"{r['EBP']:.0f}", c])
     if r.get("portVel") is not None:
-        c = "✓ Sin turbulencia" if r["portVel"]<12 else ("△ Límite aceptable" if r["portVel"]<17 else "✗ ¡Turbulencia!")
-        diags.append(["Velocidad puerto", f"{r['portVel']:.1f} m/s", c])
+        c = f"✓ {pt(r, 'no_turbulence', es='Sin turbulencia')}" if r["portVel"]<12 else (f"△ {pt(r, 'acceptable_limit', es='Límite aceptable')}" if r["portVel"]<17 else f"✗ {pt(r, 'turbulence', es='¡Turbulencia!')}")
+        diags.append([pt(r, "port_velocity", es="Velocidad puerto"), f"{r['portVel']:.1f} m/s", c])
     if r.get("SPLmax"):
-        diags.append(["SPL máximo (Keele)", f"{r['SPLmax']:.1f} dB @ 1m", "ℹ Estimación Keele 1975"])
+        diags.append([pt(r, "max_spl", es="SPL máximo (Keele)"), f"{r['SPLmax']:.1f} dB @ 1m", f"ℹ {pt(r, 'keele_estimate', es='Estimación Keele 1975')}"])
     if r.get("Vd"):
-        c = "✓ Subwoofer serio" if r["Vd"]>100 else "△ Woofer medio"
+        c = f"✓ {pt(r, 'serious_subwoofer', es='Subwoofer serio')}" if r["Vd"]>100 else f"△ {pt(r, 'medium_woofer', es='Woofer medio')}"
         diags.append(["Vd = Sd × Xmax", f"{r['Vd']:.0f} cm³", c])
     if r.get("Qtc_real"):
-        c = "✓ Plano" if r["Qtc_real"]<0.8 else ("△ Ligero pico" if r["Qtc_real"]<1.0 else "✗ Pico pronunciado")
-        diags.append(["Qtc real", f"{r['Qtc_real']:.3f}", c])
+        c = f"✓ {pt(r, 'flat', es='Plano')}" if r["Qtc_real"]<0.8 else (f"△ {pt(r, 'slight_peak', es='Ligero pico')}" if r["Qtc_real"]<1.0 else f"✗ {pt(r, 'strong_peak', es='Pico pronunciado')}")
+        diags.append([pt(r, "actual_qtc", es="Qtc real"), f"{r['Qtc_real']:.3f}", c])
     if r.get("Fbsc"):
-        diags.append(["Baffle Step (F_bsc)", f"{r['Fbsc']:.1f} Hz", "ℹ Compensar con filtro shelving"])
+        diags.append(["Baffle Step (F_bsc)", f"{r['Fbsc']:.1f} Hz", f"ℹ {pt(r, 'shelving', es='Compensar con filtro shelving')}"])
 
-    rows = [["PARÁMETRO", "VALOR", "DIAGNÓSTICO"]] + diags
+    rows = [[pt(r, "parameter", es="PARÁMETRO"), pt(r, "value", es="VALOR"), pt(r, "diagnostic", es="DIAGNÓSTICO")]] + diags
     d_tbl = Table(rows, colWidths=[65*mm, 35*mm, 70*mm])
     d_tbl.setStyle(TableStyle([
         ("BACKGROUND",  (0,0),(-1,0),  SURFACE2),
@@ -831,35 +882,29 @@ def section_diagnostics(r, S):
 
 
 def section_assembly_notes(r, d, S):
-    elems = [Paragraph("NOTAS DE ENSAMBLAJE", S["section"])]
+    elems = [Paragraph(pt(r, "assembly_notes", es="NOTAS DE ENSAMBLAJE"), S["section"])]
     inch = d.get("inches", 10)
     spk_hole_d = inch * 2.54 * 0.88
-    sub_filter = f"{r['Fb']*0.7:.0f} Hz (0.7 × Fb)" if r["box_type"]=="reflex" else "No requerido (sellada)"
+    sub_filter = f"{r['Fb']*0.7:.0f} Hz (0.7 × Fb)" if r["box_type"]=="reflex" else pt(r, "not_required_sealed", es="No requerido (sellada)")
 
     notes = [
-        ("1. Orden de corte recomendado",
-         "Frontal → Trasera → Tapa → Base → Laterales. Empezar por las piezas mayores para aprovechar el tablero."),
-        ("2. Orificio del altavoz",
-         f"Diámetro de corte estimado: {spk_hole_d:.1f} cm (verificar con el datasheet del altavoz). "
-         "Usar sierra de corona o caladora con guía circular."),
-        ("3. Sellado",
-         "Aplicar sellador acrílico o silicona en todas las juntas interiores antes del ensamblaje final. "
-         "Especialmente crítico en las esquinas traseras."),
-        ("4. Refuerzos internos",
-         "Para cajas >20 L, añadir un travesaño central de 4×4 cm entre las caras laterales "
-         "para reducir resonancias del panel (ya incluido en Vb_bruto como +5%)."),
-        ("5. Material absorbente",
-         "Rellenar el 30-50% del volumen interior con lana de vidrio o espuma de celda abierta "
-         "(no bloquear el puerto en cajas reflex)."),
-        ("6. Puerto bass reflex" if r["box_type"]=="reflex" else "6. Caja sellada",
-         (f"Longitud exacta del tubo: {r['L']:.1f} cm. Medir desde el interior del baffle hasta "
-          "el extremo del tubo. El tubo no debe tocar la pared trasera."
+        (pt(r, "cut_order_title", es="1. Orden de corte recomendado"),
+         pt(r, "cut_order", es="Frontal → Trasera → Tapa → Base → Laterales. Empezar por las piezas mayores para aprovechar el tablero.")),
+        (pt(r, "driver_hole_title", es="2. Orificio del altavoz"),
+         pt(r, "driver_hole", es="Diámetro de corte estimado: {value} cm (verificar con el datasheet del altavoz). Usar sierra de corona o caladora con guía circular.", value=f"{spk_hole_d:.1f}")),
+        (pt(r, "sealing_title", es="3. Sellado"),
+         pt(r, "sealing", es="Aplicar sellador acrílico o silicona en todas las juntas interiores antes del ensamblaje final. Especialmente crítico en las esquinas traseras.")),
+        (pt(r, "bracing_title", es="4. Refuerzos internos"),
+         pt(r, "bracing", es="Para cajas >20 L, añadir un travesaño central de 4×4 cm entre las caras laterales para reducir resonancias del panel (ya incluido en Vb_bruto como +5%).")),
+        (pt(r, "damping_title", es="5. Material absorbente"),
+         pt(r, "damping", es="Rellenar el 30-50% del volumen interior con lana de vidrio o espuma de celda abierta (no bloquear el puerto en cajas reflex).")),
+        (pt(r, "port_note_title", es="6. Puerto bass reflex") if r["box_type"]=="reflex" else pt(r, "sealed_note_title", es="6. Caja sellada"),
+         (pt(r, "port_note", es="Longitud exacta del tubo: {value} cm. Medir desde el interior del baffle hasta el extremo del tubo. El tubo no debe tocar la pared trasera.", value=f"{r['L']:.1f}")
           if r["box_type"]=="reflex"
-          else "Asegurarse de que no queden fugas de aire. Verificar con música a alto volumen "
-               "pasando la mano por las juntas.")),
-        ("7. Filtro subsónico", sub_filter),
-        ("8. Terminal de bornes",
-         "Instalar en la cara trasera. Usar cable de 2.5 mm² mínimo para conexión interior."),
+          else pt(r, "sealed_note", es="Asegurarse de que no queden fugas de aire. Verificar con música a alto volumen pasando la mano por las juntas."))),
+        (pt(r, "subsonic_title", es="7. Filtro subsónico"), sub_filter),
+        (pt(r, "terminal_title", es="8. Terminal de bornes"),
+         pt(r, "terminal", es="Instalar en la cara trasera. Usar cable de 2.5 mm² mínimo para conexión interior.")),
     ]
     for title, body in notes:
         elems.append(Paragraph(f"<b>{title}</b>", S["body"]))
@@ -876,7 +921,7 @@ def generate_pdf(input_data: dict, output_path: str = "plano_caja.pdf"):
     r = calc_acoustics(d)
     S = get_styles()
 
-    speaker_name = d.get("model_name", "Altavoz")
+    speaker_name = d.get("model_name", pt(d, "unnamed_driver", es="Altavoz"))
 
     doc = SimpleDocTemplate(
         output_path, pagesize=A4,
@@ -898,7 +943,7 @@ def generate_pdf(input_data: dict, output_path: str = "plano_caja.pdf"):
 
     doc.build(
         story,
-        canvasmaker=lambda *a, **kw: SpeakerLabCanvas(*a, speaker_name=speaker_name, **kw),
+        canvasmaker=lambda *a, **kw: SpeakerLabCanvas(*a, speaker_name=speaker_name, language=d["language"], **kw),
     )
     logger.info(f"✅  PDF generado: {output_path}")
     return output_path

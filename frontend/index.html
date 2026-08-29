@@ -383,18 +383,15 @@
                  >
                   <span>📈 <span data-i18n="chart_title">Respuesta en Frecuencia</span></span>
                   <div class="u-inline-03">
-                    <span id="chart-mode-badge" class="u-inline-04">JS
-                      aproximado</span>
-                    <button id="btn-scipy" data-action="runScipy" class="u-inline-05">⚗️
-                      Simular con scipy</button>
+                    <span id="chart-mode-badge" class="u-inline-04" data-i18n="chart_js_approx">JS aproximado</span>
+                    <button id="btn-scipy" data-action="runScipy" class="u-inline-05">⚗️ <span data-i18n="simulate_scipy">Simular con scipy</span></button>
                   </div>
                 </div>
                 <div id="chart-loading" class="u-inline-06" hidden>
-                  ⏳ Simulando con modelo Small (1973)…</div>
+                  ⏳ <span data-i18n="simulating_small">Simulando con modelo Small (1973)…</span></div>
                 <canvas id="freqChart"></canvas>
                 <div id="extra-charts" hidden>
-                  <div class="chart-header u-inline-07">🎯 Excursión del Cono &amp;
-                    Velocidad en Puerto</div>
+                  <div class="chart-header u-inline-07">🎯 <span data-i18n="excursion_port_velocity">Excursión del Cono &amp; Velocidad en Puerto</span></div>
                   <canvas id="excChart" class="u-inline-08"></canvas>
                 </div>
                 <div id="chart-api-error" class="u-inline-09" hidden>
@@ -413,10 +410,10 @@
                 <div class="paywall-banner u-inline-10">
                   <div class="pw-icon">📄</div>
                   <div>
-                    <h3>PDF Profesional con planos exactos</h3>
-                    <p>Medidas en mm precisas, diagrama isométrico, gráfica precisa, notas de ensamblaje</p>
+                    <h3 data-i18n="pdf_professional">PDF Profesional con planos exactos</h3>
+                    <p data-i18n="pdf_features">Medidas en mm precisas, diagrama isométrico, gráfica precisa, notas de ensamblaje</p>
                   </div>
-                  <button class="btn-unlock" data-pdf-download data-action="downloadPDF">Descargar PDF gratis</button>
+                  <button class="btn-unlock" data-pdf-download data-action="downloadPDF" data-i18n="pdf_free">Descargar PDF gratis</button>
                 </div>
               </div>
 
@@ -427,7 +424,7 @@
                   <div class="result-section-body">
                     <button class="btn-calc u-inline-11" data-action="runCompare" id="btn-compare"
                      >
-                      Analizar las 4 alineaciones (Scipy)
+                      <span data-i18n="compare_four">Analizar las 4 alineaciones (Scipy)</span>
                     </button>
                     <div id="compare-error" class="u-inline-12" hidden>
                     </div>
@@ -435,9 +432,9 @@
                       <table class="cuts-table">
                         <thead>
                           <tr>
-                            <th>Alineación</th>
-                            <th>Volumen Vb</th>
-                            <th>Sintonía</th>
+                            <th data-i18n="alignment">Alineación</th>
+                            <th data-i18n="box_volume">Volumen Vb</th>
+                            <th data-i18n="tuning">Sintonía</th>
                             <th>F3 (−3dB)</th>
                           </tr>
                         </thead>
@@ -991,20 +988,20 @@
          VISTA BASE DE DATOS
     ════════════════════════════════════════════════════ -->
       <div id="view-db" class="view">
-        <h2 class="u-inline-28">Base de Datos de Altavoces</h2>
+        <h2 class="u-inline-28" data-i18n="database_title">Base de Datos de Altavoces</h2>
         <p id="db-summary" class="u-inline-29">Altavoces verificados y personalizados · parámetros T/S</p>
         <div class="speaker-db-toolbar">
-          <button class="btn-project-action primary" type="button" data-action="openSpeakerModal">Añadir altavoz</button>
+          <button class="btn-project-action primary" type="button" data-action="openSpeakerModal" data-i18n="speaker_add">Añadir altavoz</button>
           <input id="speakers-import" type="file" accept="application/json,.json" hidden>
-          <button class="btn-project-action" type="button" data-action="openSpeakersImport">Importar JSON</button>
-          <button class="btn-project-action" type="button" data-action="exportCustomSpeakers">Exportar personalizados</button>
+          <button class="btn-project-action" type="button" data-action="openSpeakersImport" data-i18n="import_json">Importar JSON</button>
+          <button class="btn-project-action" type="button" data-action="exportCustomSpeakers" data-i18n="export_custom">Exportar personalizados</button>
         </div>
         <div class="u-inline-30">
           <table class="db-table" id="db-table">
             <thead>
               <tr>
-                <th>Marca</th>
-                <th>Modelo</th>
+                <th data-i18n="brand">Marca</th>
+                <th data-i18n="model">Modelo</th>
                 <th>∅</th>
                 <th>Fs (Hz)</th>
                 <th>Vas (L)</th>
@@ -1016,7 +1013,7 @@
                 <th>Mms (g)</th>
                 <th>Bl (T·m)</th>
                 <th>Re (Ω)</th>
-                <th>Alineación</th>
+                <th data-i18n="alignment">Alineación</th>
                 <th></th>
               </tr>
             </thead>
@@ -1036,29 +1033,29 @@
   <div id="projects-modal" class="projects-modal" hidden role="dialog" aria-modal="true"
     aria-labelledby="projects-title">
     <div class="projects-dialog">
-      <button class="projects-close" type="button" data-action="closeProjectsModal" aria-label="Cerrar">✕</button>
-      <h2 id="projects-title">Mis proyectos locales</h2>
-      <p>Los diseños se guardan únicamente en este navegador.</p>
+      <button class="projects-close" type="button" data-action="closeProjectsModal" aria-label="Cerrar" data-i18n-aria-label="close">✕</button>
+      <h2 id="projects-title" data-i18n="local_projects">Mis proyectos locales</h2>
+      <p data-i18n="local_only">Los diseños se guardan únicamente en este navegador.</p>
       <div class="project-create">
-        <label for="project-name">Nombre del diseño</label>
+        <label for="project-name" data-i18n="design_name">Nombre del diseño</label>
         <div class="project-create-row">
-          <input id="project-name" type="text" maxlength="80" placeholder="Ej. Subwoofer sala">
-          <button type="button" class="btn-project-action primary" data-action="saveLocalProject">Guardar nuevo</button>
+          <input id="project-name" type="text" maxlength="80" placeholder="Ej. Subwoofer sala" data-i18n-placeholder="design_name_placeholder">
+          <button type="button" class="btn-project-action primary" data-action="saveLocalProject" data-i18n="save_new">Guardar nuevo</button>
           <button type="button" class="btn-project-action" id="btn-update-project"
-            data-action="updateLocalProject" disabled>Actualizar seleccionado</button>
+            data-action="updateLocalProject" disabled data-i18n="update_selected">Actualizar seleccionado</button>
         </div>
-        <small id="project-edit-status" class="project-edit-status">Ningún proyecto seleccionado.</small>
+        <small id="project-edit-status" class="project-edit-status" data-i18n="no_project_selected">Ningún proyecto seleccionado.</small>
       </div>
       <div class="projects-toolbar">
         <strong id="projects-count">0 proyectos</strong>
         <div class="project-actions">
           <input id="projects-import" type="file" accept="application/json,.json" hidden>
           <button type="button" class="btn-project-action"
-            data-action="openProjectsImport">Importar JSON</button>
-          <button type="button" class="btn-project-action" data-action="exportAllProjects">Exportar todos</button>
+            data-action="openProjectsImport" data-i18n="import_json">Importar JSON</button>
+          <button type="button" class="btn-project-action" data-action="exportAllProjects" data-i18n="export_all">Exportar todos</button>
         </div>
       </div>
-      <div id="projects-empty" class="projects-empty">Aún no hay proyectos guardados.</div>
+      <div id="projects-empty" class="projects-empty" data-i18n="projects_empty">Aún no hay proyectos guardados.</div>
       <div id="projects-list" class="projects-list"></div>
     </div>
   </div>
@@ -1066,14 +1063,14 @@
   <div id="speaker-modal" class="projects-modal" hidden role="dialog" aria-modal="true"
     aria-labelledby="speaker-modal-title">
     <div class="projects-dialog speaker-dialog">
-      <button class="projects-close" type="button" data-action="closeSpeakerModal" aria-label="Cerrar">✕</button>
+      <button class="projects-close" type="button" data-action="closeSpeakerModal" aria-label="Cerrar" data-i18n-aria-label="close">✕</button>
       <h2 id="speaker-modal-title">Altavoz personalizado</h2>
-      <p>Se guardará únicamente en este navegador.</p>
+      <p data-i18n="speaker_local_only">Se guardará únicamente en este navegador.</p>
       <input id="custom-speaker-id" type="hidden">
       <div class="speaker-form-grid">
-        <label>Marca<input id="custom-brand" maxlength="60" required></label>
-        <label>Modelo<input id="custom-model" maxlength="80" required></label>
-        <label>Diámetro (pulgadas)<input id="custom-inches" type="number" min="1" max="30" step="0.5" required></label>
+        <label><span data-i18n="brand">Marca</span><input id="custom-brand" maxlength="60" required></label>
+        <label><span data-i18n="model">Modelo</span><input id="custom-model" maxlength="80" required></label>
+        <label><span data-i18n="diameter_inches">Diámetro (pulgadas)</span><input id="custom-inches" type="number" min="1" max="30" step="0.5" required></label>
         <label>Fs (Hz)<input id="custom-fs" type="number" min="5" max="500" step="0.1" required></label>
         <label>Vas (L)<input id="custom-vas" type="number" min="0.1" max="2000" step="0.1" required></label>
         <label>Qts<input id="custom-qts" type="number" min="0.05" max="2" step="0.001" required></label>
@@ -1088,8 +1085,8 @@
         <label>Le (mH)<input id="custom-le" type="number" min="0.01" max="10" step="0.01"></label>
       </div>
       <div class="speaker-form-actions">
-        <button class="btn-project-action" type="button" data-action="closeSpeakerModal">Cancelar</button>
-        <button class="btn-project-action primary" type="button" data-action="saveCustomSpeaker">Guardar altavoz</button>
+        <button class="btn-project-action" type="button" data-action="closeSpeakerModal" data-i18n="cancel">Cancelar</button>
+        <button class="btn-project-action primary" type="button" data-action="saveCustomSpeaker" data-i18n="save_speaker">Guardar altavoz</button>
       </div>
     </div>
   </div>

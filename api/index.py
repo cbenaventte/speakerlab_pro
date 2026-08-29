@@ -129,9 +129,11 @@ class SimulateRequest(BaseModel):
     freq_points:       int   = Field(500, ge=50, le=5000)
     eg_volts:          float = Field(2.83, gt=0.0, le=200.0)
     include_chart_png: bool  = False
+    language:          Literal["es", "en"] = "es"
 
 class PDFRequest(BaseModel):
     driver: DriverParams
+    language: Literal["es", "en"] = "es"
 
 class AlignmentRequest(BaseModel):
     fs:  float = Field(..., gt=5, lt=500)
@@ -199,20 +201,24 @@ async def api_simulate(req: SimulateRequest):
     import numpy as np
     dd       = _dd(req.driver)
     warnings = []
+    english = req.language == "en"
     if req.driver.qts < 0.2 or req.driver.qts > 0.5:
         warnings.append(
-            f"Qts={req.driver.qts} fuera del rango de tablas Thiele (0.20–0.50)."
+            (f"Qts={req.driver.qts} is outside the Thiele table range (0.20–0.50)." if english
+             else f"Qts={req.driver.qts} fuera del rango de tablas Thiele (0.20–0.50).")
         )
     if not req.driver.mms:
         warnings.append(
-            "Mms no proporcionado — se estimará desde Vas/Sd. "
-            "El error puede superar el 100%. Recomendamos incluir "
-            "el dato del fabricante."
+            ("Mms was not provided — it will be estimated from Vas/Sd. The error may exceed 100%. "
+             "We recommend including the manufacturer's value." if english else
+             "Mms no proporcionado — se estimará desde Vas/Sd. El error puede superar el 100%. "
+             "Recomendamos incluir el dato del fabricante.")
         )
     if not req.driver.bl:
         warnings.append(
-            "Bl no proporcionado — se estimará desde Re/Mms/Qes. "
-            "Incluir el dato del fabricante mejora la precisión."
+            ("Bl was not provided — it will be estimated from Re/Mms/Qes. Including the manufacturer's "
+             "value improves accuracy." if english else
+             "Bl no proporcionado — se estimará desde Re/Mms/Qes. Incluir el dato del fabricante mejora la precisión.")
         )
     if req.freq_max <= req.freq_min:
         raise HTTPException(422, "freq_max debe ser mayor que freq_min")
@@ -320,6 +326,7 @@ async def api_pdf(req: PDFRequest, bg: BackgroundTasks):
     # penalizar el arranque de los endpoints de consulta y simulación.
     from pdf_generator import generate_pdf
     dd       = _dd(req.driver)
+    dd["language"] = req.language
     out_path = f"/tmp/speakerlab_{int(time.time())}_{secrets.token_hex(4)}.pdf"
     try:
         # El generador comparte rutinas nativas de SciPy/Matplotlib con la

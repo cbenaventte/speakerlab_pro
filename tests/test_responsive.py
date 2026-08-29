@@ -75,6 +75,13 @@ class ResponsiveBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator("h1").inner_text(), "Speaker Enclosure Calculator")
         self.assertEqual(page.locator('[data-language="en"]').get_attribute("aria-pressed"), "true")
 
+        page.locator("#tb-db").click()
+        self.assertEqual(page.locator("#view-db h2").inner_text(), "Speaker Driver Database")
+        self.assertEqual(page.get_by_text("Add driver", exact=True).count(), 1)
+        page.locator('[data-action="openProjectsModal"]').click()
+        self.assertEqual(page.locator("#projects-title").inner_text(), "My Local Projects")
+        page.locator('[data-action="closeProjectsModal"]').click()
+
         page.locator('[data-language="es"]').click()
         self.assertEqual(page.locator("html").get_attribute("lang"), "es")
         self.assertEqual(page.locator("h1").inner_text(), "Calculadora de Cajas Acústicas")
