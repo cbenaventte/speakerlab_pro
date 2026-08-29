@@ -5,6 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "frontend" / "index.html").read_text()
 JS = (ROOT / "frontend" / "js" / "app.js").read_text()
+I18N = (ROOT / "frontend" / "js" / "i18n.js").read_text()
+LOCALE_ES = (ROOT / "frontend" / "js" / "locales" / "es.js").read_text()
+LOCALE_EN = (ROOT / "frontend" / "js" / "locales" / "en.js").read_text()
 CSS = (ROOT / "frontend" / "css" / "app.css").read_text()
 
 
@@ -17,7 +20,21 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn('/assets/brand/speakerlab-pro-logo.svg', HTML)
         self.assertIn('/assets/brand/speakerlab-pro-mark.svg', HTML)
         self.assertIn('/assets/brand/favicon.svg', HTML)
-        self.assertIn('<h1>Calculadora de Cajas Acústicas</h1>', HTML)
+        self.assertIn('<h1 data-i18n="calculator_title">Calculadora de Cajas Acústicas</h1>', HTML)
+
+    def test_bilingual_interface_foundations_are_present(self):
+        self.assertIn('src="/js/locales/es.js"', HTML)
+        self.assertIn('src="/js/locales/en.js"', HTML)
+        self.assertIn('src="/js/i18n.js"', HTML)
+        self.assertIn('data-language="es"', HTML)
+        self.assertIn('data-language="en"', HTML)
+        self.assertIn("speakerlab-language", I18N)
+        self.assertIn("navigator.language", I18N)
+        self.assertIn("document.documentElement.lang", I18N)
+        self.assertIn("Intl.NumberFormat", I18N)
+        self.assertIn("nav_calculator", LOCALE_ES)
+        self.assertIn("nav_calculator", LOCALE_EN)
+        self.assertIn("function renderCalculationResults", JS)
 
     def test_calculator_controls_have_associated_labels(self):
         self.assertIn('for="spk-search"', HTML)

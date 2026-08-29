@@ -278,6 +278,38 @@
       margin-right: 6px;
     }
 
+    .language-switcher {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      padding: 0 0.7rem;
+      border-left: 2px solid var(--ink);
+      color: var(--ink-muted);
+      flex-shrink: 0;
+    }
+
+    .language-switcher button {
+      min-width: 32px;
+      min-height: 36px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--ink-muted);
+      font: 700 0.78rem 'Inter', Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    .language-switcher button:hover,
+    .language-switcher button.active {
+      background: var(--blue-bg);
+      color: var(--blue-dark);
+    }
+
+    .language-switcher button.active {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .tb-pro {
       padding: 0.5rem 1.2rem;
       border-left: 2px solid var(--ink);
@@ -1568,7 +1600,7 @@
     @media(max-width:700px) {
       #topbar {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
         align-items: stretch;
       }
 
@@ -1593,6 +1625,17 @@
         place-items: center;
         padding: 0.35rem;
         border-left: 1.5px solid var(--ink);
+      }
+
+      .language-switcher {
+        padding: 0 0.2rem;
+        border-left-width: 1.5px;
+      }
+
+      .language-switcher button {
+        min-width: 30px;
+        min-height: 44px;
+        padding: 0.25rem;
       }
 
       .btn-projects,

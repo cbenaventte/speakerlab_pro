@@ -15,14 +15,14 @@
     function setButtonBusy(button, busy, busyLabel = 'Procesando…') {
       if (!button) return;
       if (busy) {
-        button.dataset.idleLabel = button.textContent;
+        button.dataset.idleHtml = button.innerHTML;
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = `⏳ ${busyLabel}`;
       } else {
         button.disabled = false;
         button.removeAttribute('aria-busy');
-        if (button.dataset.idleLabel) button.textContent = button.dataset.idleLabel;
+        if (button.dataset.idleHtml) button.innerHTML = button.dataset.idleHtml;
       }
     }
 
@@ -81,14 +81,14 @@
         const raw = field?.value.trim();
         if (!raw) {
           if (rule.required) {
-            showFieldError(id, `${rule.label} es obligatorio.`);
+            showFieldError(id, t('required', { field: rule.label }));
             valid = false;
           }
           return;
         }
         const value = Number(raw);
         if (!Number.isFinite(value) || value < rule.min || value > rule.max) {
-          showFieldError(id, `${rule.label} debe estar entre ${rule.min} y ${rule.max}.`);
+          showFieldError(id, t('range', { field: rule.label, min: rule.min, max: rule.max }));
           valid = false;
         }
       });
@@ -97,21 +97,21 @@
       for (const id of ['qes', 'qms']) {
         const field = document.getElementById(id);
         if (field.value && Number(field.value) <= qts) {
-          showFieldError(id, `${id.toUpperCase()} debe ser mayor que Qts.`);
+          showFieldError(id, t('greater_qts', { field: id.toUpperCase() }));
           valid = false;
         }
       }
       if (boxType === 'closed') {
         const qtc = Number(document.getElementById('qtcTarget').value);
         if (qtc <= qts) {
-          showFieldError('qtcTarget', 'Qtc objetivo debe ser mayor que Qts.');
+          showFieldError('qtcTarget', t('target_qtc_greater'));
           valid = false;
         }
       }
 
       if (!valid) {
         document.querySelector('[aria-invalid="true"]')?.focus();
-        notify('Corrige los campos señalados antes de calcular.', 'warning');
+        notify(t('fix_fields'), 'warning');
       }
       return valid;
     }
@@ -308,7 +308,36 @@
       if (id === 'tab-chart' && calcResults) drawChart(calcResults);
     }
 
-    function n(v, d = 1) { return (v !== null && v !== undefined && !isNaN(v)) ? v.toFixed(d) : '—'; }
+    function n(v, d = 1) {
+      return (v !== null && v !== undefined && !isNaN(v))
+        ? formatNumber(v, { minimumFractionDigits: d, maximumFractionDigits: d })
+        : '—';
+    }
+
+    function renderCalculationResults(r) {
+      if (!r) return;
+      document.getElementById('r-vb').innerHTML = `${n(r.Vb)} <span class="hc-unit">L</span>`;
+      document.getElementById('r-vb-sub').textContent = t('gross_for_cuts', { value: n(r.Vb_bruto) });
+      const fbLabel = document.getElementById('r-fb-label');
+      if (r.boxType === 'reflex') {
+        fbLabel.dataset.i18n = 'tuning_frequency';
+        fbLabel.textContent = t('tuning_frequency');
+        document.getElementById('r-fb').innerHTML = `${n(r.Fb)} <span class="hc-unit">Hz</span>`;
+        document.getElementById('r-fb-sub').textContent = t('alignment_value', { value: r.alignment });
+        document.getElementById('r-f3-sub').textContent = `f3/Fs = ${n(r.F3 / r.fs, 3)}`;
+      } else {
+        fbLabel.dataset.i18n = 'actual_qtc';
+        fbLabel.textContent = t('actual_qtc');
+        document.getElementById('r-fb').textContent = n(r.Qtc_real, 3);
+        document.getElementById('r-fb-sub').textContent = t('target_value', { value: r.qtcTarget });
+        document.getElementById('r-f3-sub').textContent = t('butterworth_derivation');
+      }
+      document.getElementById('r-f3').innerHTML = `${n(r.F3)} <span class="hc-unit">Hz</span>`;
+      renderDiag(r);
+      renderPort(r);
+      renderDim(r);
+      renderCuts(r);
+    }
 
     /* ── CÁLCULO PRINCIPAL ──────────────────────────────────── */
     async function calculate() {
@@ -317,7 +346,7 @@
       const vas = parseFloat(document.getElementById('vas').value);
       const qts = parseFloat(document.getElementById('qts').value);
       const calculateButton = document.getElementById('btn-calculate');
-      setButtonBusy(calculateButton, true, 'Calculando…');
+      setButtonBusy(calculateButton, true, t('calculating'));
 
       const qes = parseFloat(document.getElementById('qes').value) || null;
       const qms = parseFloat(document.getElementById('qms').value) || null;
@@ -354,9 +383,9 @@
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
           target = data.alignments?.[alignment];
-          if (!target) throw new Error(`Alineamiento ${alignment} no disponible`);
+          if (!target) throw new Error(t('unavailable_alignment', { alignment }));
         } catch (error) {
-          notify(`No se pudo calcular el alineamiento: ${error.message}`, 'error');
+          notify(t('alignment_error', { error: error.message }), 'error');
           setButtonBusy(calculateButton, false);
           return;
         }
@@ -391,7 +420,7 @@
           if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
           target = data.closed;
         } catch (error) {
-          notify(`No se pudo calcular la caja sellada: ${error.message}`, 'error');
+          notify(t('closed_error', { error: error.message }), 'error');
           setButtonBusy(calculateButton, false);
           return;
         }
@@ -410,26 +439,7 @@
       document.getElementById('empty-state').hidden = true;
       document.getElementById('results-content').hidden = false;
 
-      // Hero cards
-      document.getElementById('r-vb').innerHTML = `${n(r.Vb)} <span class="hc-unit">L</span>`;
-      document.getElementById('r-vb-sub').textContent = `Bruto para cortes: ${n(r.Vb_bruto)} L`;
-      if (r.boxType === 'reflex') {
-        document.getElementById('r-fb-label').textContent = 'Sintonía Fb';
-        document.getElementById('r-fb').innerHTML = `${n(r.Fb)} <span class="hc-unit">Hz</span>`;
-        document.getElementById('r-fb-sub').textContent = `Alineación ${r.alignment}`;
-        document.getElementById('r-f3-sub').textContent = `f3/Fs = ${n(r.F3 / r.fs, 3)}`;
-      } else {
-        document.getElementById('r-fb-label').textContent = 'Qtc real';
-        document.getElementById('r-fb').innerHTML = `${n(r.Qtc_real, 3)}`;
-        document.getElementById('r-fb-sub').textContent = `Objetivo: ${r.qtcTarget}`;
-        document.getElementById('r-f3-sub').textContent = 'Derivación Butterworth exacta';
-      }
-      document.getElementById('r-f3').innerHTML = `${n(r.F3)} <span class="hc-unit">Hz</span>`;
-
-      renderDiag(r);
-      renderPort(r);
-      renderDim(r);
-      renderCuts(r);
+      renderCalculationResults(r);
 
       // Activar primer tab visible
       document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
@@ -444,7 +454,7 @@
         ? JSON.stringify(collectProjectForm()) !== projectBaseline
         : true;
       refreshProjectEditState();
-      notify('Diseño calculado correctamente.', 'success');
+      notify(t('design_success'), 'success');
     }
 
     /* ── Renderizado ────────────────────────────────────────── */
@@ -452,22 +462,22 @@
       const items = [];
       if (r.EBP) {
         const c = r.EBP > 100 ? 'g' : r.EBP > 50 ? 'y' : 'r';
-        const m = r.EBP > 100 ? 'Ideal Bass-Reflex' : r.EBP > 50 ? 'Ambos tipos sirven' : 'Preferir Sellada';
+        const m = r.EBP > 100 ? t('ebp_ideal_reflex') : r.EBP > 50 ? t('ebp_both') : t('ebp_closed');
         items.push({ label: 'EBP (Fs/Qes)', val: `${n(r.EBP, 0)} — ${m}`, c });
       }
       if (r.portVel != null) {
         const c = r.portVel < 12 ? 'g' : r.portVel < 17 ? 'y' : 'r';
-        const m = r.portVel < 12 ? 'Sin turbulencia' : r.portVel < 17 ? 'Límite aceptable' : '⚠ Turbulencia!';
-        items.push({ label: 'Velocidad puerto', val: `${n(r.portVel)} m/s — ${m}`, c });
+        const m = r.portVel < 12 ? t('no_turbulence') : r.portVel < 17 ? t('acceptable_limit') : t('turbulence');
+        items.push({ label: t('port_velocity'), val: `${n(r.portVel)} m/s — ${m}`, c });
       }
-      if (r.SPLmax) items.push({ label: 'SPL máximo (Keele 1975)', val: `${n(r.SPLmax)} dB @ 1m / 1W`, c: 'g' });
-      if (r.Vd) items.push({ label: 'Vd = Sd × Xmax', val: `${n(r.Vd, 0)} cm³ — ${r.Vd > 100 ? 'Subwoofer serio' : 'Woofer medio'}`, c: r.Vd > 100 ? 'g' : 'y' });
+      if (r.SPLmax) items.push({ label: t('max_spl'), val: `${n(r.SPLmax)} dB @ 1m / 1W`, c: 'g' });
+      if (r.Vd) items.push({ label: 'Vd = Sd × Xmax', val: `${n(r.Vd, 0)} cm³ — ${r.Vd > 100 ? t('serious_subwoofer') : t('medium_woofer')}`, c: r.Vd > 100 ? 'g' : 'y' });
       if (r.Qtc_real) {
         const c = r.Qtc_real < 0.8 ? 'g' : r.Qtc_real < 1 ? 'y' : 'r';
-        items.push({ label: 'Qtc real', val: `${n(r.Qtc_real, 3)} — ${r.Qtc_real < 0.8 ? 'Respuesta plana' : 'Pico en Fc'}`, c });
+        items.push({ label: t('actual_qtc'), val: `${n(r.Qtc_real, 3)} — ${r.Qtc_real < 0.8 ? t('flat_response') : t('fc_peak')}`, c });
       }
       const qok = r.qts >= 0.2 && r.qts <= 0.5;
-      items.push({ label: 'Rango Qts (tablas Thiele)', val: `${r.qts} — ${qok ? 'Válido' : 'Fuera de tablas'}`, c: qok ? 'g' : 'y' });
+      items.push({ label: t('qts_range'), val: `${r.qts} — ${qok ? t('valid') : t('outside_tables')}`, c: qok ? 'g' : 'y' });
 
       document.getElementById('diag-grid').innerHTML = items.map(d => `
     <div class="diag-item">
@@ -483,17 +493,17 @@
       if (r.boxType !== 'reflex') { document.getElementById('tab-port').hidden = true; return; }
       const Fpipe = r.L ? 34400 / (2 * r.L) : null;
       const portDesc = r.portType === 'circular'
-        ? `<div class="data-row"><span class="dr-label">Diámetro del tubo</span><span class="dr-val">${r.portDiam} cm</span></div>`
-        : `<div class="data-row"><span class="dr-label">Slot ${r.slotW}×${r.slotH} cm</span><span class="dr-val">Área ${n(r.Sp)} cm²</span></div>`;
+        ? `<div class="data-row"><span class="dr-label">${t('tube_diameter')}</span><span class="dr-val">${r.portDiam} cm</span></div>`
+        : `<div class="data-row"><span class="dr-label">Slot ${r.slotW}×${r.slotH} cm</span><span class="dr-val">${t('area', { value: n(r.Sp) })}</span></div>`;
 
       document.getElementById('port-body').innerHTML = `
-    <div class="data-row"><span class="dr-label">Longitud del tubo / slot</span><span class="dr-val">${n(r.L)} cm &nbsp;(${n(r.L * 10, 0)} mm)</span></div>
-    <div class="data-row"><span class="dr-label">Área por puerto (Sp)</span><span class="dr-val">${n(r.Sp)} cm²</span></div>
-    <div class="data-row"><span class="dr-label">Área total (${r.N} puerto/s)</span><span class="dr-val">${n(r.SpTotal)} cm²</span></div>
-    <div class="data-row"><span class="dr-label">Diámetro equivalente</span><span class="dr-val">${n(r.d_eq)} cm</span></div>
+    <div class="data-row"><span class="dr-label">${t('tube_length')}</span><span class="dr-val">${n(r.L)} cm &nbsp;(${n(r.L * 10, 0)} mm)</span></div>
+    <div class="data-row"><span class="dr-label">${t('area_per_port')}</span><span class="dr-val">${n(r.Sp)} cm²</span></div>
+    <div class="data-row"><span class="dr-label">${t('total_area', { count: r.N })}</span><span class="dr-val">${n(r.SpTotal)} cm²</span></div>
+    <div class="data-row"><span class="dr-label">${t('equivalent_diameter')}</span><span class="dr-val">${n(r.d_eq)} cm</span></div>
     ${portDesc}
-    ${Fpipe ? `<div class="data-row"><span class="dr-label">Resonancia tubo (Pipe)</span><span class="dr-val pipe-warning">${n(Fpipe)} Hz — rellenar 1/3 con espuma</span></div>` : ''}
-    <div class="data-row"><span class="dr-label">Filtro subsónico recomendado</span><span class="dr-val">${n(r.Fb * 0.7)} Hz (0.7×Fb)</span></div>
+    ${Fpipe ? `<div class="data-row"><span class="dr-label">${t('pipe_resonance')}</span><span class="dr-val pipe-warning">${t('pipe_fill', { value: n(Fpipe) })}</span></div>` : ''}
+    <div class="data-row"><span class="dr-label">${t('subsonic_filter')}</span><span class="dr-val">${n(r.Fb * 0.7)} Hz (0.7×Fb)</span></div>
   `;
     }
 
@@ -504,11 +514,11 @@
       const De = Di + 2 * T, We = Wi + 2 * T, He = Hi + 2 * T;
       const Fbsc = 115 / (We / 100);
       document.getElementById('dim-body').innerHTML = `
-    <div class="data-row"><span class="dr-label">Interior H × W × D</span><span class="dr-val">${n(Hi)} × ${n(Wi)} × ${n(Di)} cm</span></div>
-    <div class="data-row"><span class="dr-label">Exterior H × W × D</span><span class="dr-val">${n(He)} × ${n(We)} × ${n(De)} cm</span></div>
-    <div class="data-row"><span class="dr-label">Grosor de pared (T)</span><span class="dr-val">${r.T * 10} mm</span></div>
-    <div class="data-row"><span class="dr-label">Baffle Step (F_bsc)</span><span class="dr-val">${n(Fbsc)} Hz — compensar con shelving</span></div>
-    <div class="data-row"><span class="dr-label">Proporción H:W:D (áurea)</span><span class="dr-val">1.59 : 1.26 : 1.00</span></div>
+    <div class="data-row"><span class="dr-label">${t('interior_dimensions')}</span><span class="dr-val">${n(Hi)} × ${n(Wi)} × ${n(Di)} cm</span></div>
+    <div class="data-row"><span class="dr-label">${t('exterior_dimensions')}</span><span class="dr-val">${n(He)} × ${n(We)} × ${n(De)} cm</span></div>
+    <div class="data-row"><span class="dr-label">${t('wall_thickness')}</span><span class="dr-val">${r.T * 10} mm</span></div>
+    <div class="data-row"><span class="dr-label">Baffle Step (F_bsc)</span><span class="dr-val">${t('baffle_compensation', { value: n(Fbsc) })}</span></div>
+    <div class="data-row"><span class="dr-label">${t('golden_ratio')}</span><span class="dr-val">1.59 : 1.26 : 1.00</span></div>
   `;
     }
 
@@ -1767,6 +1777,10 @@
       });
       document.getElementById('speakers-import').addEventListener('change', event => {
         importCustomSpeakers(event.target.files?.[0]);
+      });
+      document.addEventListener('speakerlab:languagechange', () => {
+        clearFieldErrors();
+        if (calcResults) renderCalculationResults(calcResults);
       });
       window.addEventListener('beforeunload', event => {
         window.clearTimeout(draftSaveTimer);

@@ -57,12 +57,30 @@ class ResponsiveBrowserTests(unittest.TestCase):
         cls.server.server_close()
         cls.server_thread.join(timeout=2)
 
-    def open_page(self, viewport):
-        context = self.browser.new_context(viewport=viewport)
+    def open_page(self, viewport, **context_options):
+        context = self.browser.new_context(viewport=viewport, locale="es-CL", **context_options)
         self.addCleanup(context.close)
         page = context.new_page()
         page.goto(self.base_url, wait_until="domcontentloaded")
         return page
+
+    def test_language_detection_switch_and_persistence(self):
+        context = self.browser.new_context(viewport={"width": 1440, "height": 900}, locale="en-US")
+        self.addCleanup(context.close)
+        page = context.new_page()
+        page.goto(self.base_url, wait_until="domcontentloaded")
+
+        self.assertEqual(page.locator("html").get_attribute("lang"), "en")
+        self.assertEqual(page.locator('[data-i18n="nav_calculator"]').inner_text(), "Calculator")
+        self.assertEqual(page.locator("h1").inner_text(), "Speaker Enclosure Calculator")
+        self.assertEqual(page.locator('[data-language="en"]').get_attribute("aria-pressed"), "true")
+
+        page.locator('[data-language="es"]').click()
+        self.assertEqual(page.locator("html").get_attribute("lang"), "es")
+        self.assertEqual(page.locator("h1").inner_text(), "Calculadora de Cajas Acústicas")
+        page.reload(wait_until="domcontentloaded")
+        self.assertEqual(page.locator("html").get_attribute("lang"), "es")
+        self.assertEqual(page.evaluate("localStorage.getItem('speakerlab-language')"), "es")
 
     def assert_no_document_overflow(self, page, viewport_width):
         dimensions = page.evaluate(

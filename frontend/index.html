@@ -20,40 +20,45 @@
 
 <body>
 
-  <a class="skip-link" href="#content-area">Saltar al contenido principal</a>
+  <a class="skip-link" href="#content-area" data-i18n="skip_content">Saltar al contenido principal</a>
 
   <!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
   <header id="topbar">
     <div class="tb-logo">
-      <a class="tb-brand" href="/" aria-label="SpeakerLab Pro, inicio">
+      <a class="tb-brand" href="/" aria-label="SpeakerLab Pro, inicio" data-i18n-aria-label="brand_home">
         <picture>
           <source media="(max-width: 700px)" srcset="/assets/brand/speakerlab-pro-mark.svg">
           <img src="/assets/brand/speakerlab-pro-logo.svg" alt="SpeakerLab Pro">
         </picture>
-        <span class="subtitle">Diseña. Simula. Construye.</span>
+        <span class="subtitle" data-i18n="tagline">Diseña. Simula. Construye.</span>
       </a>
     </div>
-    <nav class="tb-nav" aria-label="Navegación principal">
+    <nav class="tb-nav" aria-label="Navegación principal" data-i18n-aria-label="nav_main">
       <button class="active" data-view="calc" id="tb-calc">
-        <span class="tb-icon">📐</span>Calculadora
+        <span class="tb-icon">📐</span><span data-i18n="nav_calculator">Calculadora</span>
       </button>
       <button data-view="enc" id="tb-enc">
-        <span class="tb-icon">📖</span>Enciclopedia
+        <span class="tb-icon">📖</span><span data-i18n="nav_encyclopedia">Enciclopedia</span>
       </button>
       <button data-view="db" id="tb-db">
-        <span class="tb-icon">🔊</span>Base de Datos
+        <span class="tb-icon">🔊</span><span data-i18n="nav_database">Base de Datos</span>
       </button>
     </nav>
+    <div class="language-switcher" role="group" aria-label="Idioma" data-i18n-aria-label="language">
+      <button type="button" data-language="es" aria-label="Español" data-i18n-aria-label="spanish">ES</button>
+      <span aria-hidden="true">|</span>
+      <button type="button" data-language="en" aria-label="Inglés" data-i18n-aria-label="english">EN</button>
+    </div>
     <div class="tb-projects">
       <button class="btn-projects" type="button" data-action="openProjectsModal" aria-label="Abrir proyectos"
-        title="Abrir proyectos">
-        <span aria-hidden="true">💾</span><span class="tb-action-label">Proyectos</span>
+        title="Abrir proyectos" data-i18n-aria-label="projects_open" data-i18n-title="projects_open">
+        <span aria-hidden="true">💾</span><span class="tb-action-label" data-i18n="projects">Proyectos</span>
       </button>
     </div>
     <div class="tb-pro">
       <button class="btn-pro" data-pdf-download data-action="downloadPDF" aria-label="Descargar planos en PDF"
-        title="Descargar planos en PDF">
-        <span aria-hidden="true">⬇</span><span class="tb-action-label">Descargar planos PDF</span>
+        title="Descargar planos en PDF" data-i18n-aria-label="pdf_download_label" data-i18n-title="pdf_download_label">
+        <span aria-hidden="true">⬇</span><span class="tb-action-label" data-i18n="pdf_download">Descargar planos PDF</span>
       </button>
     </div>
   </header>
@@ -102,8 +107,8 @@
 
         <div class="calc-header">
           <div>
-            <h1>Calculadora de Cajas Acústicas</h1>
-            <p>Fórmulas: Thiele (1971) · Small (1973) · Keele (1975) · Proporciones áureas</p>
+            <h1 data-i18n="calculator_title">Calculadora de Cajas Acústicas</h1>
+            <p data-i18n="calculator_sources">Fórmulas: Thiele (1971) · Small (1973) · Keele (1975) · Proporciones áureas</p>
           </div>
         </div>
         <div id="draft-status" class="draft-status" role="status" hidden>
@@ -124,18 +129,18 @@
           <div class="input-panel">
 
             <!-- Búsqueda de altavoz -->
-            <div class="panel-title">🔊 Altavoz</div>
+            <div class="panel-title">🔊 <span data-i18n="speaker">Altavoz</span></div>
             <div class="search-wrapper">
-              <label class="sr-only" for="spk-search">Buscar altavoz por marca o modelo</label>
+              <label class="sr-only" for="spk-search" data-i18n="speaker_search">Buscar altavoz por marca o modelo</label>
               <span class="search-icon">🔍</span>
-              <input type="text" id="spk-search" placeholder="Buscar marca / modelo…"
+              <input type="text" id="spk-search" placeholder="Buscar marca / modelo…" data-i18n-placeholder="speaker_search_placeholder"
                 autocomplete="off">
               <div id="spk-dropdown" class="search-dropdown"></div>
             </div>
 
             <!-- Parámetros T/S -->
             <div class="form-section">
-              <div class="form-section-title">📊 Parámetros Thiele-Small</div>
+              <div class="form-section-title">📊 <span data-i18n="ts_parameters">Parámetros Thiele-Small</span></div>
               <div class="form-row">
                 <div class="form-field">
                   <label for="fs">Fs <span class="tip" data-tip="Fs">?</span></label>
@@ -221,22 +226,22 @@
 
             <!-- Configuración de caja -->
             <div class="form-section">
-              <div class="form-section-title">📦 Recinto</div>
+              <div class="form-section-title">📦 <span data-i18n="enclosure">Recinto</span></div>
               <div class="form-row">
                 <div class="form-field">
-                  <label for="boxType">Tipo de caja <span class="tip" data-tip="TipoCaja">?</span></label>
+                  <label for="boxType"><span data-i18n="box_type">Tipo de caja</span> <span class="tip" data-tip="TipoCaja">?</span></label>
                   <select id="boxType">
-                    <option value="reflex">Bass-Reflex</option>
-                    <option value="closed">Cerrada (Sellada)</option>
+                    <option value="reflex" data-i18n="box_reflex">Bass-Reflex</option>
+                    <option value="closed" data-i18n="box_closed">Cerrada (Sellada)</option>
                   </select>
                 </div>
                 <div class="form-field">
-                  <label for="material">Material</label>
+                  <label for="material" data-i18n="material">Material</label>
                   <select id="material">
                     <option value="18">MDF 18mm</option>
                     <option value="22">MDF 22mm</option>
                     <option value="25">MDF 25mm</option>
-                    <option value="18" data-label="Cont. Abedul 18mm">Contrachapado 18mm</option>
+                    <option value="18" data-label="Cont. Abedul 18mm" data-i18n="plywood_18">Contrachapado 18mm</option>
                   </select>
                 </div>
               </div>
@@ -245,7 +250,7 @@
               <div id="reflex-opts">
                 <div class="form-row">
                   <div class="form-field">
-                    <label for="alignment">Alineación <span class="tip" data-tip="Alineacion">?</span></label>
+                    <label for="alignment"><span data-i18n="alignment">Alineación</span> <span class="tip" data-tip="Alineacion">?</span></label>
                     <select id="alignment">
                       <option value="QB3">QB3 — Quasi Butterworth</option>
                       <option value="SBB4" selected>SBB4 — Sub-Butterworth</option>
@@ -253,43 +258,43 @@
                     </select>
                   </div>
                   <div class="form-field">
-                    <label for="portType">Tipo de puerto</label>
+                    <label for="portType" data-i18n="port_type">Tipo de puerto</label>
                     <select id="portType">
-                      <option value="circular">Circular</option>
-                      <option value="slot">Slot (rectangular)</option>
+                      <option value="circular" data-i18n="port_circular">Circular</option>
+                      <option value="slot" data-i18n="port_slot">Slot (rectangular)</option>
                     </select>
                   </div>
                 </div>
                 <div id="port-circular" class="form-row">
                   <div class="form-field">
-                    <label for="portDiam">∅ Puerto</label>
+                    <label for="portDiam" data-i18n="port_diameter">∅ Puerto</label>
                     <input type="number" id="portDiam" value="7" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                   <div class="form-field">
-                    <label for="numPorts">N° puertos</label>
+                    <label for="numPorts" data-i18n="port_count">N° puertos</label>
                     <input type="number" id="numPorts" value="1" min="1" max="4">
                   </div>
                 </div>
                 <div id="port-slot" class="form-row" hidden>
                   <div class="form-field">
-                    <label for="slotW">Slot Ancho</label>
+                    <label for="slotW" data-i18n="slot_width">Slot Ancho</label>
                     <input type="number" id="slotW" value="10" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                   <div class="form-field">
-                    <label for="slotH">Slot Alto</label>
+                    <label for="slotH" data-i18n="slot_height">Slot Alto</label>
                     <input type="number" id="slotH" value="5" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-field">
-                    <label for="kFactor">Corrección k <span class="tip" data-tip="FactorK">?</span></label>
+                    <label for="kFactor"><span data-i18n="correction_k">Corrección k</span> <span class="tip" data-tip="FactorK">?</span></label>
                     <select id="kFactor">
-                      <option value="0.614">0.614 — ambos extremos abiertos</option>
-                      <option value="0.732" selected>0.732 — un extremo cerrado</option>
-                      <option value="0.850">0.850 — con cono de entrada</option>
+                      <option value="0.614" data-i18n="k_open">0.614 — ambos extremos abiertos</option>
+                      <option value="0.732" selected data-i18n="k_closed">0.732 — un extremo cerrado</option>
+                      <option value="0.850" data-i18n="k_flared">0.850 — con cono de entrada</option>
                     </select>
                   </div>
                 </div>
@@ -298,18 +303,18 @@
               <!-- Opciones sellada -->
               <div id="closed-opts" hidden>
                 <div class="form-field">
-                  <label for="qtcTarget">Qtc objetivo <span class="tip" data-tip="Qtc">?</span></label>
+                  <label for="qtcTarget"><span data-i18n="target_qtc">Qtc objetivo</span> <span class="tip" data-tip="Qtc">?</span></label>
                   <select id="qtcTarget">
-                    <option value="0.577">0.577 — Bessel (transitorios)</option>
-                    <option value="0.707" selected>0.707 — Butterworth (plano)</option>
-                    <option value="1.0">1.0 — Chebyshev (pico +1.2dB)</option>
+                    <option value="0.577" data-i18n="qtc_bessel">0.577 — Bessel (transitorios)</option>
+                    <option value="0.707" selected data-i18n="qtc_butterworth">0.707 — Butterworth (plano)</option>
+                    <option value="1.0" data-i18n="qtc_chebyshev">1.0 — Chebyshev (pico +1.2dB)</option>
                   </select>
                 </div>
               </div>
             </div>
 
             <button class="btn-calc" id="btn-calculate" data-action="calculate">
-              ✏️ Calcular
+              ✏️ <span data-i18n="calculate">Calcular</span>
             </button>
           </div>
 
@@ -318,7 +323,7 @@
 
             <div id="empty-state" class="empty-state">
               <div class="es-icon">📐</div>
-              <p>Introduce los parámetros T/S<br>y pulsa Calcular</p>
+              <p data-i18n="empty_results">Introduce los parámetros T/S y pulsa Calcular</p>
             </div>
 
             <div id="results-content" hidden>
@@ -326,12 +331,12 @@
               <!-- Hero cards -->
               <div class="hero-cards">
                 <div class="hero-card">
-                  <div class="hc-label">Volumen Vb</div>
+                  <div class="hc-label" data-i18n="box_volume">Volumen Vb</div>
                   <div class="hc-val" id="r-vb">—<span class="hc-unit"> L</span></div>
                   <div class="hc-sub" id="r-vb-sub"></div>
                 </div>
                 <div class="hero-card green">
-                  <div class="hc-label" id="r-fb-label">Sintonía Fb</div>
+                  <div class="hc-label" id="r-fb-label" data-i18n="tuning_frequency">Sintonía Fb</div>
                   <div class="hc-val" id="r-fb">—<span class="hc-unit" id="r-fb-unit"> Hz</span></div>
                   <div class="hc-sub" id="r-fb-sub"></div>
                 </div>
@@ -343,18 +348,18 @@
               </div>
 
               <!-- Tabs resultados -->
-              <div class="calc-tabs" role="tablist" aria-label="Resultados del cálculo">
-                <button class="calc-tab active" data-result-tab="tab-diag">Diagnóstico</button>
-                <button class="calc-tab" data-result-tab="tab-port">Puerto</button>
-                <button class="calc-tab" data-result-tab="tab-dim">Dimensiones</button>
-                <button class="calc-tab" data-result-tab="tab-chart">Gráfica</button>
-                <button class="calc-tab" data-result-tab="tab-cuts">Planos de Corte</button>
-                <button class="calc-tab" data-result-tab="tab-compare">Comparar</button>
+              <div class="calc-tabs" role="tablist" aria-label="Resultados del cálculo" data-i18n-aria-label="results_aria">
+                <button class="calc-tab active" data-result-tab="tab-diag" data-i18n="tab_diagnostic">Diagnóstico</button>
+                <button class="calc-tab" data-result-tab="tab-port" data-i18n="tab_port">Puerto</button>
+                <button class="calc-tab" data-result-tab="tab-dim" data-i18n="tab_dimensions">Dimensiones</button>
+                <button class="calc-tab" data-result-tab="tab-chart" data-i18n="tab_chart">Gráfica</button>
+                <button class="calc-tab" data-result-tab="tab-cuts" data-i18n="tab_cuts">Planos de Corte</button>
+                <button class="calc-tab" data-result-tab="tab-compare" data-i18n="tab_compare">Comparar</button>
               </div>
 
               <!-- Tab: Diagnóstico -->
               <div id="tab-diag" class="result-section">
-                <div class="result-section-header">🔍 Diagnóstico y Semáforo</div>
+                <div class="result-section-header">🔍 <span data-i18n="diagnostic_title">Diagnóstico y Semáforo</span></div>
                 <div class="result-section-body">
                   <div id="diag-grid" class="diag-grid"></div>
                 </div>
@@ -362,13 +367,13 @@
 
               <!-- Tab: Puerto -->
               <div id="tab-port" class="result-section" hidden>
-                <div class="result-section-header">🌬️ Puerto Bass-Reflex</div>
+                <div class="result-section-header">🌬️ <span data-i18n="port_title">Puerto Bass-Reflex</span></div>
                 <div class="result-section-body" id="port-body"></div>
               </div>
 
               <!-- Tab: Dimensiones -->
               <div id="tab-dim" class="result-section" hidden>
-                <div class="result-section-header">📏 Dimensiones de la Caja</div>
+                <div class="result-section-header">📏 <span data-i18n="dimensions_title">Dimensiones de la Caja</span></div>
                 <div class="result-section-body" id="dim-body"></div>
               </div>
 
@@ -376,7 +381,7 @@
               <div id="tab-chart" class="chart-wrapper" hidden>
                 <div class="chart-header u-inline-02"
                  >
-                  <span>📈 Respuesta en Frecuencia</span>
+                  <span>📈 <span data-i18n="chart_title">Respuesta en Frecuencia</span></span>
                   <div class="u-inline-03">
                     <span id="chart-mode-badge" class="u-inline-04">JS
                       aproximado</span>
@@ -399,7 +404,7 @@
               <!-- Tab: Planos de corte -->
               <div id="tab-cuts" hidden>
                 <div class="result-section">
-                  <div class="result-section-header">✂️ Planos de Corte (vista previa)</div>
+                  <div class="result-section-header">✂️ <span data-i18n="cuts_title">Planos de Corte (vista previa)</span></div>
                   <div class="result-section-body">
                     <table class="cuts-table" id="cuts-table"></table>
                     <div class="cuts-summary" id="cuts-summary"></div>
@@ -418,7 +423,7 @@
               <!-- Tab: Comparativa -->
               <div id="tab-compare" hidden>
                 <div class="result-section">
-                  <div class="result-section-header">⚖️ Comparativa de Alineaciones</div>
+                  <div class="result-section-header">⚖️ <span data-i18n="compare_title">Comparativa de Alineaciones</span></div>
                   <div class="result-section-body">
                     <button class="btn-calc u-inline-11" data-action="runCompare" id="btn-compare"
                      >
@@ -1092,6 +1097,9 @@
   <!-- ═══════════════════════════════════════════════════════════
      DATOS
 ═══════════════════════════════════════════════════════════ -->
+  <script src="/js/locales/es.js"></script>
+  <script src="/js/locales/en.js"></script>
+  <script src="/js/i18n.js"></script>
   <script src="/js/database.js"></script>
   <script src="/js/app.js"></script>
 
@@ -1102,7 +1110,7 @@
   <!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
   <footer class="brand-footer">
     <img src="/assets/brand/speakerlab-pro-mark.svg" alt="" aria-hidden="true">
-    <div><strong>SpeakerLab Pro</strong><span>Diseña. Simula. Construye.</span></div>
+    <div><strong>SpeakerLab Pro</strong><span data-i18n="tagline">Diseña. Simula. Construye.</span></div>
     <small>Ingeniería y diseño acústico · Ing. Carlos Benavente</small>
   </footer>
 
