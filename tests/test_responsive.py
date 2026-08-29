@@ -80,12 +80,39 @@ class ResponsiveBrowserTests(unittest.TestCase):
                 page = self.open_page(viewport)
                 logo = page.locator(".tb-logo").bounding_box()
                 self.assertGreater(page.locator(".tb-brand img").evaluate("img => img.naturalWidth"), 0)
+                self.assertTrue(page.locator(".tb-brand img").evaluate("img => img.currentSrc.endsWith('/assets/brand/speakerlab-pro-mark.svg')"))
                 nav = page.locator(".tb-nav").bounding_box()
                 self.assertIsNotNone(logo)
                 self.assertIsNotNone(nav)
                 self.assertGreaterEqual(nav["y"], logo["y"] + logo["height"] - 1)
                 self.assertEqual(page.locator(".tb-action-label").first.evaluate("el => getComputedStyle(el).display"), "none")
                 self.assert_no_document_overflow(page, viewport["width"])
+
+    def test_small_mobile_controls_and_grids_are_touch_friendly(self):
+        page = self.open_page({"width": 430, "height": 932})
+        controls = page.locator("#view-calc .form-field input, #view-calc .form-field select, #spk-search, #btn-calculate")
+        sizes = controls.evaluate_all("elements => elements.filter(el => el.getClientRects().length).map(el => ({id: el.id, height: el.getBoundingClientRect().height}))")
+        self.assertTrue(sizes)
+        undersized = [control for control in sizes if control["height"] < 44]
+        self.assertEqual(undersized, [])
+
+        page.evaluate("document.getElementById('results-content').hidden = false")
+        cards = page.locator(".hero-cards .hero-card")
+        first = cards.nth(0).bounding_box()
+        second = cards.nth(1).bounding_box()
+        self.assertGreaterEqual(second["y"], first["y"] + first["height"] - 1)
+
+        page.locator("#tb-db").click()
+        page.get_by_text("Añadir altavoz", exact=True).click()
+        columns = page.locator(".speaker-form-grid").evaluate("el => getComputedStyle(el).gridTemplateColumns.split(' ').length")
+        self.assertEqual(columns, 1)
+
+    def test_calculator_fields_expose_accessible_names(self):
+        page = self.open_page({"width": 1440, "height": 900})
+        unlabeled = page.locator("#view-calc input:not([type='hidden']), #view-calc select").evaluate_all(
+            "elements => elements.filter(el => !el.labels || el.labels.length === 0).map(el => el.id)"
+        )
+        self.assertEqual(unlabeled, [])
 
     def test_mobile_encyclopedia_index_opens_and_closes(self):
         for viewport in MOBILE_VIEWPORTS[:3]:

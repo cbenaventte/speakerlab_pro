@@ -17,6 +17,12 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn('/assets/brand/speakerlab-pro-logo.svg', HTML)
         self.assertIn('/assets/brand/speakerlab-pro-mark.svg', HTML)
         self.assertIn('/assets/brand/favicon.svg', HTML)
+        self.assertIn('<h1>Calculadora de Cajas Acústicas</h1>', HTML)
+
+    def test_calculator_controls_have_associated_labels(self):
+        self.assertIn('for="spk-search"', HTML)
+        for field_id in ("fs", "vas", "qts", "qes", "qms", "xmax", "sd", "boxType", "material"):
+            self.assertIn(f'for="{field_id}"', HTML)
 
     def test_blocking_browser_alerts_are_not_used(self):
         self.assertNotIn("alert(", JS)

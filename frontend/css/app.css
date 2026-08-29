@@ -103,6 +103,18 @@
       outline-offset: 3px;
     }
 
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
     body.modal-open {
       overflow: hidden;
     }
@@ -781,7 +793,7 @@
       flex-wrap: wrap;
     }
 
-    .calc-header h2 {
+    .calc-header h1 {
       font-size: 1.9rem;
     }
 
@@ -1718,6 +1730,19 @@
 
       .paywall-banner {
         flex-wrap: wrap;
+      }
+    }
+
+    @media(max-width:460px) {
+      .speaker-form-grid,
+      .hero-cards {
+        grid-template-columns: 1fr;
+      }
+
+      input:not([type="file"]):not([type="hidden"]),
+      select,
+      button {
+        min-height: 44px;
       }
     }
 

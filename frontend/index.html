@@ -102,7 +102,7 @@
 
         <div class="calc-header">
           <div>
-            <h2>Calculadora de Cajas Acústicas</h2>
+            <h1>Calculadora de Cajas Acústicas</h1>
             <p>Fórmulas: Thiele (1971) · Small (1973) · Keele (1975) · Proporciones áureas</p>
           </div>
         </div>
@@ -126,6 +126,7 @@
             <!-- Búsqueda de altavoz -->
             <div class="panel-title">🔊 Altavoz</div>
             <div class="search-wrapper">
+              <label class="sr-only" for="spk-search">Buscar altavoz por marca o modelo</label>
               <span class="search-icon">🔍</span>
               <input type="text" id="spk-search" placeholder="Buscar marca / modelo…"
                 autocomplete="off">
@@ -137,50 +138,50 @@
               <div class="form-section-title">📊 Parámetros Thiele-Small</div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Fs <span class="tip" data-tip="Fs">?</span></label>
+                  <label for="fs">Fs <span class="tip" data-tip="Fs">?</span></label>
                   <input type="number" id="fs" placeholder="p. ej. 28" step="0.1">
                   <span class="unit-hint">Hz — resonancia libre</span>
                 </div>
                 <div class="form-field">
-                  <label>Vas <span class="tip" data-tip="Vas">?</span></label>
+                  <label for="vas">Vas <span class="tip" data-tip="Vas">?</span></label>
                   <input type="number" id="vas" placeholder="p. ej. 75" step="0.1">
                   <span class="unit-hint">Litros — vol. equiv.</span>
                 </div>
               </div>
               <div class="form-row three">
                 <div class="form-field">
-                  <label>Qts <span class="tip" data-tip="Qts">?</span></label>
+                  <label for="qts">Qts <span class="tip" data-tip="Qts">?</span></label>
                   <input type="number" id="qts" placeholder="0.33" step="0.01">
                 </div>
                 <div class="form-field">
-                  <label>Qes</label>
+                  <label for="qes">Qes</label>
                   <input type="number" id="qes" placeholder="0.35" step="0.01">
                 </div>
                 <div class="form-field">
-                  <label>Qms</label>
+                  <label for="qms">Qms</label>
                   <input type="number" id="qms" placeholder="5.1" step="0.1">
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Xmax <span class="tip" data-tip="Xmax">?</span></label>
+                  <label for="xmax">Xmax <span class="tip" data-tip="Xmax">?</span></label>
                   <input type="number" id="xmax" placeholder="12" step="0.5">
                   <span class="unit-hint">mm</span>
                 </div>
                 <div class="form-field">
-                  <label>Sd <span class="tip" data-tip="Sd">?</span></label>
+                  <label for="sd">Sd <span class="tip" data-tip="Sd">?</span></label>
                   <input type="number" id="sd" placeholder="346" step="1">
                   <span class="unit-hint">cm²</span>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>SPL ref.</label>
+                  <label for="spl">SPL ref.</label>
                   <input type="number" id="spl" placeholder="86" step="0.5">
                   <span class="unit-hint">dB / 1W / 1m</span>
                 </div>
                 <div class="form-field">
-                  <label>Pulgadas (∅)</label>
+                  <label for="inches">Pulgadas (∅)</label>
                   <select id="inches">
                     <option value="6">6"</option>
                     <option value="6.5">6.5"</option>
@@ -194,24 +195,24 @@
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Mms <span class="tip" data-tip="Mms">?</span></label>
+                  <label for="mms">Mms <span class="tip" data-tip="Mms">?</span></label>
                   <input type="number" id="mms" placeholder="12.3" step="0.1">
                   <span class="unit-hint">g — masa móvil</span>
                 </div>
                 <div class="form-field">
-                  <label>Bl <span class="tip" data-tip="Bl">?</span></label>
+                  <label for="bl">Bl <span class="tip" data-tip="Bl">?</span></label>
                   <input type="number" id="bl" placeholder="7.36" step="0.01">
                   <span class="unit-hint">T·m — factor de fuerza</span>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Re</label>
+                  <label for="re">Re</label>
                   <input type="number" id="re" placeholder="6.0" step="0.1">
                   <span class="unit-hint">Ω — resistencia DC</span>
                 </div>
                 <div class="form-field">
-                  <label>Le</label>
+                  <label for="le">Le</label>
                   <input type="number" id="le" placeholder="0.5" step="0.1">
                   <span class="unit-hint">mH — inductancia bobina</span>
                 </div>
@@ -223,14 +224,14 @@
               <div class="form-section-title">📦 Recinto</div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Tipo de caja <span class="tip" data-tip="TipoCaja">?</span></label>
+                  <label for="boxType">Tipo de caja <span class="tip" data-tip="TipoCaja">?</span></label>
                   <select id="boxType">
                     <option value="reflex">Bass-Reflex</option>
                     <option value="closed">Cerrada (Sellada)</option>
                   </select>
                 </div>
                 <div class="form-field">
-                  <label>Material</label>
+                  <label for="material">Material</label>
                   <select id="material">
                     <option value="18">MDF 18mm</option>
                     <option value="22">MDF 22mm</option>
@@ -244,7 +245,7 @@
               <div id="reflex-opts">
                 <div class="form-row">
                   <div class="form-field">
-                    <label>Alineación <span class="tip" data-tip="Alineacion">?</span></label>
+                    <label for="alignment">Alineación <span class="tip" data-tip="Alineacion">?</span></label>
                     <select id="alignment">
                       <option value="QB3">QB3 — Quasi Butterworth</option>
                       <option value="SBB4" selected>SBB4 — Sub-Butterworth</option>
@@ -252,7 +253,7 @@
                     </select>
                   </div>
                   <div class="form-field">
-                    <label>Tipo de puerto</label>
+                    <label for="portType">Tipo de puerto</label>
                     <select id="portType">
                       <option value="circular">Circular</option>
                       <option value="slot">Slot (rectangular)</option>
@@ -261,30 +262,30 @@
                 </div>
                 <div id="port-circular" class="form-row">
                   <div class="form-field">
-                    <label>∅ Puerto</label>
+                    <label for="portDiam">∅ Puerto</label>
                     <input type="number" id="portDiam" value="7" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                   <div class="form-field">
-                    <label>N° puertos</label>
+                    <label for="numPorts">N° puertos</label>
                     <input type="number" id="numPorts" value="1" min="1" max="4">
                   </div>
                 </div>
                 <div id="port-slot" class="form-row" hidden>
                   <div class="form-field">
-                    <label>Slot Ancho</label>
+                    <label for="slotW">Slot Ancho</label>
                     <input type="number" id="slotW" value="10" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                   <div class="form-field">
-                    <label>Slot Alto</label>
+                    <label for="slotH">Slot Alto</label>
                     <input type="number" id="slotH" value="5" step="0.5">
                     <span class="unit-hint">cm</span>
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-field">
-                    <label>Corrección k <span class="tip" data-tip="FactorK">?</span></label>
+                    <label for="kFactor">Corrección k <span class="tip" data-tip="FactorK">?</span></label>
                     <select id="kFactor">
                       <option value="0.614">0.614 — ambos extremos abiertos</option>
                       <option value="0.732" selected>0.732 — un extremo cerrado</option>
@@ -297,7 +298,7 @@
               <!-- Opciones sellada -->
               <div id="closed-opts" hidden>
                 <div class="form-field">
-                  <label>Qtc objetivo <span class="tip" data-tip="Qtc">?</span></label>
+                  <label for="qtcTarget">Qtc objetivo <span class="tip" data-tip="Qtc">?</span></label>
                   <select id="qtcTarget">
                     <option value="0.577">0.577 — Bessel (transitorios)</option>
                     <option value="0.707" selected>0.707 — Butterworth (plano)</option>
