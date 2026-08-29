@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">SpeakerLab Pro isotipo</title>
+  <desc id="desc">Cono de altavoz, curva de respuesta y monograma SL</desc>
+  <g fill="none" stroke="#171A1F" stroke-width="12" stroke-linecap="round">
+    <path d="M112 30A98 98 0 0 0 112 226"/>
+    <path d="M112 62A66 66 0 0 0 112 194"/>
+    <path d="M112 94A34 34 0 0 0 112 162"/>
+    <path d="M112 30V226"/>
+  </g>
+  <circle cx="112" cy="128" r="27" fill="#171A1F"/>
+  <path d="M112 101A27 27 0 0 0 112 155Z" fill="#F47A21"/>
+  <path d="M128 121C145 121 146 84 168 84S190 120 218 120" fill="none" stroke="#F47A21" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="168" cy="84" r="9" fill="#F47A21"/>
+  <path d="M144 157h44c9 0 15 6 15 14s-6 14-15 14h-24c-7 0-12 5-12 12s5 12 12 12h43" fill="none" stroke="#171A1F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M218 157v52h25" fill="none" stroke="#171A1F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -4,9 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpeakerLab — Calculadora & Enciclopedia Acústica</title>
+  <title>SpeakerLab Pro — Diseña. Simula. Construye.</title>
+  <meta name="description" content="Diseña, simula y construye cajas acústicas con cálculos, enciclopedia y planos gratuitos.">
+  <meta name="theme-color" content="#171A1F">
+  <meta property="og:title" content="SpeakerLab Pro">
+  <meta property="og:description" content="Ingeniería acústica accesible para diseñar, simular y construir.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
   <link
-    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700;800&family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/utilities.css">
@@ -19,9 +25,13 @@
   <!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
   <header id="topbar">
     <div class="tb-logo">
-      <h1>SpeakerLab Pro</h1>
-      <span class="subtitle">Diseño acústico DIY</span>
-      <span class="author-credits">Desarrollado por Ing. Carlos Benavente</span>
+      <a class="tb-brand" href="/" aria-label="SpeakerLab Pro, inicio">
+        <picture>
+          <source media="(max-width: 700px)" srcset="/assets/brand/speakerlab-pro-mark.svg">
+          <img src="/assets/brand/speakerlab-pro-logo.svg" alt="SpeakerLab Pro">
+        </picture>
+        <span class="subtitle">Diseña. Simula. Construye.</span>
+      </a>
     </div>
     <nav class="tb-nav" aria-label="Navegación principal">
       <button class="active" data-view="calc" id="tb-calc">
@@ -910,12 +920,12 @@
               <line x1="50" y1="190" x2="550" y2="190" stroke="#999" stroke-width="1.5" />
               <line x1="50" y1="15" x2="50" y2="190" stroke="#999" stroke-width="1.5" />
               <line x1="50" y1="75" x2="550" y2="75" class="s-stroke s-dash" stroke="rgba(0,0,0,0.08)" />
-              <text x="300" y="218" font-family="Nunito" font-size="11" text-anchor="middle">Frecuencia Hz →</text>
-              <text x="14" y="110" font-family="Nunito" font-size="11" transform="rotate(-90 14 110)"
+              <text x="300" y="218" font-family="Inter, Arial, sans-serif" font-size="11" text-anchor="middle">Frecuencia Hz →</text>
+              <text x="14" y="110" font-family="Inter, Arial, sans-serif" font-size="11" transform="rotate(-90 14 110)"
                 text-anchor="middle">dB</text>
-              <text x="50" y="208" font-family="Nunito" font-size="9">20Hz</text>
-              <text x="148" y="208" font-family="Nunito" font-size="9">50Hz</text>
-              <text x="248" y="208" font-family="Nunito" font-size="9">100Hz</text>
+              <text x="50" y="208" font-family="Inter, Arial, sans-serif" font-size="9">20Hz</text>
+              <text x="148" y="208" font-family="Inter, Arial, sans-serif" font-size="9">50Hz</text>
+              <text x="248" y="208" font-family="Inter, Arial, sans-serif" font-size="9">100Hz</text>
               <path id="curve-path" d="M 50 190 C 120 190, 140 75, 220 75 L 550 75" fill="none" stroke="var(--blue)"
                 stroke-width="2.5" class="u-inline-26" />
             </svg>
@@ -1089,8 +1099,10 @@
 ═══════════════════════════════════════════════════════════ -->
 
   <!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
-  <footer class="u-inline-31">
-    © 2024 - Ingeniería y Diseño Acústico | Ing. Carlos Benavente
+  <footer class="brand-footer">
+    <img src="/assets/brand/speakerlab-pro-mark.svg" alt="" aria-hidden="true">
+    <div><strong>SpeakerLab Pro</strong><span>Diseña. Simula. Construye.</span></div>
+    <small>Ingeniería y diseño acústico · Ing. Carlos Benavente</small>
   </footer>
 
 </body>

@@ -3,17 +3,17 @@
 ═══════════════════════════════════════════════════════════ */
     :root {
       /* Papel */
-      --paper: #f1ebd9;
-      --paper-light: #fcfbf8;
-      --paper-dark: #e8dfc8;
-      --ink: #1e272e;
-      --ink-muted: #5a6a72;
-      --ink-faint: rgba(30, 39, 46, 0.08);
+      --paper: #f4f1ea;
+      --paper-light: #fffdf8;
+      --paper-dark: #e8e3da;
+      --ink: #171a1f;
+      --ink-muted: #69707a;
+      --ink-faint: rgba(23, 26, 31, 0.08);
 
       /* Acento azul (blueprint) */
-      --blue: #0984e3;
-      --blue-dark: #075f9e;
-      --blue-bg: rgba(9, 132, 227, 0.07);
+      --blue: #f47a21;
+      --blue-dark: #9f4300;
+      --blue-bg: rgba(244, 122, 33, 0.10);
 
       /* Acento rojo (pluma roja del diseñador) */
       --red: #d63031;
@@ -24,7 +24,7 @@
       --green-bg: rgba(0, 184, 148, 0.09);
 
       /* Acento naranja */
-      --orange: #e17055;
+      --orange: #f47a21;
 
       /* Highlight */
       --hl: rgba(253, 203, 110, 0.42);
@@ -54,7 +54,7 @@
     }
 
     body {
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       background: var(--paper);
       color: var(--ink);
       line-height: 1.6;
@@ -162,6 +162,24 @@
       opacity: 0.45;
     }
 
+    .brand-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-top: auto;
+      padding: 1.5rem 1rem;
+      border-top: 2.5px solid var(--ink);
+      background: var(--paper-light);
+      color: var(--ink-muted);
+      font-family: 'Inter', Arial, sans-serif;
+      text-align: left;
+    }
+    .brand-footer img { width: 48px; height: 48px; }
+    .brand-footer strong { display: block; color: var(--ink); }
+    .brand-footer span { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .brand-footer small { padding-left: 0.8rem; border-left: 1px solid var(--ink-muted); }
+
     /* ═══════════════════════════════════════════════════════════
    TOPBAR
 ═══════════════════════════════════════════════════════════ */
@@ -178,39 +196,37 @@
     }
 
     .tb-logo {
-      padding: 0.7rem 1.5rem;
+      padding: 0.45rem 1rem;
       border-right: 2px solid var(--ink);
       flex-shrink: 0;
     }
 
-    .tb-logo h1 {
-      font-size: 1.5rem;
-      color: var(--blue-dark);
-      line-height: 1;
-      letter-spacing: -0.5px;
+    .tb-brand {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .tb-brand picture { display: block; }
+
+    .tb-brand img {
+      display: block;
+      width: 180px;
+      height: 50px;
+      object-fit: contain;
+      object-position: left center;
     }
 
     .tb-logo span.subtitle {
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       font-size: 0.7rem;
       color: var(--ink-muted);
       letter-spacing: 0.05em;
       font-weight: 600;
       text-transform: uppercase;
       display: block;
-      margin-top: 1px;
-    }
-
-    .tb-logo span.author-credits {
-      font-family: 'Georgia', serif;
-      font-size: 0.9rem;
-      font-style: italic;
-      color: var(--ink-muted);
-      font-weight: normal;
-      letter-spacing: 0.2px;
-      text-transform: none;
-      display: block;
-      margin-top: 4px;
+      margin-top: 2px;
+      text-align: center;
     }
 
     .tb-nav {
@@ -225,7 +241,7 @@
       padding: 0.9rem 1.4rem;
       background: none;
       border: none;
-      font-family: 'Kalam', cursive;
+      font-family: 'Inter', Arial, sans-serif;
       font-size: 1.05rem;
       color: var(--ink-muted);
       cursor: pointer;
@@ -451,7 +467,7 @@
       margin-bottom: 3px;
       background: none;
       border: 2px dashed transparent;
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       font-weight: 700;
       font-size: 0.95rem;
       color: var(--ink);
@@ -468,7 +484,7 @@
     .nav-item.active {
       border: 2px solid var(--ink);
       background: var(--blue);
-      color: var(--paper-light);
+      color: var(--ink);
       transform: scale(1.02);
     }
 
@@ -733,7 +749,7 @@
 
     .tab-btn.active {
       background: var(--blue);
-      color: #fff;
+      color: var(--ink);
       border-color: var(--blue);
     }
 
@@ -851,7 +867,7 @@
       border: 2px dashed var(--ink);
       border-radius: var(--r-sketch);
       background: var(--paper);
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       font-size: 0.95rem;
       color: var(--ink);
       outline: none;
@@ -1550,15 +1566,12 @@
         border-right: 0;
       }
 
-      .tb-logo h1 {
-        overflow: hidden;
-        font-size: 1.15rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      .tb-brand img {
+        width: 44px;
+        height: 44px;
       }
 
-      .tb-logo span.subtitle,
-      .tb-logo span.author-credits {
+      .tb-logo span.subtitle {
         display: none;
       }
 
@@ -1608,6 +1621,8 @@
 
       .project-create-row, .project-item { grid-template-columns: 1fr; flex-direction: column; }
       .speaker-form-grid { grid-template-columns: 1fr 1fr; }
+      .brand-footer { flex-wrap: wrap; text-align: center; }
+      .brand-footer small { width: 100%; padding-left: 0; border-left: 0; }
 
       #content-area {
         padding: 1.2rem;
@@ -1674,8 +1689,8 @@
         border-radius: var(--r-sketch);
         background: var(--blue);
         box-shadow: var(--shadow-sketch);
-        color: var(--paper-light);
-        font-family: 'Kalam', cursive;
+        color: var(--ink);
+        font-family: 'Inter', Arial, sans-serif;
         font-size: 1rem;
         font-weight: 700;
         cursor: pointer;

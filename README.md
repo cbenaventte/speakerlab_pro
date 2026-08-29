@@ -1,4 +1,8 @@
-# SpeakerLab Pro
+<p align="center">
+  <img src="frontend/assets/brand/speakerlab-pro-logo.svg" alt="SpeakerLab Pro" width="460">
+</p>
+
+<p align="center"><strong>Diseña. Simula. Construye.</strong></p>
 
 Calculadora libre de cajas acústicas DIY con enciclopedia, simulación científica y generación gratuita de planos PDF.
 
@@ -8,6 +12,7 @@ Calculadora libre de cajas acústicas DIY con enciclopedia, simulación científ
 speakerlab-pro/
 ├── frontend/index.html     # Estructura de la aplicación
 ├── frontend/css/app.css    # Sistema visual y componentes
+├── frontend/assets/brand/  # Identidad visual y guía de marca
 ├── frontend/js/database.js # Base de datos y tablas de alineamiento
 ├── frontend/js/app.js      # Estado, cálculos e integración con la API
 ├── api/index.py            # API FastAPI

@@ -14,6 +14,9 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn('src="/js/app.js"', HTML)
         self.assertIn('id="toast-region"', HTML)
         self.assertIn('aria-live="polite"', HTML)
+        self.assertIn('/assets/brand/speakerlab-pro-logo.svg', HTML)
+        self.assertIn('/assets/brand/speakerlab-pro-mark.svg', HTML)
+        self.assertIn('/assets/brand/favicon.svg', HTML)
 
     def test_blocking_browser_alerts_are_not_used(self):
         self.assertNotIn("alert(", JS)

@@ -79,6 +79,7 @@ class ResponsiveBrowserTests(unittest.TestCase):
             with self.subTest(viewport=viewport):
                 page = self.open_page(viewport)
                 logo = page.locator(".tb-logo").bounding_box()
+                self.assertGreater(page.locator(".tb-brand img").evaluate("img => img.naturalWidth"), 0)
                 nav = page.locator(".tb-nav").bounding_box()
                 self.assertIsNotNone(logo)
                 self.assertIsNotNone(nav)

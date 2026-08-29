@@ -40,6 +40,7 @@ app.add_middleware(CORSMiddleware, allow_origins=allowed_origins,
                    allow_methods=["GET","POST"], allow_headers=["*"])
 app.mount("/css", StaticFiles(directory=FRONTEND_DIR / "css"), name="css")
 app.mount("/js", StaticFiles(directory=FRONTEND_DIR / "js"), name="js")
+app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="assets")
 
 @app.middleware("http")
 async def operational_guards(request: Request, call_next):
