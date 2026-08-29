@@ -59,6 +59,11 @@ class FrontendExperienceTests(unittest.TestCase):
             self.assertNotIn(attribute, HTML)
         self.assertIn("function initDeclarativeEvents()", JS)
 
+    def test_presentation_is_not_embedded_in_html_or_javascript(self):
+        self.assertNotIn("style=", HTML)
+        self.assertNotIn(".style.", JS)
+        self.assertIn('href="/css/utilities.css"', HTML)
+
 
 if __name__ == "__main__":
     unittest.main()

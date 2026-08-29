@@ -1,0 +1,31 @@
+/* Utilities extracted from legacy inline presentation. */
+.u-inline-02 { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem; }
+.u-inline-03 { display:flex;align-items:center;gap:0.6rem; }
+.u-inline-04 { font-family:'Space Mono',monospace;font-size:0.72rem;padding:2px 8px;border-radius:3px;background:rgba(253,203,110,0.5);border:1px solid #c4900a;color:#7a5500; }
+.u-inline-05 { font-family:'Kalam',cursive;font-size:0.95rem;padding:3px 10px;border:2px solid var(--blue);background:var(--blue-bg);color:var(--blue-dark);border-radius:var(--r-sketch);cursor:pointer; }
+.u-inline-06 { text-align:center;padding:2rem;font-family:'Kalam',cursive;color:var(--ink-muted);font-size:1.1rem; }
+.u-inline-07 { border-top:1.5px solid var(--ink); }
+.u-inline-08 { width:100%;height:160px;display:block;background:var(--paper); }
+.u-inline-09 { padding:0.8rem 1.2rem;background:var(--red-bg);border-top:1px solid var(--red);font-size:0.85rem;color:var(--red); }
+.u-inline-10 { margin-top:1rem; }
+.u-inline-11 { margin-bottom:1rem;background:var(--blue-dark); }
+.u-inline-12 { color:var(--red);margin-bottom:1rem;font-size:0.9rem; }
+.u-inline-13 { margin-top:1rem;width:100%;height:320px;display:block;background:var(--paper); }
+.u-inline-14 { display:flex;justify-content:space-around;align-items:center;text-align:center;flex-wrap:wrap;gap:1rem; }
+.u-inline-15 { flex:1;min-width:120px; }
+.u-inline-16 { height:50px; }
+.u-inline-17 { font-size:0.88rem; }
+.u-inline-18 { font-size:1.8rem;flex-shrink:0; }
+.u-inline-19 { text-align:center;font-weight:700; }
+.u-inline-20 { margin-bottom:0.8rem; }
+.u-inline-21 { text-align:center;font-family:'Space Mono';font-size:1.1rem;margin:1rem 0;font-weight:700;letter-spacing:0.05em; }
+.u-inline-22 { margin-top:0.8rem; }
+.u-inline-23 { display:block;padding:0.8rem;background:var(--paper-dark);border-radius:4px;font-size:0.9rem;margin:0.8rem 0; }
+.u-inline-24 { font-family:'Kalam';font-size:1.2rem;color:var(--blue-dark); }
+.u-inline-25 { background:var(--paper);border:1px solid #ccc;border-radius:4px;width:100%; }
+.u-inline-26 { transition:d 0.35s ease; }
+.u-inline-27 { margin-top:1.2rem;padding:1rem;background:var(--paper);border-radius:4px;font-size:0.93rem;min-height:70px; }
+.u-inline-28 { font-family:'Kalam';font-size:1.8rem;margin-bottom:0.3rem; }
+.u-inline-29 { color:var(--ink-muted);margin-bottom:1.5rem;font-size:0.93rem; }
+.u-inline-30 { overflow-x:auto; }
+.u-inline-31 { text-align: center;padding: 2.5rem 1rem;background: var(--paper-light);border-top: 2.5px solid var(--ink);color: var(--ink-muted);font-family: 'Nunito', sans-serif;font-size: 0.95rem;font-weight: 600;margin-top: auto;display: block; }

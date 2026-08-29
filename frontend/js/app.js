@@ -158,8 +158,8 @@
 
     /* ── Enciclopedia ───────────────────────────────────────── */
     function showEnc(id) {
-      document.querySelectorAll('#view-enc .enc-article').forEach(a => a.style.display = 'none');
-      document.getElementById(id).style.display = 'block';
+      document.querySelectorAll('#view-enc .enc-article').forEach(a => a.hidden = true);
+      document.getElementById(id).hidden = false;
       document.querySelectorAll('#enc-sidebar .nav-item').forEach(b => b.classList.remove('active'));
       document.querySelector(`[data-enc="${id}"]`).classList.add('active');
       document.getElementById('content-area').scrollTop = 0;
@@ -208,7 +208,7 @@
       if (!tip) return;
       const el = document.getElementById('enc-tooltip');
       el.innerHTML = `<strong>${tip.title}</strong>${tip.body}
-    <br><a href="#" data-tip-section="${key}" style="color:var(--blue);font-size:0.8rem;margin-top:0.4rem;display:inline-block">Ver en la Enciclopedia →</a>`;
+    <br><a href="#" data-tip-section="${key}" class="tip-section-link">Ver en la Enciclopedia →</a>`;
       el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), 5000);
     }
@@ -242,7 +242,7 @@
       dd.innerHTML = hits.map((s, i) => `
     <div class="dd-item" data-speaker-index="${DB.indexOf(s)}">
       <div><span class="dd-brand">${s.brand}</span><br><span class="dd-model">${s.model}</span></div>
-      <div style="font-size:0.75rem;color:var(--ink-muted)">${s.inches}" · ${s.align}</div>
+      <div class="speaker-search-meta">${s.inches}" · ${s.align}</div>
     </div>`).join('');
       dd.classList.add('open');
     }
@@ -281,26 +281,26 @@
     /* ── Toggles de UI ──────────────────────────────────────── */
     function toggleBoxOpts() {
       const isReflex = document.getElementById('boxType').value === 'reflex';
-      document.getElementById('reflex-opts').style.display = isReflex ? '' : 'none';
-      document.getElementById('closed-opts').style.display = isReflex ? 'none' : '';
+      document.getElementById('reflex-opts').hidden = !isReflex;
+      document.getElementById('closed-opts').hidden = isReflex;
     }
     function togglePortOpts() {
       const isCirc = document.getElementById('portType').value === 'circular';
-      document.getElementById('port-circular').style.display = isCirc ? '' : 'none';
-      document.getElementById('port-slot').style.display = isCirc ? 'none' : '';
+      document.getElementById('port-circular').hidden = !isCirc;
+      document.getElementById('port-slot').hidden = isCirc;
     }
 
     function switchTab(evt, id) {
       ['tab-diag', 'tab-port', 'tab-dim', 'tab-chart', 'tab-cuts', 'tab-compare'].forEach(t => {
         const el = document.getElementById(t);
-        if (el) el.style.display = 'none';
+        if (el) el.hidden = true;
       });
       document.querySelectorAll('.calc-tab').forEach(b => {
         b.classList.remove('active');
         b.setAttribute('aria-selected', 'false');
         b.tabIndex = -1;
       });
-      document.getElementById(id).style.display = 'block';
+      document.getElementById(id).hidden = false;
       evt.currentTarget.classList.add('active');
       evt.currentTarget.setAttribute('aria-selected', 'true');
       evt.currentTarget.tabIndex = 0;
@@ -406,8 +406,8 @@
       calcResults = r;
 
       // Mostrar resultados
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('results-content').style.display = 'block';
+      document.getElementById('empty-state').hidden = true;
+      document.getElementById('results-content').hidden = false;
 
       // Hero cards
       document.getElementById('r-vb').innerHTML = `${n(r.Vb)} <span class="hc-unit">L</span>`;
@@ -435,9 +435,9 @@
       document.querySelector('.calc-tab').classList.add('active');
       ['tab-diag', 'tab-port', 'tab-dim', 'tab-chart', 'tab-cuts', 'tab-compare'].forEach(t => {
         const el = document.getElementById(t);
-        if (el) el.style.display = 'none';
+        if (el) el.hidden = true;
       });
-      document.getElementById('tab-diag').style.display = 'block';
+      document.getElementById('tab-diag').hidden = false;
       setButtonBusy(calculateButton, false);
       projectDirty = projectBaseline
         ? JSON.stringify(collectProjectForm()) !== projectBaseline
@@ -479,7 +479,7 @@
     }
 
     function renderPort(r) {
-      if (r.boxType !== 'reflex') { document.getElementById('tab-port').style.display = 'none'; return; }
+      if (r.boxType !== 'reflex') { document.getElementById('tab-port').hidden = true; return; }
       const Fpipe = r.L ? 34400 / (2 * r.L) : null;
       const portDesc = r.portType === 'circular'
         ? `<div class="data-row"><span class="dr-label">Diámetro del tubo</span><span class="dr-val">${r.portDiam} cm</span></div>`
@@ -491,7 +491,7 @@
     <div class="data-row"><span class="dr-label">Área total (${r.N} puerto/s)</span><span class="dr-val">${n(r.SpTotal)} cm²</span></div>
     <div class="data-row"><span class="dr-label">Diámetro equivalente</span><span class="dr-val">${n(r.d_eq)} cm</span></div>
     ${portDesc}
-    ${Fpipe ? `<div class="data-row"><span class="dr-label">Resonancia tubo (Pipe)</span><span class="dr-val" style="color:var(--orange)">${n(Fpipe)} Hz — rellenar 1/3 con espuma</span></div>` : ''}
+    ${Fpipe ? `<div class="data-row"><span class="dr-label">Resonancia tubo (Pipe)</span><span class="dr-val pipe-warning">${n(Fpipe)} Hz — rellenar 1/3 con espuma</span></div>` : ''}
     <div class="data-row"><span class="dr-label">Filtro subsónico recomendado</span><span class="dr-val">${n(r.Fb * 0.7)} Hz (0.7×Fb)</span></div>
   `;
     }
@@ -603,9 +603,9 @@
       const badge = document.getElementById('chart-mode-badge');
       const btnScipy = document.getElementById('btn-scipy');
 
-      errEl.style.display = 'none';
-      loadEl.style.display = 'block';
-      canvasEl.style.display = 'none';
+      errEl.hidden = true;
+      loadEl.hidden = false;
+      canvasEl.hidden = true;
       btnScipy.disabled = true;
       btnScipy.textContent = '⏳ Calculando…';
 
@@ -633,46 +633,37 @@
 
         // Actualizar badge
         badge.textContent = '⚗️ scipy / Small 1973';
-        badge.style.background = 'rgba(0,184,148,0.15)';
-        badge.style.borderColor = 'var(--green)';
-        badge.style.color = '#00836a';
+        badge.classList.add('simulation-badge-success');
 
         // Mostrar avisos si los hay
         if (sciPyData.warnings?.length) {
           errEl.innerHTML = '⚠️ ' + sciPyData.warnings.join('<br>⚠️ ');
-          errEl.style.display = 'block';
-          errEl.style.background = 'rgba(253,203,110,0.3)';
-          errEl.style.borderColor = '#e5a700';
-          errEl.style.color = '#7a5500';
+          errEl.hidden = false;
+          errEl.className = 'u-inline-09 simulation-message-warning';
         }
 
-        loadEl.style.display = 'none';
-        canvasEl.style.display = 'block';
+        loadEl.hidden = true;
+        canvasEl.hidden = false;
         drawChartFromData(sciPyData);
         renderExcursionChart(sciPyData);
         notify('Simulación científica completada.', 'success');
 
       } catch (err) {
-        loadEl.style.display = 'none';
-        canvasEl.style.display = 'block';
+        loadEl.hidden = true;
+        canvasEl.hidden = false;
         // Backend no disponible — mostrar aviso suave, no error rojo
         const isConnErr = err.message === 'Failed to fetch' || err.message.includes('NetworkError');
         if (isConnErr) {
           errEl.innerHTML = `⚗️ Backend scipy no conectado — mostrando gráfica JS aproximada.
-        <a href="https://github.com" target="_blank" style="color:var(--blue-dark);font-size:0.8rem;margin-left:0.5rem">
+        <a href="https://github.com/cbenaventte/speakerlab_pro" target="_blank" rel="noopener" class="simulation-help-link">
         Ver instrucciones de arranque →</a>`;
-          errEl.style.background = 'rgba(253,203,110,0.25)';
-          errEl.style.borderColor = 'rgba(0,0,0,0.1)';
-          errEl.style.color = 'var(--ink-muted)';
-          errEl.style.borderTop = '1px solid rgba(0,0,0,0.08)';
+          errEl.className = 'u-inline-09 simulation-message-info';
         } else {
           errEl.innerHTML = `❌ Error scipy: <strong>${err.message}</strong>`;
           notify(`Error de simulación: ${err.message}`, 'error');
-          errEl.style.background = 'var(--red-bg)';
-          errEl.style.borderColor = 'var(--red)';
-          errEl.style.color = 'var(--red)';
+          errEl.className = 'u-inline-09 simulation-message-error';
         }
-        errEl.style.display = 'block';
+        errEl.hidden = false;
         drawChart(calcResults);   // fallback a la gráfica JS
       } finally {
         btnScipy.disabled = false;
@@ -691,7 +682,7 @@
       const errEl = document.getElementById('compare-error');
       btn.textContent = '⏳ Analizando...';
       btn.disabled = true;
-      errEl.style.display = 'none';
+      errEl.hidden = true;
 
       try {
         const res = await fetch(`${API_BASE}/api/compare`, {
@@ -709,7 +700,7 @@
           const info = data.curves[align];
           if (!info || info.error) continue;
           html += `<tr>
-        <td style="color:${colors[align]};font-weight:bold">${align} ${align === 'Closed' ? '(Sellada)' : ''}</td>
+        <td class="compare-align compare-align-${align.toLowerCase()}">${align} ${align === 'Closed' ? '(Sellada)' : ''}</td>
         <td class="dims">${n(info.vb)} L</td>
         <td class="dims">${align === 'Closed' ? 'Qtc ' + n(info.qtc, 3) : n(info.fb) + ' Hz'}</td>
         <td class="dims">${n(info.f3)} Hz</td>
@@ -780,11 +771,11 @@
           ctx.stroke();
         }
 
-        document.getElementById('compare-results').style.display = 'block';
+        document.getElementById('compare-results').hidden = false;
         notify('Comparación de alineamientos completada.', 'success');
       } catch (e) {
         errEl.textContent = '❌ Error de API: ' + e.message;
-        errEl.style.display = 'block';
+        errEl.hidden = false;
         notify(`No se pudo completar la comparación: ${e.message}`, 'error');
       } finally {
         btn.textContent = 'Analizar las 4 alineaciones (Scipy)';
@@ -892,7 +883,7 @@
         { f: m.fb, label: `Fb=${m.fb}Hz`, color: '#0984e3' },
       ].filter(mk => mk.f);
       _drawCanvasCore(canvas, data.freqs, data.spl, markers, m.sens_band);
-      document.getElementById('extra-charts').style.display = 'block';
+      document.getElementById('extra-charts').hidden = false;
     }
 
     /* Gráfica de excursión + velocidad de puerto */
@@ -1016,7 +1007,7 @@
       tbody.innerHTML = DB.map((s, i) => `<tr>
     <td class="brand">${s.brand}</td>
     <td>${s.model}</td>
-    <td style="text-align:center">${s.inches}"</td>
+    <td class="db-size-cell">${s.inches}"</td>
     <td class="num">${s.fs}</td>
     <td class="num">${s.vas}</td>
     <td class="num">${s.qts}</td>
@@ -1174,13 +1165,13 @@
       renderProjectsList();
       refreshProjectEditState();
       document.getElementById('projects-modal').hidden = false;
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       window.setTimeout(() => document.getElementById('project-name').focus(), 0);
     }
 
     function closeProjectsModal() {
       document.getElementById('projects-modal').hidden = true;
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
       projectsModalTrigger?.focus();
       projectsModalTrigger = null;
     }
@@ -1504,6 +1495,7 @@
         runCompare,
         runScipy,
         saveLocalProject,
+        showBackendInstructions,
         updateLocalProject,
       };
 
@@ -1603,7 +1595,12 @@
         const r = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
         if (r.ok) {
           // Backend disponible — botón scipy visible y activo
-          if (btn) { btn.style.display = ''; btn.title = 'Backend scipy disponible'; }
+          if (btn) {
+            btn.hidden = false;
+            btn.classList.remove('backend-unavailable');
+            btn.dataset.action = 'runScipy';
+            btn.title = 'Backend scipy disponible';
+          }
           if (badge) { badge.title = 'Conectado al backend'; }
         } else {
           _hideScipy();
@@ -1615,19 +1612,19 @@
 
     function _hideScipy() {
       const btn = document.getElementById('btn-scipy');
-      const badge = document.getElementById('chart-mode-badge');
       if (btn) {
         btn.textContent = '⚗️ scipy (sin backend)';
         btn.title = 'Arranca uvicorn api.index:app --port 8000 para activar la simulación precisa';
-        btn.style.opacity = '0.45';
-        btn.style.cursor = 'default';
-        btn.onclick = () => {
-          document.getElementById('chart-api-error').innerHTML =
-            `⚗️ El backend Python no está corriendo.<br>
-         <small>Lanza: <code>uvicorn api.index:app --reload --port 8000</code></small>`;
-          document.getElementById('chart-api-error').style.cssText =
-            'display:block;padding:0.8rem 1.2rem;background:rgba(253,203,110,0.25);border-top:1px solid rgba(0,0,0,0.08);font-size:0.85rem;color:var(--ink-muted)';
-        };
+        btn.classList.add('backend-unavailable');
+        btn.dataset.action = 'showBackendInstructions';
       }
+    }
+
+    function showBackendInstructions() {
+      const message = document.getElementById('chart-api-error');
+      message.innerHTML = `⚗️ El backend Python no está corriendo.<br>
+        <small>Lanza: <code>uvicorn api.index:app --reload --port 8000</code></small>`;
+      message.className = 'u-inline-09 simulation-message-info';
+      message.hidden = false;
     }
   

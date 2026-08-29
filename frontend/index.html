@@ -9,6 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/utilities.css">
 </head>
 
 <body>
@@ -255,7 +256,7 @@
                     <input type="number" id="numPorts" value="1" min="1" max="4">
                   </div>
                 </div>
-                <div id="port-slot" class="form-row" style="display:none">
+                <div id="port-slot" class="form-row" hidden>
                   <div class="form-field">
                     <label>Slot Ancho</label>
                     <input type="number" id="slotW" value="10" step="0.5">
@@ -280,7 +281,7 @@
               </div>
 
               <!-- Opciones sellada -->
-              <div id="closed-opts" style="display:none">
+              <div id="closed-opts" hidden>
                 <div class="form-field">
                   <label>Qtc objetivo <span class="tip" data-tip="Qtc">?</span></label>
                   <select id="qtcTarget">
@@ -305,7 +306,7 @@
               <p>Introduce los parámetros T/S<br>y pulsa Calcular</p>
             </div>
 
-            <div id="results-content" style="display:none">
+            <div id="results-content" hidden>
 
               <!-- Hero cards -->
               <div class="hero-cards">
@@ -345,47 +346,43 @@
               </div>
 
               <!-- Tab: Puerto -->
-              <div id="tab-port" class="result-section" style="display:none">
+              <div id="tab-port" class="result-section" hidden>
                 <div class="result-section-header">🌬️ Puerto Bass-Reflex</div>
                 <div class="result-section-body" id="port-body"></div>
               </div>
 
               <!-- Tab: Dimensiones -->
-              <div id="tab-dim" class="result-section" style="display:none">
+              <div id="tab-dim" class="result-section" hidden>
                 <div class="result-section-header">📏 Dimensiones de la Caja</div>
                 <div class="result-section-body" id="dim-body"></div>
               </div>
 
               <!-- Tab: Gráfica -->
-              <div id="tab-chart" class="chart-wrapper" style="display:none">
-                <div class="chart-header"
-                  style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+              <div id="tab-chart" class="chart-wrapper" hidden>
+                <div class="chart-header u-inline-02"
+                 >
                   <span>📈 Respuesta en Frecuencia</span>
-                  <div style="display:flex;align-items:center;gap:0.6rem">
-                    <span id="chart-mode-badge"
-                      style="font-family:'Space Mono',monospace;font-size:0.72rem;padding:2px 8px;border-radius:3px;background:rgba(253,203,110,0.5);border:1px solid #c4900a;color:#7a5500">JS
+                  <div class="u-inline-03">
+                    <span id="chart-mode-badge" class="u-inline-04">JS
                       aproximado</span>
-                    <button id="btn-scipy" data-action="runScipy"
-                      style="font-family:'Kalam',cursive;font-size:0.95rem;padding:3px 10px;border:2px solid var(--blue);background:var(--blue-bg);color:var(--blue-dark);border-radius:var(--r-sketch);cursor:pointer">⚗️
+                    <button id="btn-scipy" data-action="runScipy" class="u-inline-05">⚗️
                       Simular con scipy</button>
                   </div>
                 </div>
-                <div id="chart-loading"
-                  style="display:none;text-align:center;padding:2rem;font-family:'Kalam',cursive;color:var(--ink-muted);font-size:1.1rem">
+                <div id="chart-loading" class="u-inline-06" hidden>
                   ⏳ Simulando con modelo Small (1973)…</div>
                 <canvas id="freqChart"></canvas>
-                <div id="extra-charts" style="display:none">
-                  <div class="chart-header" style="border-top:1.5px solid var(--ink)">🎯 Excursión del Cono &amp;
+                <div id="extra-charts" hidden>
+                  <div class="chart-header u-inline-07">🎯 Excursión del Cono &amp;
                     Velocidad en Puerto</div>
-                  <canvas id="excChart" style="width:100%;height:160px;display:block;background:var(--paper)"></canvas>
+                  <canvas id="excChart" class="u-inline-08"></canvas>
                 </div>
-                <div id="chart-api-error"
-                  style="display:none;padding:0.8rem 1.2rem;background:var(--red-bg);border-top:1px solid var(--red);font-size:0.85rem;color:var(--red)">
+                <div id="chart-api-error" class="u-inline-09" hidden>
                 </div>
               </div>
 
               <!-- Tab: Planos de corte -->
-              <div id="tab-cuts" style="display:none">
+              <div id="tab-cuts" hidden>
                 <div class="result-section">
                   <div class="result-section-header">✂️ Planos de Corte (vista previa)</div>
                   <div class="result-section-body">
@@ -393,7 +390,7 @@
                     <div class="cuts-summary" id="cuts-summary"></div>
                   </div>
                 </div>
-                <div class="paywall-banner" style="margin-top:1rem">
+                <div class="paywall-banner u-inline-10">
                   <div class="pw-icon">📄</div>
                   <div>
                     <h3>PDF Profesional con planos exactos</h3>
@@ -404,17 +401,17 @@
               </div>
 
               <!-- Tab: Comparativa -->
-              <div id="tab-compare" style="display:none">
+              <div id="tab-compare" hidden>
                 <div class="result-section">
                   <div class="result-section-header">⚖️ Comparativa de Alineaciones</div>
                   <div class="result-section-body">
-                    <button class="btn-calc" data-action="runCompare" id="btn-compare"
-                      style="margin-bottom:1rem;background:var(--blue-dark)">
+                    <button class="btn-calc u-inline-11" data-action="runCompare" id="btn-compare"
+                     >
                       Analizar las 4 alineaciones (Scipy)
                     </button>
-                    <div id="compare-error" style="display:none;color:var(--red);margin-bottom:1rem;font-size:0.9rem">
+                    <div id="compare-error" class="u-inline-12" hidden>
                     </div>
-                    <div id="compare-results" style="display:none">
+                    <div id="compare-results" hidden>
                       <table class="cuts-table">
                         <thead>
                           <tr>
@@ -426,8 +423,7 @@
                         </thead>
                         <tbody id="compare-tbody"></tbody>
                       </table>
-                      <canvas id="compareChart"
-                        style="margin-top:1rem;width:100%;height:320px;display:block;background:var(--paper)"></canvas>
+                      <canvas id="compareChart" class="u-inline-13"></canvas>
                     </div>
                   </div>
                 </div>
@@ -493,37 +489,36 @@
         </article>
 
         <!-- 2. Modelo -->
-        <article id="sec-modelo" class="enc-article" style="display:none">
+        <article id="sec-modelo" class="enc-article" hidden>
           <h2>2. Modelo Electro-Mecánico-Acústico</h2>
           <p>Para diseñar una caja correctamente, tratamos al altavoz como un <strong>circuito equivalente</strong>. La
             energía pasa por tres dominios:</p>
           <div class="sketch-box">
-            <div
-              style="display:flex; justify-content:space-around; align-items:center; text-align:center; flex-wrap:wrap; gap:1rem;">
-              <div style="flex:1; min-width:120px;">
+            <div class="u-inline-14">
+              <div class="u-inline-15">
                 <h3>1. Eléctrico</h3>
-                <svg viewBox="0 0 100 60" style="height:50px">
+                <svg viewBox="0 0 100 60" class="u-inline-16">
                   <path d="M 5 30 L 25 30 L 30 10 L 40 50 L 50 10 L 60 50 L 65 30 L 85 30" class="s-stroke s-blue" />
                 </svg>
-                <p style="font-size:0.88rem">Voltaje del amplificador, Re (resistencia DC)</p>
+                <p class="u-inline-17">Voltaje del amplificador, Re (resistencia DC)</p>
               </div>
-              <div style="font-size:1.8rem; flex-shrink:0;">→</div>
-              <div style="flex:1; min-width:120px;">
+              <div class="u-inline-18">→</div>
+              <div class="u-inline-15">
                 <h3>2. Mecánico</h3>
-                <svg viewBox="0 0 100 60" style="height:50px">
+                <svg viewBox="0 0 100 60" class="u-inline-16">
                   <rect x="35" y="15" width="30" height="30" class="s-stroke" />
                   <path d="M 5 30 Q 15 5 35 30" class="s-stroke s-red" />
                   <line x1="65" y1="30" x2="85" y2="30" class="s-stroke" />
                 </svg>
-                <p style="font-size:0.88rem">Masa (Mms), Resorte (Cms), Fricción (Rms)</p>
+                <p class="u-inline-17">Masa (Mms), Resorte (Cms), Fricción (Rms)</p>
               </div>
-              <div style="font-size:1.8rem; flex-shrink:0;">→</div>
-              <div style="flex:1; min-width:120px;">
+              <div class="u-inline-18">→</div>
+              <div class="u-inline-15">
                 <h3>3. Acústico</h3>
-                <svg viewBox="0 0 100 60" style="height:50px">
+                <svg viewBox="0 0 100 60" class="u-inline-16">
                   <path d="M 20 10 A 35 35 0 0 1 20 50 M 40 5 A 55 55 0 0 1 40 55" class="s-stroke s-dash" />
                 </svg>
-                <p style="font-size:0.88rem">Presión, Compliancia acústica (Cas), Masa acústica</p>
+                <p class="u-inline-17">Presión, Compliancia acústica (Cas), Masa acústica</p>
               </div>
             </div>
           </div>
@@ -540,53 +535,53 @@
         </article>
 
         <!-- 3. Parámetros T/S -->
-        <article id="sec-ts" class="enc-article" style="display:none">
+        <article id="sec-ts" class="enc-article" hidden>
           <h2>3. Parámetros Thiele-Small</h2>
           <p>Sin ellos el diseño de la caja es pura adivinanza. Haz clic en cada tarjeta para explorar su función
             técnica.</p>
           <div class="grid-3">
             <div class="ts-card" data-toggle-card>
               <h4>Fs</h4>
-              <p style="text-align:center;font-weight:700">Resonancia Libre</p>
+              <p class="u-inline-19">Resonancia Libre</p>
               <div class="ts-content">Frecuencia (Hz) donde la masa del cono resuena con su suspensión al aire libre.
                 Por debajo de Fs la respuesta cae abruptamente. La caja sube esta frecuencia al añadir rigidez
                 neumática.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Qts</h4>
-              <p style="text-align:center;font-weight:700">Factor de Calidad Total</p>
+              <p class="u-inline-19">Factor de Calidad Total</p>
               <div class="ts-content">Describe el amortiguamiento del altavoz en Fs. <br>• <strong>Qts &lt;
                   0.4:</strong> motor fuerte, ideal Bass-Reflex.<br>• <strong>Qts &gt; 0.4:</strong> motor débil,
                 necesita la rigidez de caja sellada.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Vas</h4>
-              <p style="text-align:center;font-weight:700">Vol. Acústico Equiv.</p>
+              <p class="u-inline-19">Vol. Acústico Equiv.</p>
               <div class="ts-content">Elasticidad de la suspensión expresada en litros de aire. <strong>NO</strong> es
                 el volumen de la caja. Vas alto = suspensión blanda = caja grande necesaria.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Xmax</h4>
-              <p style="text-align:center;font-weight:700">Excursión Máxima</p>
+              <p class="u-inline-19">Excursión Máxima</p>
               <div class="ts-content">Desplazamiento lineal máximo (mm) en una dirección sin salir del campo magnético.
                 Determina el SPL máximo en graves sin distorsión.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Sd</h4>
-              <p style="text-align:center;font-weight:700">Área Efectiva</p>
+              <p class="u-inline-19">Área Efectiva</p>
               <div class="ts-content">Superficie radiante del cono (cm²). Con Xmax define el <em>Volumen de
                   Desplazamiento</em>: Vd = Sd × Xmax. Mayor Sd = más aire movido a igual excursión.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>EBP</h4>
-              <p style="text-align:center;font-weight:700">Efficiency Bandwidth Product</p>
+              <p class="u-inline-19">Efficiency Bandwidth Product</p>
               <div class="ts-content">EBP = Fs/Qes. Guía rápida de tipo de recinto ideal:<br>• <strong>&gt;100:</strong>
                 Bass-Reflex claro.<br>• <strong>50-100:</strong> ambos tipos funcionan.<br>• <strong>&lt;50:</strong>
                 Caja sellada.</div>
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Mms</h4>
-              <p style="text-align:center;font-weight:700">Masa Móvil</p>
+              <p class="u-inline-19">Masa Móvil</p>
               <div class="ts-content">Masa total del conjunto móvil (cono + bobina + suspensión) en gramos.
                 <strong>Crítico para cálculos precisos.</strong> Si se omite, el simulador lo estima desde Vas y Sd,
                 pero con errores que pueden superar el 100%.<br><br>• Mms bajo + Bl alto = alta eficiencia<br>• Mms alto
@@ -595,7 +590,7 @@
             </div>
             <div class="ts-card" data-toggle-card>
               <h4>Bl</h4>
-              <p style="text-align:center;font-weight:700">Factor de Fuerza</p>
+              <p class="u-inline-19">Factor de Fuerza</p>
               <div class="ts-content">Producto del campo magnético (B) por la longitud del hilo en el entrehierro (l),
                 en Tesla·metro. Es el "engranaje" entre el dominio eléctrico y el mecánico:
                 <code>F = Bl × I</code><br><br>• Bl alto → Qes bajo → motor potente<br>• Bl bajo → Qes alto → motor
@@ -614,7 +609,7 @@
         </article>
 
         <!-- 4. Cajas Cerradas -->
-        <article id="sec-cerradas" class="enc-article" style="display:none">
+        <article id="sec-cerradas" class="enc-article" hidden>
           <h2>4. Diseño de Cajas Cerradas</h2>
           <p>También llamadas <em>Acoustic Suspension</em>. El aire encerrado actúa como resorte neumático adicional.
           </p>
@@ -655,7 +650,7 @@
         </article>
 
         <!-- 5. Bass-Reflex -->
-        <article id="sec-reflex" class="enc-article" style="display:none">
+        <article id="sec-reflex" class="enc-article" hidden>
           <h2>5. Cajas Bass-Reflex (Ventiladas)</h2>
           <p>Aprovechan la onda trasera del cono a través de un <strong>resonador de Helmholtz</strong> para reforzar la
             salida en graves.</p>
@@ -695,10 +690,10 @@
         </article>
 
         <!-- 6. Avanzadas -->
-        <article id="sec-avanzadas" class="enc-article" style="display:none">
+        <article id="sec-avanzadas" class="enc-article" hidden>
           <h2>6. Diseños Avanzados</h2>
           <div class="sketch-box">
-            <div style="margin-bottom:0.8rem">
+            <div class="u-inline-20">
               <button class="tab-btn active" data-content-tab="tab-bp" data-tab-group="adv">Paso-Banda (4°)</button>
               <button class="tab-btn" data-content-tab="tab-tl" data-tab-group="adv">Línea de Transmisión</button>
             </div>
@@ -747,7 +742,7 @@
         </article>
 
         <!-- 7. Baffle Step -->
-        <article id="sec-baffle" class="enc-article" style="display:none">
+        <article id="sec-baffle" class="enc-article" hidden>
           <h2>7. Difracción de Bordes y Baffle Step</h2>
           <p>El baffle no es solo soporte mecánico: es un componente acústico crítico.</p>
           <div class="sketch-box grid-2">
@@ -782,7 +777,7 @@
         </article>
 
         <!-- 8. Materiales -->
-        <article id="sec-materiales" class="enc-article" style="display:none">
+        <article id="sec-materiales" class="enc-article" hidden>
           <h2>8. Materiales y Proporciones</h2>
           <div class="grid-2">
             <div class="sketch-box">
@@ -798,8 +793,7 @@
               <h3>Proporciones Internas</h3>
               <p>Una caja cúbica acumula modos estacionarios en las mismas frecuencias. La calculadora usa la proporción
                 áurea acústica:</p>
-              <p
-                style="text-align:center; font-family:'Space Mono'; font-size:1.1rem; margin:1rem 0; font-weight:700; letter-spacing:0.05em;">
+              <p class="u-inline-21">
                 H : W : D = 1.59 : 1.26 : 1.00
               </p>
               <p>Distribuye los modos de forma suave, evitando picos indeseados en la respuesta interna.</p>
@@ -816,7 +810,7 @@
         </article>
 
         <!-- 9. Refuerzos -->
-        <article id="sec-refuerzos" class="enc-article" style="display:none">
+        <article id="sec-refuerzos" class="enc-article" hidden>
           <h2>9. Refuerzos y Amortiguamiento Interno</h2>
           <div class="sketch-box grid-2">
             <div>
@@ -848,13 +842,13 @@
               <li><strong>Resultado:</strong> El altavoz "ve" una caja hasta un <strong>20% más grande</strong> —
                 ventaja acústica sin coste de espacio.</li>
             </ol>
-            <p style="margin-top:0.8rem"><em>Materiales recomendados:</em> lana de vidrio, lana de oveja, guata acústica
+            <p class="u-inline-22"><em>Materiales recomendados:</em> lana de vidrio, lana de oveja, guata acústica
               de poliéster. No bloquear el puerto en cajas reflex.</p>
           </div>
         </article>
 
         <!-- 10. Puertos -->
-        <article id="sec-puertos" class="enc-article" style="display:none">
+        <article id="sec-puertos" class="enc-article" hidden>
           <h2>10. Matemáticas del Puerto Reflex</h2>
           <div class="key-idea">
             Para bajar Fb (graves más profundos):<br>
@@ -866,8 +860,7 @@
             <div>
               <h3>Fórmula de longitud del tubo</h3>
               <p>Derivada de la resonancia de Helmholtz:</p>
-              <code
-                style="display:block; padding:0.8rem; background:var(--paper-dark); border-radius:4px; font-size:0.9rem; margin:0.8rem 0;">
+              <code class="u-inline-23">
               L = (29974.86 × N × Sp) / (Fb² × Vb) − k × d_eq
             </code>
               <p>Donde k es la corrección de extremo (end-correction): 0.614 / 0.732 / 0.850 según la geometría del
@@ -899,18 +892,17 @@
         </article>
 
         <!-- 11. Simulador -->
-        <article id="sec-simulador" class="enc-article" style="display:none">
+        <article id="sec-simulador" class="enc-article" hidden>
           <h2>11. Alineamientos Clásicos</h2>
           <p>Interactúa con el control para ver cómo el volumen de la caja cambia la forma de la curva.</p>
           <div class="simulator-panel sketch-box">
             <div class="slider-wrapper">
-              <label for="align-slider" style="font-family:'Kalam';font-size:1.2rem;color:var(--blue-dark)">
+              <label for="align-slider" class="u-inline-24">
                 Volumen Vb: <span id="align-label">Óptimo (Butterworth B4)</span>
               </label>
               <input type="range" id="align-slider" min="1" max="3" value="2" step="1">
             </div>
-            <svg viewBox="0 0 600 230"
-              style="background:var(--paper);border:1px solid #ccc;border-radius:4px;width:100%">
+            <svg viewBox="0 0 600 230" class="u-inline-25">
               <line x1="50" y1="190" x2="550" y2="190" stroke="#999" stroke-width="1.5" />
               <line x1="50" y1="15" x2="50" y2="190" stroke="#999" stroke-width="1.5" />
               <line x1="50" y1="75" x2="550" y2="75" class="s-stroke s-dash" stroke="rgba(0,0,0,0.08)" />
@@ -921,10 +913,9 @@
               <text x="148" y="208" font-family="Nunito" font-size="9">50Hz</text>
               <text x="248" y="208" font-family="Nunito" font-size="9">100Hz</text>
               <path id="curve-path" d="M 50 190 C 120 190, 140 75, 220 75 L 550 75" fill="none" stroke="var(--blue)"
-                stroke-width="2.5" style="transition:d 0.35s ease" />
+                stroke-width="2.5" class="u-inline-26" />
             </svg>
-            <div id="align-desc"
-              style="margin-top:1.2rem;padding:1rem;background:var(--paper);border-radius:4px;font-size:0.93rem;min-height:70px">
+            <div id="align-desc" class="u-inline-27">
             </div>
           </div>
           <div class="bridge-cta" data-calc-box="reflex">
@@ -938,7 +929,7 @@
         </article>
 
         <!-- 12. Pruebas -->
-        <article id="sec-pruebas" class="enc-article" style="display:none">
+        <article id="sec-pruebas" class="enc-article" hidden>
           <h2>12. Medición y Pruebas</h2>
           <div class="sketch-box grid-2">
             <div>
@@ -949,7 +940,7 @@
                 <li><strong>Bass-reflex:</strong> dos picos gemelos. El valle entre ellos indica Fb real. Ajusta la
                   longitud del tubo hasta que el valle quede en la Fb calculada.</li>
               </ul>
-              <p style="margin-top:0.8rem"><em>Herramientas:</em> DATS v3 (Dayton Audio), REW + tarjeta de audio, LIMP
+              <p class="u-inline-22"><em>Herramientas:</em> DATS v3 (Dayton Audio), REW + tarjeta de audio, LIMP
                 (Arta software).</p>
             </div>
             <div>
@@ -980,10 +971,10 @@
          VISTA BASE DE DATOS
     ════════════════════════════════════════════════════ -->
       <div id="view-db" class="view">
-        <h2 style="font-family:'Kalam';font-size:1.8rem;margin-bottom:0.3rem">Base de Datos de Altavoces</h2>
-        <p style="color:var(--ink-muted);margin-bottom:1.5rem;font-size:0.93rem">15 altavoces verificados · parámetros
+        <h2 class="u-inline-28">Base de Datos de Altavoces</h2>
+        <p class="u-inline-29">15 altavoces verificados · parámetros
           T/S · alineación recomendada</p>
-        <div style="overflow-x:auto">
+        <div class="u-inline-30">
           <table class="db-table" id="db-table">
             <thead>
               <tr>
@@ -1058,8 +1049,7 @@
 ═══════════════════════════════════════════════════════════ -->
 
   <!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
-  <footer
-    style="text-align: center; padding: 2.5rem 1rem; background: var(--paper-light); border-top: 2.5px solid var(--ink); color: var(--ink-muted); font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 600; margin-top: auto; display: block;">
+  <footer class="u-inline-31">
     © 2024 - Ingeniería y Diseño Acústico | Ing. Carlos Benavente
   </footer>
 
