@@ -175,11 +175,11 @@
       const banner = document.getElementById('context-banner');
       const msg = document.getElementById('context-msg');
       const sectionNames = {
-        'sec-cerradas': 'Cajas Cerradas', 'sec-reflex': 'Bass-Reflex',
-        'sec-ts': 'Parámetros T/S', 'sec-puertos': 'Diseño del Puerto',
-        'sec-materiales': 'Materiales y Proporciones',
+        'sec-cerradas': t('section_closed'), 'sec-reflex': t('section_reflex'),
+        'sec-ts': t('section_ts'), 'sec-puertos': t('section_port'),
+        'sec-materiales': t('section_materials'),
       };
-      msg.textContent = `Vinculado desde: Enciclopedia → ${sectionNames[currentEnc] || 'Enciclopedia'}`;
+      msg.textContent = t('linked_from', { section: sectionNames[currentEnc] || t('nav_encyclopedia') });
       banner.classList.add('show');
       document.getElementById('content-area').scrollTop = 0;
     }
@@ -203,12 +203,26 @@
       Bl: { title: 'Bl — Factor de Fuerza', body: 'Producto del campo magnético por la longitud del hilo en el entrehierro (T·m). Es el engranaje eléctrico→mecánico: F = Bl × I. Bl alto → Qes bajo → motor potente.' },
     };
 
+    const TIPS_EN = {
+      Fs: { title: 'Fs — Free-Air Resonance', body: 'The frequency at which the cone naturally resonates. The enclosure raises it to Fc. Response falls rapidly below Fs.' },
+      Vas: { title: 'Vas — Equivalent Volume', body: 'Suspension compliance expressed as an equivalent volume of air. It is not the enclosure volume. High Vas means a compliant suspension and a larger enclosure.' },
+      Qts: { title: 'Qts — Total Quality Factor', body: 'Damping at resonance. Qts < 0.4 generally favors bass reflex; Qts > 0.4 generally favors sealed. Qts = Qes·Qms/(Qes+Qms).' },
+      Xmax: { title: 'Xmax — Maximum Excursion', body: 'Maximum linear travel in one direction. Together with Sd, it determines Vd = Sd×Xmax and maximum low-frequency SPL.' },
+      Sd: { title: 'Sd — Effective Piston Area', body: 'Effective radiating cone area in cm². Together with Xmax: Vd = Sd × Xmax. Greater Sd moves more air at the same excursion.' },
+      TipoCaja: { title: 'Enclosure Type', body: 'Reflex offers greater extension and efficiency and generally suits Qts < 0.4. Sealed offers more accurate, controlled bass and generally suits Qts 0.4–0.7.' },
+      Alineacion: { title: 'Thiele-Small Alignment', body: 'QB3 balances the main tradeoffs. SBB4 maximizes extension with more volume. B4 is the classic maximally flat Butterworth alignment.' },
+      FactorK: { title: 'End Correction k', body: 'Compensates for the additional air mass at the port openings. 0.732 is the standard value for one open and one flanged end.' },
+      Qtc: { title: 'Target Qtc (Sealed)', body: '0.577 Bessel favors transient response but needs a large enclosure. 0.707 Butterworth is maximally flat. 1.0 Chebyshev adds a +1.2 dB peak in a smaller enclosure.' },
+      Mms: { title: 'Mms — Moving Mass', body: 'Total moving mass in grams. It is critical for accuracy. Estimating it from Vas/Sd can introduce errors above 100%.' },
+      Bl: { title: 'Bl — Force Factor', body: 'Magnetic flux density times wire length in the gap (T·m). It couples the electrical and mechanical domains: F = Bl × I. High Bl generally means a powerful motor and low Qes.' },
+    };
+
     function openTip(key) {
-      const tip = TIPS[key];
+      const tip = (getLanguage() === 'en' ? TIPS_EN : TIPS)[key];
       if (!tip) return;
       const el = document.getElementById('enc-tooltip');
       el.innerHTML = `<strong>${tip.title}</strong>${tip.body}
-    <br><a href="#" data-tip-section="${key}" class="tip-section-link">Ver en la Enciclopedia →</a>`;
+    <br><a href="#" data-tip-section="${key}" class="tip-section-link">${t('view_encyclopedia')}</a>`;
       el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), 5000);
     }
@@ -1159,9 +1173,9 @@
 
     /* ── Simulador enciclopedia ─────────────────────────────── */
     const alignments = {
-      "1": { path: "M 50 190 C 130 190, 140 38, 220 75 L 550 75", title: "Vb Pequeño (Chebyshev — Sub-amortiguado)", desc: "Produce un pico audible antes del decaimiento. Sonido 'boomy' a una sola nota. Respuesta transitoria pobre." },
-      "2": { path: "M 50 190 C 118 190, 140 75, 220 75 L 550 75", title: "Vb Óptimo (Butterworth — Máximamente Plano)", desc: "Curva plana ideal. Mejor compromiso extensión/transitorios. Caída brusca a 24 dB/oct. La referencia de diseño." },
-      "3": { path: "M 50 190 C 70 190, 155 98, 220 75 L 550 75", title: "Vb Grande (Bessel — Sobre-amortiguado)", desc: "Caída suave que empieza antes. Pierde impacto en el rango medio-grave pero ofrece los mejores transitorios posibles." },
+      "1": { path: "M 50 190 C 130 190, 140 38, 220 75 L 550 75", titleKey: 'align_small_title', descKey: 'align_small_desc' },
+      "2": { path: "M 50 190 C 118 190, 140 75, 220 75 L 550 75", titleKey: 'align_optimal_title', descKey: 'align_optimal_desc' },
+      "3": { path: "M 50 190 C 70 190, 155 98, 220 75 L 550 75", titleKey: 'align_large_title', descKey: 'align_large_desc' },
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1169,11 +1183,11 @@
       if (slider) slider.addEventListener('input', function () {
         const a = alignments[this.value];
         document.getElementById('curve-path').setAttribute('d', a.path);
-        document.getElementById('align-label').textContent = a.title;
-        document.getElementById('align-desc').innerHTML = `<strong>${a.title}:</strong><br>${a.desc}`;
+        document.getElementById('align-label').textContent = t(a.titleKey);
+        document.getElementById('align-desc').innerHTML = `<strong>${t(a.titleKey)}:</strong><br>${t(a.descKey)}`;
       });
       const desc = document.getElementById('align-desc');
-      if (desc) desc.innerHTML = `<strong>${alignments["2"].title}:</strong><br>${alignments["2"].desc}`;
+      if (desc) desc.innerHTML = `<strong>${t(alignments["2"].titleKey)}:</strong><br>${t(alignments["2"].descKey)}`;
     });
 
     /* ── Tabs enciclopedia ──────────────────────────────────── */
@@ -1797,6 +1811,12 @@
           document.getElementById('speaker-modal-title').textContent = document.getElementById('custom-speaker-id').value
             ? t('custom_speaker_edit') : t('custom_speaker_add');
         }
+        const alignment = alignments[document.getElementById('align-slider')?.value || '2'];
+        if (alignment) {
+          document.getElementById('align-label').textContent = t(alignment.titleKey);
+          document.getElementById('align-desc').innerHTML = `<strong>${t(alignment.titleKey)}:</strong><br>${t(alignment.descKey)}`;
+        }
+        document.getElementById('enc-tooltip').classList.remove('show');
       });
       window.addEventListener('beforeunload', event => {
         window.clearTimeout(draftSaveTimer);

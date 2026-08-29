@@ -52,6 +52,7 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+    window.translateEncyclopedia?.(currentLanguage);
   }
 
   function setLanguage(language, options = {}) {

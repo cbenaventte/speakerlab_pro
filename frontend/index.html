@@ -67,34 +67,34 @@
   <div id="app">
 
     <!-- Sidebar Enciclopedia -->
-    <nav id="enc-sidebar" aria-label="Índice de la enciclopedia">
+    <nav id="enc-sidebar" aria-label="Índice de la enciclopedia" data-i18n-aria-label="encyclopedia_index_label">
       <div class="enc-sidebar-mobile-header">
-        <strong>Índice</strong>
-        <button class="enc-menu-close" type="button" data-action="closeEncMenu" aria-label="Cerrar índice">✕</button>
+        <strong data-i18n="encyclopedia_index">Índice</strong>
+        <button class="enc-menu-close" type="button" data-action="closeEncMenu" aria-label="Cerrar índice" data-i18n-aria-label="close_index">✕</button>
       </div>
-      <div class="nav-section-title">Fundamentos</div>
-      <button class="nav-item active" data-enc="sec-intro">1. Anatomía del Altavoz</button>
-      <button class="nav-item" data-enc="sec-modelo">2. Modelo Electro-Mecánico</button>
-      <button class="nav-item" data-enc="sec-ts">3. Parámetros Thiele-Small</button>
+      <div class="nav-section-title" data-i18n="enc_foundations">Fundamentos</div>
+      <button class="nav-item active" data-enc="sec-intro" data-i18n="enc_chapter_1">1. Anatomía del Altavoz</button>
+      <button class="nav-item" data-enc="sec-modelo" data-i18n="enc_chapter_2">2. Modelo Electro-Mecánico</button>
+      <button class="nav-item" data-enc="sec-ts" data-i18n="enc_chapter_3">3. Parámetros Thiele-Small</button>
 
-      <div class="nav-section-title">Tipos de Recintos</div>
-      <button class="nav-item" data-enc="sec-cerradas">4. Cajas Cerradas</button>
-      <button class="nav-item" data-enc="sec-reflex">5. Cajas Bass-Reflex</button>
-      <button class="nav-item" data-enc="sec-avanzadas">6. Bandpass y Líneas</button>
+      <div class="nav-section-title" data-i18n="enc_enclosure_types">Tipos de Recintos</div>
+      <button class="nav-item" data-enc="sec-cerradas" data-i18n="enc_chapter_4">4. Cajas Cerradas</button>
+      <button class="nav-item" data-enc="sec-reflex" data-i18n="enc_chapter_5">5. Cajas Bass-Reflex</button>
+      <button class="nav-item" data-enc="sec-avanzadas" data-i18n="enc_chapter_6">6. Bandpass y Líneas</button>
 
-      <div class="nav-section-title">Física de la Caja</div>
-      <button class="nav-item" data-enc="sec-baffle">7. Difracción y Baffle Step</button>
-      <button class="nav-item" data-enc="sec-materiales">8. Materiales y Proporciones</button>
-      <button class="nav-item" data-enc="sec-refuerzos">9. Refuerzos y Amortiguamiento</button>
+      <div class="nav-section-title" data-i18n="enc_enclosure_physics">Física de la Caja</div>
+      <button class="nav-item" data-enc="sec-baffle" data-i18n="enc_chapter_7">7. Difracción y Baffle Step</button>
+      <button class="nav-item" data-enc="sec-materiales" data-i18n="enc_chapter_8">8. Materiales y Proporciones</button>
+      <button class="nav-item" data-enc="sec-refuerzos" data-i18n="enc_chapter_9">9. Refuerzos y Amortiguamiento</button>
 
-      <div class="nav-section-title">Diseño y Cálculo</div>
-      <button class="nav-item" data-enc="sec-puertos">10. Diseño del Puerto</button>
-      <button class="nav-item" data-enc="sec-simulador">11. Alineamientos</button>
-      <button class="nav-item" data-enc="sec-pruebas">12. Medición y Pruebas</button>
+      <div class="nav-section-title" data-i18n="enc_design_calculation">Diseño y Cálculo</div>
+      <button class="nav-item" data-enc="sec-puertos" data-i18n="enc_chapter_10">10. Diseño del Puerto</button>
+      <button class="nav-item" data-enc="sec-simulador" data-i18n="enc_chapter_11">11. Alineamientos</button>
+      <button class="nav-item" data-enc="sec-pruebas" data-i18n="enc_chapter_12">12. Medición y Pruebas</button>
     </nav>
 
     <button id="enc-menu-toggle" class="enc-menu-toggle" type="button" data-action="openEncMenu"
-      aria-controls="enc-sidebar" aria-expanded="false" hidden>☰ Índice</button>
+      aria-controls="enc-sidebar" aria-expanded="false" hidden>☰ <span data-i18n="encyclopedia_index">Índice</span></button>
     <div id="enc-menu-overlay" class="enc-menu-overlay" data-action="closeEncMenu" hidden></div>
 
     <!-- Área de contenido -->
@@ -1096,6 +1096,7 @@
 ═══════════════════════════════════════════════════════════ -->
   <script src="/js/locales/es.js"></script>
   <script src="/js/locales/en.js"></script>
+  <script src="/js/locales/encyclopedia.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/database.js"></script>
   <script src="/js/app.js"></script>

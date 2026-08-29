@@ -230,6 +230,24 @@
     scipy_start_title: 'Arranca uvicorn api.index:app --port 8000 para activar la simulación precisa',
     backend_not_running: 'El backend Python no está corriendo.',
     launch_command: 'Lanza:',
-    unnamed_driver: 'Altavoz'
+    unnamed_driver: 'Altavoz',
+    encyclopedia_index: 'Índice', encyclopedia_index_label: 'Índice de la enciclopedia', close_index: 'Cerrar índice',
+    enc_foundations: 'Fundamentos', enc_enclosure_types: 'Tipos de Recintos',
+    enc_enclosure_physics: 'Física de la Caja', enc_design_calculation: 'Diseño y Cálculo',
+    enc_chapter_1: '1. Anatomía del Altavoz', enc_chapter_2: '2. Modelo Electro-Mecánico',
+    enc_chapter_3: '3. Parámetros Thiele-Small', enc_chapter_4: '4. Cajas Cerradas',
+    enc_chapter_5: '5. Cajas Bass-Reflex', enc_chapter_6: '6. Bandpass y Líneas',
+    enc_chapter_7: '7. Difracción y Baffle Step', enc_chapter_8: '8. Materiales y Proporciones',
+    enc_chapter_9: '9. Refuerzos y Amortiguamiento', enc_chapter_10: '10. Diseño del Puerto',
+    enc_chapter_11: '11. Alineamientos', enc_chapter_12: '12. Medición y Pruebas',
+    linked_from: 'Vinculado desde: Enciclopedia → {section}', view_encyclopedia: 'Ver en la Enciclopedia →',
+    section_closed: 'Cajas Cerradas', section_reflex: 'Bass-Reflex', section_ts: 'Parámetros T/S',
+    section_port: 'Diseño del Puerto', section_materials: 'Materiales y Proporciones',
+    align_small_title: 'Vb Pequeño (Chebyshev — Sub-amortiguado)',
+    align_small_desc: 'Produce un pico audible antes del decaimiento. Sonido “boomy” a una sola nota. Respuesta transitoria pobre.',
+    align_optimal_title: 'Vb Óptimo (Butterworth — Máximamente Plano)',
+    align_optimal_desc: 'Curva plana ideal. Mejor compromiso extensión/transitorios. Caída brusca a 24 dB/oct. La referencia de diseño.',
+    align_large_title: 'Vb Grande (Bessel — Sobre-amortiguado)',
+    align_large_desc: 'Caída suave que empieza antes. Pierde impacto en el rango medio-grave pero ofrece los mejores transitorios posibles.'
   };
 }());

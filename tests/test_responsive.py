@@ -89,6 +89,26 @@ class ResponsiveBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator("html").get_attribute("lang"), "es")
         self.assertEqual(page.evaluate("localStorage.getItem('speakerlab-language')"), "es")
 
+    def test_all_encyclopedia_chapters_switch_to_technical_english(self):
+        page = self.open_page({"width": 1440, "height": 900})
+        page.locator('[data-language="en"]').click()
+        page.locator("#tb-enc").click()
+        expected_headings = (
+            "Anatomy of a Dynamic Driver", "Electro-Mechanical-Acoustic Model",
+            "Thiele-Small Parameters", "Sealed Enclosure Design",
+            "Bass Reflex (Vented) Enclosures", "Advanced Enclosure Designs",
+            "Edge Diffraction and Baffle Step", "Materials and Proportions",
+            "Internal Bracing and Damping", "Bass Reflex Port Mathematics",
+            "Classic Alignments", "Measurement and Testing",
+        )
+        for chapter, heading in enumerate(expected_headings, start=1):
+            page.locator(f"#enc-sidebar .nav-item:nth-of-type({chapter})").click()
+            article = page.locator("#view-enc .enc-article:visible")
+            self.assertIn(heading, article.locator("h2").inner_text())
+
+        page.locator('[data-language="es"]').click()
+        self.assertIn("Medición y Pruebas", page.locator("#sec-pruebas h2").inner_text())
+
     def assert_no_document_overflow(self, page, viewport_width):
         dimensions = page.evaluate(
             """() => ({

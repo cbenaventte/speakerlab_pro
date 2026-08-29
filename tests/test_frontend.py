@@ -8,6 +8,7 @@ JS = (ROOT / "frontend" / "js" / "app.js").read_text()
 I18N = (ROOT / "frontend" / "js" / "i18n.js").read_text()
 LOCALE_ES = (ROOT / "frontend" / "js" / "locales" / "es.js").read_text()
 LOCALE_EN = (ROOT / "frontend" / "js" / "locales" / "en.js").read_text()
+ENCYCLOPEDIA_LOCALE = (ROOT / "frontend" / "js" / "locales" / "encyclopedia.js").read_text()
 CSS = (ROOT / "frontend" / "css" / "app.css").read_text()
 PDF_GENERATOR = (ROOT / "api" / "pdf_generator.py").read_text()
 
@@ -49,6 +50,16 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn('"language": d.get("language", "es")', PDF_GENERATOR)
         self.assertIn("PDF_EN", PDF_GENERATOR)
         self.assertIn('VALID_BOX_TYPES = {"reflex", "closed"}', PDF_GENERATOR)
+
+    def test_encyclopedia_has_a_dedicated_technical_translation_layer(self):
+        self.assertIn('src="/js/locales/encyclopedia.js"', HTML)
+        self.assertIn("window.translateEncyclopedia", ENCYCLOPEDIA_LOCALE)
+        self.assertIn("acoustic compliance", ENCYCLOPEDIA_LOCALE)
+        self.assertIn("Port air velocity", ENCYCLOPEDIA_LOCALE)
+        self.assertIn("Transmission Line", ENCYCLOPEDIA_LOCALE)
+        for chapter in range(1, 13):
+            self.assertIn(f"enc_chapter_{chapter}", LOCALE_ES)
+            self.assertIn(f"enc_chapter_{chapter}", LOCALE_EN)
 
     def test_calculator_controls_have_associated_labels(self):
         self.assertIn('for="spk-search"', HTML)

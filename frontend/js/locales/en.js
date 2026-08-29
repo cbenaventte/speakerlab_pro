@@ -230,6 +230,24 @@
     scipy_start_title: 'Run uvicorn api.index:app --port 8000 to enable accurate simulation',
     backend_not_running: 'The Python backend is not running.',
     launch_command: 'Run:',
-    unnamed_driver: 'Driver'
+    unnamed_driver: 'Driver',
+    encyclopedia_index: 'Index', encyclopedia_index_label: 'Encyclopedia index', close_index: 'Close index',
+    enc_foundations: 'Foundations', enc_enclosure_types: 'Enclosure Types',
+    enc_enclosure_physics: 'Enclosure Physics', enc_design_calculation: 'Design and Calculation',
+    enc_chapter_1: '1. Driver Anatomy', enc_chapter_2: '2. Electro-Mechanical Model',
+    enc_chapter_3: '3. Thiele-Small Parameters', enc_chapter_4: '4. Sealed Enclosures',
+    enc_chapter_5: '5. Bass Reflex Enclosures', enc_chapter_6: '6. Bandpass and Transmission Lines',
+    enc_chapter_7: '7. Diffraction and Baffle Step', enc_chapter_8: '8. Materials and Proportions',
+    enc_chapter_9: '9. Bracing and Damping', enc_chapter_10: '10. Port Design',
+    enc_chapter_11: '11. Alignments', enc_chapter_12: '12. Measurement and Testing',
+    linked_from: 'Linked from: Encyclopedia → {section}', view_encyclopedia: 'View in the Encyclopedia →',
+    section_closed: 'Sealed Enclosures', section_reflex: 'Bass Reflex', section_ts: 'T/S Parameters',
+    section_port: 'Port Design', section_materials: 'Materials and Proportions',
+    align_small_title: 'Small Vb (Chebyshev — Underdamped)',
+    align_small_desc: 'Produces an audible peak before roll-off, with a one-note boomy character and poor transient response.',
+    align_optimal_title: 'Optimum Vb (Butterworth — Maximally Flat)',
+    align_optimal_desc: 'Ideal flat curve and the best extension/transient compromise. Steep 24 dB/octave roll-off; the design reference.',
+    align_large_title: 'Large Vb (Bessel — Overdamped)',
+    align_large_desc: 'A gentle roll-off that begins earlier. It loses some mid-bass impact but offers the best transient response.'
   };
 }());
