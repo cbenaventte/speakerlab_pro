@@ -1,0 +1,121 @@
+import os
+import threading
+import unittest
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+
+ROOT = Path(__file__).resolve().parents[1]
+FRONTEND = ROOT / "frontend"
+MOBILE_VIEWPORTS = (
+    {"width": 320, "height": 568},
+    {"width": 375, "height": 667},
+    {"width": 430, "height": 932},
+    {"width": 768, "height": 1024},
+)
+
+
+class QuietHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(FRONTEND), **kwargs)
+
+    def log_message(self, _format, *args):
+        pass
+
+
+class ResponsiveBrowserTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
+        cls.server_thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.server_thread.start()
+        cls.base_url = f"http://127.0.0.1:{cls.server.server_port}"
+
+        cls.playwright = sync_playwright().start()
+        launch_options = {"headless": True}
+        chrome_path = os.environ.get("PLAYWRIGHT_CHROME_PATH")
+        if chrome_path:
+            launch_options["executable_path"] = chrome_path
+        cls.browser = cls.playwright.chromium.launch(**launch_options)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.browser.close()
+        cls.playwright.stop()
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.server_thread.join(timeout=2)
+
+    def open_page(self, viewport):
+        context = self.browser.new_context(viewport=viewport)
+        self.addCleanup(context.close)
+        page = context.new_page()
+        page.goto(self.base_url, wait_until="domcontentloaded")
+        return page
+
+    def assert_no_document_overflow(self, page, viewport_width):
+        dimensions = page.evaluate(
+            """() => ({
+                body: document.body.scrollWidth,
+                document: document.documentElement.scrollWidth
+            })"""
+        )
+        self.assertLessEqual(dimensions["body"], viewport_width + 1)
+        self.assertLessEqual(dimensions["document"], viewport_width + 1)
+
+    def test_mobile_header_uses_two_rows_without_overflow(self):
+        for viewport in MOBILE_VIEWPORTS[:3]:
+            with self.subTest(viewport=viewport):
+                page = self.open_page(viewport)
+                logo = page.locator(".tb-logo").bounding_box()
+                nav = page.locator(".tb-nav").bounding_box()
+                self.assertIsNotNone(logo)
+                self.assertIsNotNone(nav)
+                self.assertGreaterEqual(nav["y"], logo["y"] + logo["height"] - 1)
+                self.assertEqual(page.locator(".tb-action-label").first.evaluate("el => getComputedStyle(el).display"), "none")
+                self.assert_no_document_overflow(page, viewport["width"])
+
+    def test_mobile_encyclopedia_index_opens_and_closes(self):
+        for viewport in MOBILE_VIEWPORTS[:3]:
+            with self.subTest(viewport=viewport):
+                page = self.open_page(viewport)
+                page.locator("#tb-enc").click()
+                toggle = page.locator("#enc-menu-toggle")
+                self.assertTrue(toggle.is_visible())
+                self.assertEqual(toggle.get_attribute("aria-expanded"), "false")
+
+                toggle.click()
+                self.assertTrue(page.locator("#enc-sidebar").is_visible())
+                self.assertTrue(page.locator("#enc-menu-overlay").is_visible())
+                self.assertEqual(toggle.get_attribute("aria-expanded"), "true")
+
+                page.locator("#enc-sidebar .nav-item").nth(1).click()
+                page.locator("#enc-sidebar").wait_for(state="hidden")
+                self.assertEqual(toggle.get_attribute("aria-expanded"), "false")
+                self.assert_no_document_overflow(page, viewport["width"])
+
+    def test_projects_dialog_fits_mobile_viewports(self):
+        for viewport in MOBILE_VIEWPORTS:
+            with self.subTest(viewport=viewport):
+                page = self.open_page(viewport)
+                page.locator(".btn-projects").click()
+                dialog = page.locator(".projects-dialog").bounding_box()
+                self.assertIsNotNone(dialog)
+                self.assertLessEqual(dialog["width"], viewport["width"])
+                self.assertLessEqual(dialog["height"], viewport["height"])
+                page.locator(".projects-close").click()
+
+    def test_desktop_keeps_permanent_encyclopedia_sidebar(self):
+        page = self.open_page({"width": 1440, "height": 900})
+        page.locator("#tb-enc").click()
+        self.assertTrue(page.locator("#enc-sidebar").is_visible())
+        self.assertFalse(page.locator("#enc-menu-toggle").is_visible())
+        sidebar = page.locator("#enc-sidebar").bounding_box()
+        self.assertGreaterEqual(sidebar["width"], 260)
+        self.assert_no_document_overflow(page, 1440)
+
+
+if __name__ == "__main__":
+    unittest.main()

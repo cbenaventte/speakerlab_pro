@@ -70,11 +70,18 @@ Documentación interactiva: `http://localhost:8000/docs`.
 ## Pruebas automatizadas
 
 La suite protege los valores de referencia de los alineamientos, las simulaciones
-sellada y bass-reflex, los límites de entrada y el contrato público de la API.
+sellada y bass-reflex, los límites de entrada, el contrato público de la API y el
+diseño responsivo en navegadores de 320, 375, 430, 768 y 1440 píxeles.
 
 ```bash
+pip install -r requirements-dev.txt
+python -m playwright install chromium
 python -m unittest discover -s tests -v
 ```
+
+Para utilizar un Chrome ya instalado en vez del navegador administrado por
+Playwright, define `PLAYWRIGHT_CHROME_PATH` con la ruta de su ejecutable. GitHub
+Actions ejecuta la suite completa automáticamente en cada `push` y pull request.
 
 ## Despliegue
 
