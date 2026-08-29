@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "frontend" / "index.html").read_text()
 JS = (ROOT / "frontend" / "js" / "app.js").read_text()
+CSS = (ROOT / "frontend" / "css" / "app.css").read_text()
 
 
 class FrontendExperienceTests(unittest.TestCase):
@@ -45,6 +46,13 @@ class FrontendExperienceTests(unittest.TestCase):
         ):
             self.assertIn(f"function {function}", JS)
         self.assertNotIn("/api/auth", JS)
+
+    def test_keyboard_accessibility_foundations_are_present(self):
+        self.assertIn('class="skip-link"', HTML)
+        self.assertIn('role="tablist"', HTML)
+        self.assertIn("function trapFocus(", JS)
+        self.assertIn("function initKeyboardAccessibility(", JS)
+        self.assertIn(":focus-visible", CSS)
 
 
 if __name__ == "__main__":

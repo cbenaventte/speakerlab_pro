@@ -13,6 +13,8 @@
 
 <body>
 
+  <a class="skip-link" href="#content-area">Saltar al contenido principal</a>
+
   <!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
   <header id="topbar">
     <div class="tb-logo">
@@ -20,7 +22,7 @@
       <span class="subtitle">Diseño acústico DIY</span>
       <span class="author-credits">Desarrollado por Ing. Carlos Benavente</span>
     </div>
-    <nav class="tb-nav">
+    <nav class="tb-nav" aria-label="Navegación principal">
       <button class="active" onclick="setView('calc')" id="tb-calc">
         <span class="tb-icon">📐</span>Calculadora
       </button>
@@ -80,7 +82,7 @@
     <div id="enc-menu-overlay" class="enc-menu-overlay" onclick="closeEncMenu()" hidden></div>
 
     <!-- Área de contenido -->
-    <main id="content-area">
+    <main id="content-area" tabindex="-1">
 
       <!-- ════════════════════════════════════════════════════
          VISTA CALCULADORA
@@ -325,13 +327,13 @@
               </div>
 
               <!-- Tabs resultados -->
-              <div class="calc-tabs">
-                <button class="calc-tab active" onclick="switchTab('tab-diag')">Diagnóstico</button>
-                <button class="calc-tab" onclick="switchTab('tab-port')">Puerto</button>
-                <button class="calc-tab" onclick="switchTab('tab-dim')">Dimensiones</button>
-                <button class="calc-tab" onclick="switchTab('tab-chart')">Gráfica</button>
-                <button class="calc-tab" onclick="switchTab('tab-cuts')">Planos de Corte</button>
-                <button class="calc-tab" onclick="switchTab('tab-compare')">Comparar</button>
+              <div class="calc-tabs" role="tablist" aria-label="Resultados del cálculo">
+                <button class="calc-tab active" onclick="switchTab(event,'tab-diag')">Diagnóstico</button>
+                <button class="calc-tab" onclick="switchTab(event,'tab-port')">Puerto</button>
+                <button class="calc-tab" onclick="switchTab(event,'tab-dim')">Dimensiones</button>
+                <button class="calc-tab" onclick="switchTab(event,'tab-chart')">Gráfica</button>
+                <button class="calc-tab" onclick="switchTab(event,'tab-cuts')">Planos de Corte</button>
+                <button class="calc-tab" onclick="switchTab(event,'tab-compare')">Comparar</button>
               </div>
 
               <!-- Tab: Diagnóstico -->

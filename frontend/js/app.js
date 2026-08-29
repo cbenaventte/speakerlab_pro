@@ -290,14 +290,20 @@
       document.getElementById('port-slot').style.display = isCirc ? 'none' : '';
     }
 
-    function switchTab(id) {
+    function switchTab(evt, id) {
       ['tab-diag', 'tab-port', 'tab-dim', 'tab-chart', 'tab-cuts', 'tab-compare'].forEach(t => {
         const el = document.getElementById(t);
         if (el) el.style.display = 'none';
       });
-      document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.calc-tab').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+        b.tabIndex = -1;
+      });
       document.getElementById(id).style.display = 'block';
-      event.currentTarget.classList.add('active');
+      evt.currentTarget.classList.add('active');
+      evt.currentTarget.setAttribute('aria-selected', 'true');
+      evt.currentTarget.tabIndex = 0;
       if (id === 'tab-chart' && calcResults) drawChart(calcResults);
     }
 
@@ -1057,9 +1063,15 @@
     /* ── Tabs enciclopedia ──────────────────────────────────── */
     function openTab(evt, tabId, groupClass) {
       document.querySelectorAll('.tab-content.' + groupClass).forEach(t => t.classList.remove('active'));
-      evt.currentTarget.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      evt.currentTarget.parentElement.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+        b.tabIndex = -1;
+      });
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
+      evt.currentTarget.setAttribute('aria-selected', 'true');
+      evt.currentTarget.tabIndex = 0;
     }
 
     /* ── Descarga libre del PDF ──────────────────────────────── */
@@ -1155,7 +1167,10 @@
       return window.crypto?.randomUUID?.() || `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
+    let projectsModalTrigger = null;
+
     function openProjectsModal() {
+      projectsModalTrigger = document.activeElement;
       renderProjectsList();
       refreshProjectEditState();
       document.getElementById('projects-modal').hidden = false;
@@ -1166,6 +1181,8 @@
     function closeProjectsModal() {
       document.getElementById('projects-modal').hidden = true;
       document.body.style.overflow = '';
+      projectsModalTrigger?.focus();
+      projectsModalTrigger = null;
     }
 
     function saveLocalProject() {
@@ -1395,8 +1412,86 @@
       });
     }
 
+    function trapFocus(container, event) {
+      if (event.key !== 'Tab') return;
+      const focusable = [...container.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )].filter(element => !element.hidden && element.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function initKeyboardAccessibility() {
+      document.querySelectorAll('.bridge-cta, .ts-card, .tip').forEach(element => {
+        element.tabIndex = 0;
+        element.setAttribute('role', 'button');
+        if (element.classList.contains('ts-card')) {
+          element.setAttribute('aria-expanded', element.classList.contains('open') ? 'true' : 'false');
+          element.addEventListener('click', () => {
+            element.setAttribute('aria-expanded', element.classList.contains('open') ? 'true' : 'false');
+          });
+        }
+        element.addEventListener('keydown', event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          element.click();
+        });
+      });
+
+      const calcPanels = ['tab-diag', 'tab-port', 'tab-dim', 'tab-chart', 'tab-cuts', 'tab-compare'];
+      document.querySelectorAll('.calc-tab').forEach((tab, index) => {
+        const panel = document.getElementById(calcPanels[index]);
+        const tabId = `calc-tab-control-${index + 1}`;
+        tab.id = tabId;
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', panel.id);
+        tab.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        tab.tabIndex = index === 0 ? 0 : -1;
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('aria-labelledby', tabId);
+      });
+
+      const advancedTabs = [...document.querySelectorAll('#sec-avanzadas .tab-btn')];
+      const advancedPanels = ['tab-bp', 'tab-tl'];
+      advancedTabs.forEach((tab, index) => {
+        const panel = document.getElementById(advancedPanels[index]);
+        const tabId = `advanced-tab-control-${index + 1}`;
+        tab.id = tabId;
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', panel.id);
+        tab.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        tab.tabIndex = index === 0 ? 0 : -1;
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('aria-labelledby', tabId);
+      });
+      advancedTabs[0]?.parentElement.setAttribute('role', 'tablist');
+
+      document.querySelectorAll('[role="tablist"]').forEach(tablist => {
+        tablist.addEventListener('keydown', event => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+          const current = tabs.indexOf(document.activeElement);
+          if (current < 0) return;
+          event.preventDefault();
+          let next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+            : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+          tabs[next].focus();
+          tabs[next].click();
+        });
+      });
+    }
+
     /* ── Init ───────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
+      initKeyboardAccessibility();
       Object.entries(FIELD_RULES).forEach(([id, rule]) => {
         const field = document.getElementById(id);
         if (!field) return;
@@ -1431,6 +1526,9 @@
         if (event.key === 'Escape' && document.getElementById('enc-sidebar').classList.contains('mobile-open')) {
           closeEncMenu();
         }
+        if (!projectsModal.hidden) trapFocus(projectsModal, event);
+        const encSidebar = document.getElementById('enc-sidebar');
+        if (encSidebar.classList.contains('mobile-open')) trapFocus(encSidebar, event);
       });
       document.getElementById('project-name').addEventListener('keydown', event => {
         if (event.key === 'Enter') {

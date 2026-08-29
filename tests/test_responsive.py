@@ -116,6 +116,34 @@ class ResponsiveBrowserTests(unittest.TestCase):
         self.assertGreaterEqual(sidebar["width"], 260)
         self.assert_no_document_overflow(page, 1440)
 
+    def test_keyboard_navigation_and_modal_focus(self):
+        page = self.open_page({"width": 1440, "height": 900})
+
+        page.keyboard.press("Tab")
+        self.assertEqual(page.locator(":focus").get_attribute("class"), "skip-link")
+
+        page.locator("#tb-enc").click()
+        page.evaluate("showEnc('sec-ts')")
+        card = page.locator(".ts-card").first
+        card.focus()
+        page.keyboard.press("Enter")
+        self.assertEqual(card.get_attribute("aria-expanded"), "true")
+
+        page.evaluate("showEnc('sec-avanzadas')")
+        first_tab = page.locator("#sec-avanzadas .tab-btn").first
+        first_tab.focus()
+        page.keyboard.press("ArrowRight")
+        second_tab = page.locator("#sec-avanzadas .tab-btn").nth(1)
+        self.assertTrue(second_tab.evaluate("el => el === document.activeElement"))
+        self.assertEqual(second_tab.get_attribute("aria-selected"), "true")
+
+        trigger = page.locator(".btn-projects")
+        trigger.focus()
+        trigger.click()
+        self.assertTrue(page.locator("#project-name").evaluate("el => el === document.activeElement"))
+        page.locator(".projects-close").click()
+        self.assertTrue(trigger.evaluate("el => el === document.activeElement"))
+
 
 if __name__ == "__main__":
     unittest.main()
