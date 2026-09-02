@@ -62,10 +62,17 @@ class ApiContractTests(unittest.TestCase):
     def test_alignment_endpoint_uses_reference_engine(self):
         response = asyncio.run(get_alignments(AlignmentRequest(fs=30, vas=100, qts=0.35)))
         self.assertEqual(
-            response["alignments"]["B4"],
-            {"vb": 104.2, "fb": 34.8, "f3": 34.8},
+            {key: response["alignments"]["B4"][key] for key in ("vb", "fb", "f3_table")},
+            {"vb": 104.2, "fb": 34.8, "f3_table": 34.8},
         )
+        self.assertGreater(response["alignments"]["B4"]["f3"], 0)
         self.assertEqual(response["closed"]["qtc"], 0.707)
+        self.assertGreater(response["closed"]["vb"], 0)
+
+    def test_alignment_endpoint_keeps_closed_design_outside_reflex_table_range(self):
+        response = asyncio.run(get_alignments(AlignmentRequest(fs=30, vas=100, qts=0.7)))
+        self.assertFalse(response["reflex_supported"])
+        self.assertEqual(response["alignments"], {})
         self.assertGreater(response["closed"]["vb"], 0)
 
     def test_request_limits_reject_excessive_work(self):
@@ -85,6 +92,8 @@ class ApiContractTests(unittest.TestCase):
             {"port_diam_cm": 0},
             {"num_ports": 9},
             {"material_mm": 3},
+            {"qb": 2.0},
+            {"qb": 31.0},
         ]
         for values in invalid_cases:
             with self.subTest(values=values), self.assertRaises(ValidationError):
@@ -109,6 +118,8 @@ class ApiContractTests(unittest.TestCase):
         self.assertEqual(len(response["spl"]), 100)
         self.assertEqual(response["metrics"]["box_type"], "reflex")
         self.assertEqual(response["metrics"]["alignment"], "QB3")
+        self.assertAlmostEqual(response["metrics"]["simulation_voltage"], 2.83)
+        self.assertGreater(response["metrics"]["input_power_w"], 0)
         self.assertEqual(response["warnings"], [])
 
 

@@ -39,6 +39,8 @@
       bl: { min: 0.01, max: 50, label: 'Bl' },
       re: { min: 0.1, max: 100, label: 'Re' },
       le: { min: 0.01, max: 10, label: 'Le' },
+      simulationVoltage: { min: 0.1, max: 200, required: true, labelKey: 'simulation_voltage' },
+      qb: { min: 3, max: 30, required: true, labelKey: 'loss_factor_qb' },
       portDiam: { min: 0.5, max: 50, labelKey: 'port_diameter' },
       numPorts: { min: 1, max: 8, labelKey: 'port_count' },
       slotW: { min: 0.5, max: 200, labelKey: 'slot_width' },
@@ -376,8 +378,9 @@
       const bl = parseFloat(document.getElementById('bl')?.value) || null;
       const re = parseFloat(document.getElementById('re')?.value) || null;
       const le = parseFloat(document.getElementById('le')?.value) || null;
+      const simulationVoltage = parseFloat(document.getElementById('simulationVoltage').value);
 
-      let r = { fs, vas, qts, qms, T, boxType, mms, bl, re, le };
+      let r = { fs, vas, qts, qms, T, boxType, mms, bl, re, le, simulationVoltage };
 
       if (boxType === 'reflex') {
         const alignment = document.getElementById('alignment').value;
@@ -387,16 +390,20 @@
         const slotH = parseFloat(document.getElementById('slotH').value) || 5;
         const k = parseFloat(document.getElementById('kFactor').value);
         const N = parseInt(document.getElementById('numPorts').value) || 1;
+        const qb = parseFloat(document.getElementById('qb').value);
 
         let target;
         try {
           const response = await fetch(`${API_BASE}/api/alignments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fs, vas, qts }),
+            body: JSON.stringify({ fs, vas, qts, qb }),
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
+          if (data.reflex_supported === false) {
+            throw new Error(t('reflex_qts_unsupported', { value: qts }));
+          }
           target = data.alignments?.[alignment];
           if (!target) throw new Error(t('unavailable_alignment', { alignment }));
         } catch (error) {
@@ -413,7 +420,9 @@
         else { Sp = slotW * slotH; d_eq = 2 * Math.sqrt(Sp / Math.PI); }
         const SpTotal = N * Sp;
         const L = (29974.86 * N * Sp) / (Fb ** 2 * Vb) - k * d_eq;
-        const portVel = (sd && xmax) ? (Fb * 2 * Math.PI * (xmax / 1000 * 0.4) * sd) / SpTotal : null;
+        // La velocidad depende de la tensión y del modelo completo. Se obtiene
+        // exclusivamente desde /api/simulate para no mezclar dos estimaciones.
+        const portVel = null;
         const Vport = N * Sp * Math.max(L, 1) / 1000;
         const Vdriver = 0.0035 * inches ** 2.8;
         const Vb_bruto = Vb + Vport + Vdriver + 0.05 * Vb;
@@ -421,7 +430,7 @@
         const SPLmax = Vd ? 112.2 + 20 * Math.log10((Vd / 1e6) * Fb ** 2) : null;
         const EBP = qes ? fs / qes : null;
 
-        Object.assign(r, { alignment, Vb, Fb, F3, Sp, SpTotal, d_eq, L, portVel, Vb_bruto, Vd, SPLmax, EBP, N, portType, portDiam, slotW, slotH, Vdriver, qes, xmax, sd, inches });
+        Object.assign(r, { alignment, Vb, Fb, F3, Sp, SpTotal, d_eq, L, portVel, Vb_bruto, Vd, SPLmax, EBP, N, qb, portType, portDiam, slotW, slotH, Vdriver, qes, xmax, sd, inches });
       } else {
         const qtcTarget = parseFloat(document.getElementById('qtcTarget').value);
         let target;
@@ -485,6 +494,16 @@
         const m = r.portVel < 12 ? t('no_turbulence') : r.portVel < 17 ? t('acceptable_limit') : t('turbulence');
         items.push({ label: t('port_velocity'), val: `${n(r.portVel)} m/s — ${m}`, c });
       }
+      if (r.boxType === 'reflex' && r.portVel == null) {
+        items.push({ label: t('port_velocity'), val: t('port_velocity_pending'), c: 'y' });
+      }
+      if (r.simulationPower != null) {
+        items.push({
+          label: t('simulation_drive'),
+          val: `${n(r.simulationVoltage, 2)} V RMS ≈ ${n(r.simulationPower, 2)} W (${t('power_over_re')})`,
+          c: 'g',
+        });
+      }
       if (r.SPLmax) items.push({ label: t('max_spl'), val: `${n(r.SPLmax)} dB @ 1m / 1W`, c: 'g' });
       if (r.Vd) items.push({ label: 'Vd = Sd × Xmax', val: `${n(r.Vd, 0)} cm³ — ${r.Vd > 100 ? t('serious_subwoofer') : t('medium_woofer')}`, c: r.Vd > 100 ? 'g' : 'y' });
       if (r.Qtc_real) {
@@ -506,13 +525,15 @@
 
     function renderPort(r) {
       if (r.boxType !== 'reflex') { document.getElementById('tab-port').hidden = true; return; }
-      const Fpipe = r.L ? 34400 / (2 * r.L) : null;
+      const portFeasible = r.L >= 1;
+      const Fpipe = portFeasible ? 34400 / (2 * r.L) : null;
       const portDesc = r.portType === 'circular'
         ? `<div class="data-row"><span class="dr-label">${t('tube_diameter')}</span><span class="dr-val">${r.portDiam} cm</span></div>`
         : `<div class="data-row"><span class="dr-label">Slot ${r.slotW}×${r.slotH} cm</span><span class="dr-val">${t('area', { value: n(r.Sp) })}</span></div>`;
 
       document.getElementById('port-body').innerHTML = `
     <div class="data-row"><span class="dr-label">${t('tube_length')}</span><span class="dr-val">${n(r.L)} cm &nbsp;(${n(r.L * 10, 0)} mm)</span></div>
+    ${!portFeasible ? `<div class="data-row"><span class="dr-label">⚠️ ${t('port_not_feasible')}</span><span class="dr-val pipe-warning">${t('port_change_geometry')}</span></div>` : ''}
     <div class="data-row"><span class="dr-label">${t('area_per_port')}</span><span class="dr-val">${n(r.Sp)} cm²</span></div>
     <div class="data-row"><span class="dr-label">${t('total_area', { count: r.N })}</span><span class="dr-val">${n(r.SpTotal)} cm²</span></div>
     <div class="data-row"><span class="dr-label">${t('equivalent_diameter')}</span><span class="dr-val">${n(r.d_eq)} cm</span></div>
@@ -599,6 +620,7 @@
         slot_h_cm: r.slotH || undefined,
         num_ports: r.N || undefined,
         k_factor: parseFloat(document.getElementById('kFactor').value) || 0.732,
+        qb: r.qb || undefined,
       };
 
       // Solo enviar si el usuario los proporcionó
@@ -611,7 +633,7 @@
         freq_min: 15,
         freq_max: 800,
         freq_points: 500,
-        eg_volts: 2.83,
+        eg_volts: r.simulationVoltage,
         language: getLanguage(),
       };
     }
@@ -652,6 +674,12 @@
 
         // Actualizar métricas hero con valores scipy (más precisos)
         const m = sciPyData.metrics;
+        calcResults.simulationPower = m.input_power_w;
+        calcResults.simulationVoltage = m.simulation_voltage;
+        if (m.max_port_velocity != null) {
+          calcResults.portVel = m.max_port_velocity;
+        }
+        renderDiag(calcResults);
         document.getElementById('r-f3').innerHTML = `${m.f3} <span class="hc-unit">Hz</span>`;
         document.getElementById('r-f3-sub').textContent = `scipy · F6=${m.f6}Hz`;
         if (m.fb) {
@@ -924,7 +952,7 @@
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = '#fcfbf8'; ctx.fillRect(0, 0, W, H);
 
-      const PAD = { l: 54, r: 22, t: 16, b: 34 };
+      const PAD = { l: 54, r: 48, t: 16, b: 34 };
       const fw = W - PAD.l - PAD.r, fh = H - PAD.t - PAD.b;
       const logMin = Math.log10(15), logMax = Math.log10(900);
       const xPos = f => PAD.l + (Math.log10(Math.max(f, 15)) - logMin) / (logMax - logMin) * fw;
@@ -932,6 +960,12 @@
       // Excursión (eje izquierdo)
       const maxExc = Math.max(...data.excursion) * 1.3 || 20;
       const yExc = v => PAD.t + fh - (v / maxExc) * fh;
+
+      [0, 0.5, 1].forEach(ratio => {
+        const value = maxExc * ratio, y = yExc(value);
+        ctx.fillStyle = '#0984e3'; ctx.font = '9px Kalam,cursive'; ctx.textAlign = 'right';
+        ctx.fillText(n(value, 1), PAD.l - 5, y + 3);
+      });
 
       ctx.fillStyle = 'rgba(9,132,227,0.07)';
       ctx.beginPath();
@@ -966,6 +1000,12 @@
         const maxVel = Math.max(Math.max(...data.port_vel) * 1.3, 20);
         const yVel = v => PAD.t + fh - (v / maxVel) * fh;
 
+        [0, 0.5, 1].forEach(ratio => {
+          const value = maxVel * ratio, y = yVel(value);
+          ctx.fillStyle = '#e17055'; ctx.font = '9px Kalam,cursive'; ctx.textAlign = 'left';
+          ctx.fillText(n(value, 1), PAD.l + fw + 5, y + 3);
+        });
+
         ctx.beginPath(); ctx.strokeStyle = 'rgba(225,112,85,0.7)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
         data.freqs.forEach((f, i) => {
           const x = xPos(f), y = yVel(data.port_vel[i]);
@@ -979,14 +1019,14 @@
         ctx.beginPath(); ctx.moveTo(PAD.l, y17); ctx.lineTo(PAD.l + fw, y17); ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = '#d63031'; ctx.font = '9px Kalam,cursive'; ctx.textAlign = 'right';
-        ctx.fillText('17m/s turbulencia', PAD.l + fw - 4, y17 - 3);
+        ctx.fillText(t('port_turbulence_limit'), PAD.l + fw - 4, y17 - 3);
       }
 
       // Leyenda
       ctx.font = '10px Kalam,cursive';
-      ctx.fillStyle = '#0984e3'; ctx.textAlign = 'left'; ctx.fillText('── Excursión (mm)', PAD.l + 8, PAD.t + 14);
+      ctx.fillStyle = '#0984e3'; ctx.textAlign = 'left'; ctx.fillText(`── ${t('axis_excursion')}`, PAD.l + 8, PAD.t + 14);
       if (data.port_vel) {
-        ctx.fillStyle = '#e17055'; ctx.fillText('- - Vel. puerto (m/s)', PAD.l + 8, PAD.t + 28);
+        ctx.fillStyle = '#e17055'; ctx.fillText(`- - ${t('axis_port_velocity')}`, PAD.l + 8, PAD.t + 28);
       }
 
       // Eje X
@@ -1003,6 +1043,9 @@
     function drawChart(r) {
       if (!r) return;
       const canvas = document.getElementById('freqChart');
+      const badge = document.getElementById('chart-mode-badge');
+      badge.textContent = t('chart_js_approx');
+      badge.classList.remove('simulation-badge-success');
 
       // Construir arrays desde la aproximación JS
       const freqArr = [], splArr = [];
@@ -1219,7 +1262,11 @@
         const response = await fetch(`${API_BASE}/api/pdf`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ driver: payload.driver, language: getLanguage() }),
+          body: JSON.stringify({
+            driver: payload.driver,
+            language: getLanguage(),
+            eg_volts: payload.eg_volts,
+          }),
         });
         if (!response.ok) {
           const error = await response.json();
@@ -1246,8 +1293,8 @@
     const CALCULATOR_DRAFT_KEY = 'speakerlab.calculator-draft.v1';
     const PROJECT_FIELD_IDS = [
       'spk-search', 'fs', 'vas', 'qts', 'qes', 'qms', 'xmax', 'sd', 'spl',
-      'inches', 'mms', 'bl', 're', 'le', 'boxType', 'material', 'alignment',
-      'portType', 'portDiam', 'numPorts', 'slotW', 'slotH', 'kFactor', 'qtcTarget',
+      'inches', 'mms', 'bl', 're', 'le', 'simulationVoltage', 'boxType', 'material', 'alignment',
+      'portType', 'portDiam', 'numPorts', 'slotW', 'slotH', 'kFactor', 'qb', 'qtcTarget',
     ];
     let activeProjectId = null;
     let projectBaseline = null;
@@ -1427,6 +1474,9 @@
       const project = readLocalProjects().find(item => item.id === id);
       if (!project) return notify(t('project_missing'), 'error');
       if (projectDirty && activeProjectId !== id && !window.confirm(t('confirm_load_changes'))) return;
+      if (!Object.hasOwn(project.form || {}, 'simulationVoltage')) {
+        document.getElementById('simulationVoltage').value = '2.83';
+      }
       Object.entries(project.form || {}).forEach(([fieldId, value]) => {
         const field = document.getElementById(fieldId);
         if (field) field.value = value;
@@ -1518,7 +1568,9 @@
       const form = {};
       PROJECT_FIELD_IDS.forEach(id => {
         const value = raw.form[id];
-        form[id] = value === undefined || value === null ? '' : String(value).slice(0, 200);
+        form[id] = value === undefined || value === null
+          ? (id === 'simulationVoltage' ? '2.83' : '')
+          : String(value).slice(0, 200);
       });
       if (!form.fs || !form.vas || !form.qts) throw new Error(t('project_missing_params', { name: raw.name }));
       const now = new Date().toISOString();
@@ -1799,6 +1851,10 @@
       document.addEventListener('speakerlab:languagechange', () => {
         clearFieldErrors();
         if (calcResults) renderCalculationResults(calcResults);
+        if (sciPyData && !document.getElementById('freqChart').hidden) {
+          drawChartFromData(sciPyData);
+          renderExcursionChart(sciPyData);
+        }
         renderDB();
         renderProjectsList();
         refreshProjectEditState();

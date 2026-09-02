@@ -39,7 +39,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-from acoustic_sim import simulate
+try:
+    from .acoustic_sim import simulate
+except ImportError:  # Ejecución directa: python api/pdf_generator.py
+    from acoustic_sim import simulate
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -217,7 +220,7 @@ def interpolate_alignment(table_name: str, qts: float) -> Tuple[float, float, fl
     return rows[-1][1], rows[-1][2], rows[-1][3]
 
 def calc_acoustics(d: dict) -> dict:
-    sim = simulate(d)
+    sim = simulate(d, eg_volts=float(d.get("eg_volts", 2.83)))
     fs    = d["fs"]
     vas   = d["vas"]
     qts   = d["qts"]
@@ -244,23 +247,9 @@ def calc_acoustics(d: dict) -> dict:
     EBP = fs / qes if qes else None
 
     if box == "reflex":
-        if align == "B4":
-            qb = 7.0
-            alpha = 1.4142 - (1.0 / (qts * qb))
-            if alpha > 0:
-                Vb = vas / alpha
-                Fb = fs
-                F3 = fs
-            else:
-                alpha, h, f3_ratio = interpolate_alignment("QB3", qts)
-                Vb = vas / alpha
-                Fb = h * fs
-                F3 = f3_ratio * fs
-        else:
-            alpha, h, f3_ratio = interpolate_alignment(align, qts)
-            Vb = vas / alpha
-            Fb = h * fs
-            F3 = f3_ratio * fs
+        Vb = sim["vb_liters"]
+        Fb = sim["fb"]
+        F3 = sim["f3_from_curve"]
 
         if port_type == "circular":
             Sp   = math.pi * (port_diam / 2.0) ** 2
@@ -273,21 +262,12 @@ def calc_acoustics(d: dict) -> dict:
         # Fórmula de Keele: L = c²·N·Sp / (4π²·Fb²·Vb) - k·d_eq
         # Con c=34400 cm/s → c²/(4π²) ≈ 29974.86
         # Vb en litros, Sp en cm², L en cm
-        L = (29974.86 * N * Sp) / (Fb ** 2 * Vb) - k * d_eq
-
-        if L < 0:
-            logger.warning(f"Longitud de puerto negativa ({L:.1f} cm).")
-            L = max(L, 1.0)
-
-        # Velocidad del aire en el puerto (m/s)
-        # v = Fb × 2π × Xmax_peak × Sd / SpTotal
-        # Xmax_peak = xmax(mm) / 1000 × 0.4 (factor de pico)
-        if sd and xmax and SpTotal > 0:
-            xmax_m = xmax / 1000.0          # mm → m
-            sd_cm2 = sd                      # ya en cm²
-            portVel = (Fb * 2 * math.pi * (xmax_m * 0.4) * sd_cm2) / SpTotal
-        else:
-            portVel = None
+        L = sim["L_port_cm"]
+        if not sim["port_feasible"]:
+            raise ValueError(
+                f"No se puede generar el plano: longitud de puerto inviable ({L:.1f} cm)"
+            )
+        portVel = float(max(sim["port_vel"]))
 
         Vport = N * Sp * L / 1000.0
         Vb_bruto = Vb + Vport + Vdriver + 0.05 * Vb
@@ -300,7 +280,7 @@ def calc_acoustics(d: dict) -> dict:
         Fpipe = 34400.0 / (2.0 * L) if L > 0 else None
 
         r.update({
-            "alignment": align, "Vb": Vb, "Fb": sim.get("fb", Fb), "F3": sim.get("f3_from_curve", F3),
+            "alignment": align, "Vb": Vb, "Fb": Fb, "F3": F3,
             "Sp": Sp, "SpTotal": SpTotal, "d_eq": d_eq, "L": L,
             "portVel": portVel, "Vport": Vport, "Vb_bruto": Vb_bruto,
             "Vd": Vd, "Vdriver": Vdriver, "SPLmax": SPLmax,

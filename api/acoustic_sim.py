@@ -54,6 +54,8 @@ def ts_to_physical(d: dict) -> dict:
     qes  = float(d.get("qes", qts * 1.1))
     sd   = float(d.get("sd", 530)) * 1e-4  # cm² → m²
     re   = float(d.get("re", 6.0))         # Ω
+    le   = float(d.get("le", 0.5)) * 1e-3  # mH → H
+    qb   = float(d.get("qb", 7.0))          # pérdidas del recinto/puerto
     xmax = float(d.get("xmax", 10)) * 1e-3 # mm → m
 
     ws  = 2 * PI * fs
@@ -86,9 +88,9 @@ def ts_to_physical(d: dict) -> dict:
 
     return {
         "fs": fs, "ws": ws,
-        "vas": vas, "sd": sd, "re": re, "bl": bl,
+        "vas": vas, "sd": sd, "re": re, "le": le, "bl": bl,
         "mms": mms, "cms": cms, "rms": rms,
-        "qts": qts, "qes": qes, "qms": qms,
+        "qts": qts, "qes": qes, "qms": qms, "qb": qb,
         "xmax": xmax, "cas": cas,
     }
 
@@ -215,7 +217,7 @@ def cone_excursion(p: dict, freqs: np.ndarray, vb_liters: float,
     x_dc = (eg_volts * p["bl"] * p["cms"]) / p["re"]
 
     if box_type == "reflex" and fb_hz:
-        qb = 7.0
+        qb = p["qb"]
         wa_c, wb, a3, a2, a1, a0 = get_small_coefficients(p, vb_liters, fb_hz, qb)
         D = s**4 + a3*s**3 + a2*s**2 + a1*s + a0
         # Hx para reflex es el filtro de 2º orden sobre el cajón de 4º
@@ -294,7 +296,7 @@ def impedance(p: dict, freqs: np.ndarray, box_type: str,
             wb  = 2 * PI * fb_hz
             map_ac = 1.0 / (wb**2 * cab)    # masa acústica del puerto
             mmp = map_ac * sd**2              # masa mecánica equivalente
-            qb  = 7.0
+            qb  = p["qb"]
             rmp = wb * mmp / qb               # pérdidas del puerto
 
             # Puerto: serie Mmp + Rmp
@@ -377,12 +379,19 @@ def simulate(driver: dict, freqs: np.ndarray = None,
 
     p       = ts_to_physical(driver)
     box     = driver.get("box_type", "reflex")
-    spl_ref = float(driver.get("spl", 86.0))   # sensibilidad nominal
+    spl_ref = float(driver.get("spl", 86.0))   # sensibilidad nominal dB / 1 W / 1 m
+    input_power_w = eg_volts**2 / p["re"]
+    drive_level_db = 10 * np.log10(input_power_w)
 
     result = {"freqs": freqs, "driver": driver, "phys": p}
 
     # ── REFLEX ──────────────────────────────────────────────
     if box == "reflex":
+        if not 0.20 <= p["qts"] <= 0.50:
+            raise ValueError(
+                f"Qts={p['qts']:.3f} fuera del rango 0.20–0.50 soportado "
+                "por las tablas de alineamiento reflex"
+            )
         align = driver.get("alignment", "QB3")
         target = AlignmentEngine(
             p["fs"], p["qts"], p["vas"] * 1e3
@@ -410,16 +419,16 @@ def simulate(driver: dict, freqs: np.ndarray = None,
 
         sp_total  = N * sp
         L_port    = (29974.86 * N * sp) / (fb**2 * vb_liters) - k * d_eq
-        L_port    = max(L_port, 1.0)
+        port_feasible = L_port >= 1.0
 
         # Función de transferencia 4º orden
-        tf = tf_reflex(p, vb_liters, fb)
+        tf = tf_reflex(p, vb_liters, fb, p["qb"])
         _, H = signal.freqs(tf.num, tf.den, worN=2*PI*freqs)
 
         # La función de transferencia ya tiende a 1.0 (0 dB) en la banda de paso
         H_mag    = np.abs(H)
         H_norm   = H_mag
-        spl_curve = spl_ref + 20 * np.log10(H_norm + 1e-30)
+        spl_curve = spl_ref + drive_level_db + 20 * np.log10(H_norm + 1e-30)
 
         # Retardo de grupo (ms)
         gd_s  = -np.gradient(np.unwrap(np.angle(H)), 2*PI*freqs)
@@ -447,6 +456,7 @@ def simulate(driver: dict, freqs: np.ndarray = None,
             "impedance":   zimp,
             "sp_cm2":      sp_total,
             "L_port_cm":   L_port,
+            "port_feasible": port_feasible,
             "port_diam":   port_diam,
             "N_ports":     N,
             "tf":          tf,
@@ -466,7 +476,7 @@ def simulate(driver: dict, freqs: np.ndarray = None,
         _, H   = signal.freqs(tf_obj.num, tf_obj.den, worN=2*PI*freqs)
         H_mag  = np.abs(H)
         H_norm = H_mag
-        spl_curve = spl_ref + 20 * np.log10(H_norm + 1e-30)
+        spl_curve = spl_ref + drive_level_db + 20 * np.log10(H_norm + 1e-30)
 
         gd_s  = -np.gradient(np.unwrap(np.angle(H)), 2*PI*freqs)
         gd_ms = gd_s * 1e3
@@ -496,6 +506,12 @@ def simulate(driver: dict, freqs: np.ndarray = None,
     # Usar la zona alta evita incluir el roll-off bajo que sesga el
     # promedio y desplaza F3 respecto a Fb en alineaciones B4.
     mask_band = (f_arr >= 200) & (f_arr <= 500)
+    if not np.any(mask_band):
+        # En solicitudes con un rango acotado, usar el cuarto superior de la
+        # malla como referencia estable en vez de producir una media vacía/NaN.
+        start = max(0, int(len(f_arr) * 0.75))
+        mask_band = np.zeros(len(f_arr), dtype=bool)
+        mask_band[start:] = True
     sens_band = float(np.mean(spl_arr[mask_band]))
 
     # F3 real desde la curva — buscar el cruce −3 dB más cercano
@@ -543,6 +559,8 @@ def simulate(driver: dict, freqs: np.ndarray = None,
 
     result["sens_band"]       = sens_band
     result["f3_from_curve"]   = f3_from_curve
+    result["input_power_w"]   = input_power_w
+    result["eg_volts"]        = eg_volts
 
     return result
 

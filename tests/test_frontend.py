@@ -46,7 +46,7 @@ class FrontendExperienceTests(unittest.TestCase):
             self.assertIn(key, LOCALE_ES)
             self.assertIn(key, LOCALE_EN)
         self.assertIn("language: getLanguage()", JS)
-        self.assertIn("body: JSON.stringify({ driver: payload.driver, language: getLanguage() })", JS)
+        self.assertIn("eg_volts: payload.eg_volts", JS)
         self.assertIn('"language": d.get("language", "es")', PDF_GENERATOR)
         self.assertIn("PDF_EN", PDF_GENERATOR)
         self.assertIn('VALID_BOX_TYPES = {"reflex", "closed"}', PDF_GENERATOR)
@@ -63,7 +63,7 @@ class FrontendExperienceTests(unittest.TestCase):
 
     def test_calculator_controls_have_associated_labels(self):
         self.assertIn('for="spk-search"', HTML)
-        for field_id in ("fs", "vas", "qts", "qes", "qms", "xmax", "sd", "boxType", "material"):
+        for field_id in ("fs", "vas", "qts", "qes", "qms", "xmax", "sd", "simulationVoltage", "qb", "boxType", "material"):
             self.assertIn(f'for="{field_id}"', HTML)
 
     def test_input_parameter_descriptions_are_localized(self):
@@ -84,6 +84,23 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertGreaterEqual(HTML.count("data-pdf-download"), 2)
         self.assertIn("setButtonBusy(calculateButton, true", JS)
         self.assertIn("setButtonBusy(button, true, t('pdf_generating'))", JS)
+
+    def test_fallback_chart_is_identified_as_a_simplified_estimate(self):
+        self.assertIn("Estimación simplificada (no simulación)", LOCALE_ES)
+        self.assertIn("Simplified estimate (not a simulation)", LOCALE_EN)
+        self.assertIn("badge.textContent = t('chart_js_approx')", JS)
+
+    def test_chart_explains_scope_and_port_limits(self):
+        self.assertIn('data-i18n="chart_model_scope"', HTML)
+        self.assertIn("port_velocity_pending", LOCALE_ES)
+        self.assertIn("port_velocity_pending", LOCALE_EN)
+        self.assertIn("port_not_feasible", JS)
+        self.assertIn("axis_port_velocity", JS)
+        self.assertIn("eg_volts: r.simulationVoltage", JS)
+        self.assertIn("simulation_drive", LOCALE_ES)
+        self.assertIn("simulation_drive", LOCALE_EN)
+        self.assertIn("loss_factor_qb", LOCALE_ES)
+        self.assertIn("loss_factor_qb", LOCALE_EN)
 
     def test_inline_field_validation_is_accessible(self):
         self.assertIn("function validateCalculatorForm()", JS)

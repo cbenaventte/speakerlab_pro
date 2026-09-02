@@ -6,6 +6,30 @@
 
 Calculadora libre de cajas acústicas DIY con enciclopedia, simulación científica y generación gratuita de planos PDF.
 
+## Alcance de la simulación
+
+SpeakerLab Pro utiliza los modelos clásicos de Thiele y Small para estimar
+recintos sellados y bass-reflex. La simulación científica calcula respuesta SPL,
+F3/F6/F10, excursión del cono, velocidad del puerto, impedancia y retardo de
+grupo. La gráfica JS disponible como respaldo es una **estimación simplificada**
+y aparece identificada como tal.
+
+La tensión de simulación es configurable en voltios RMS. La potencia eléctrica
+mostrada es una aproximación sobre la resistencia DC del driver:
+
+```text
+P ≈ V² / Re
+```
+
+Duplicar la tensión aumenta aproximadamente 6,02 dB, duplica la excursión y
+cuadruplica la potencia. El valor `Qb` representa las pérdidas combinadas del
+recinto y el puerto bass-reflex: un valor menor produce mayores pérdidas. El
+rango admitido es 3–30 y el valor inicial es 7.
+
+El modelo es de campo libre y no incluye la sala, difracción del baffle,
+compresión térmica, directividad ni la respuesta propia del cono. Para obtener
+resultados fiables conviene introducir Mms, Bl, Re, Le, Sd y Xmax del fabricante.
+
 ## Estructura
 
 ```text
@@ -73,7 +97,7 @@ RATE_LIMIT_PER_MINUTE=120
 | GET | `/api/health` | Estado del servicio |
 | GET | `/api/config` | Capacidades públicas |
 | GET | `/api/speakers` | Base de altavoces |
-| POST | `/api/alignments` | Alineamientos calculados por la tabla canónica |
+| POST | `/api/alignments` | Alineamientos canónicos y F3 obtenido de la curva |
 | POST | `/api/simulate` | Simulación acústica completa |
 | POST | `/api/compare` | Comparación de alineamientos |
 | POST | `/api/pdf` | Generación gratuita del PDF |
@@ -84,17 +108,36 @@ Documentación interactiva: `http://localhost:8000/docs`.
 
 La suite protege los valores de referencia de los alineamientos, las simulaciones
 sellada y bass-reflex, los límites de entrada, el contrato público de la API y el
-diseño responsivo en navegadores de 320, 375, 430, 768 y 1440 píxeles.
+diseño responsivo en navegadores de 320, 375, 430, 768 y 1440 píxeles. También
+comprueba la escala eléctrica, Le, Qb, puertos inviables y consistencia entre la
+interfaz, el motor científico y los planos PDF.
 
 ```bash
 pip install -r requirements-dev.txt
 python -m playwright install chromium
-python -m unittest discover -s tests -v
+python -m unittest discover -v
 ```
 
 Para utilizar un Chrome ya instalado en vez del navegador administrado por
 Playwright, define `PLAYWRIGHT_CHROME_PATH` con la ruta de su ejecutable. GitHub
 Actions ejecuta la suite completa automáticamente en cada `push` y pull request.
+
+En este equipo, la ejecución completa es:
+
+```bash
+PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome python -m unittest discover -v
+```
+
+### Criterios de validez
+
+- Las tablas reflex admiten `Qts` entre 0,20 y 0,50. Fuera de ese intervalo la
+  aplicación rechaza el alineamiento en vez de recortar silenciosamente el dato.
+- Una longitud de puerto inferior a 1 cm se considera inviable. No se modifica
+  artificialmente y el PDF no genera un plano que altere la sintonía calculada.
+- F3 se obtiene del cruce real de −3 dB de la curva científica. El valor tabular
+  permanece disponible internamente como referencia.
+- El PDF utiliza el mismo motor canónico, tensión, Qb, Vb, Fb, F3 y puerto que la
+  interfaz.
 
 ## Despliegue
 

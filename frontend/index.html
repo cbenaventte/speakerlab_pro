@@ -222,6 +222,13 @@
                   <span class="unit-hint" data-i18n="hint_le">mH — inductancia bobina</span>
                 </div>
               </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="simulationVoltage" data-i18n="simulation_voltage">Tensión de simulación</label>
+                  <input type="number" id="simulationVoltage" value="2.83" step="0.1">
+                  <span class="unit-hint" data-i18n="simulation_voltage_hint">V RMS — determina SPL, excursión y velocidad</span>
+                </div>
+              </div>
             </div>
 
             <!-- Configuración de caja -->
@@ -296,6 +303,11 @@
                       <option value="0.732" selected data-i18n="k_closed">0.732 — un extremo cerrado</option>
                       <option value="0.850" data-i18n="k_flared">0.850 — con cono de entrada</option>
                     </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="qb" data-i18n="loss_factor_qb">Factor de pérdidas Qb</label>
+                    <input type="number" id="qb" value="7" step="0.5">
+                    <span class="unit-hint" data-i18n="loss_factor_qb_hint">3–30 · menor valor = más pérdidas</span>
                   </div>
                 </div>
               </div>
@@ -383,13 +395,14 @@
                  >
                   <span>📈 <span data-i18n="chart_title">Respuesta en Frecuencia</span></span>
                   <div class="u-inline-03">
-                    <span id="chart-mode-badge" class="u-inline-04" data-i18n="chart_js_approx">JS aproximado</span>
+                    <span id="chart-mode-badge" class="u-inline-04" data-i18n="chart_js_approx">Estimación simplificada (no simulación)</span>
                     <button id="btn-scipy" data-action="runScipy" class="u-inline-05">⚗️ <span data-i18n="simulate_scipy">Simular con scipy</span></button>
                   </div>
                 </div>
                 <div id="chart-loading" class="u-inline-06" hidden>
                   ⏳ <span data-i18n="simulating_small">Simulando con modelo Small (1973)…</span></div>
                 <canvas id="freqChart"></canvas>
+                <p class="chart-model-note" data-i18n="chart_model_scope">Modelo ideal de campo libre: no incluye sala, baffle step, compresión térmica ni respuesta propia del driver.</p>
                 <div id="extra-charts" hidden>
                   <div class="chart-header u-inline-07">🎯 <span data-i18n="excursion_port_velocity">Excursión del Cono &amp; Velocidad en Puerto</span></div>
                   <canvas id="excChart" class="u-inline-08"></canvas>

@@ -111,6 +111,7 @@ class DriverParams(BaseModel):
     slot_h_cm:    Optional[float] = Field(5.0, ge=0.5, le=200)
     num_ports:    Optional[int] = Field(1, ge=1, le=8)
     k_factor:     Optional[float] = Field(0.732, ge=0.1, le=2)
+    qb:           Optional[float] = Field(7.0, ge=3.0, le=30.0)
 
     @model_validator(mode="after")
     def validate_physical_relationships(self):
@@ -134,12 +135,14 @@ class SimulateRequest(BaseModel):
 class PDFRequest(BaseModel):
     driver: DriverParams
     language: Literal["es", "en"] = "es"
+    eg_volts: float = Field(2.83, gt=0.0, le=200.0)
 
 class AlignmentRequest(BaseModel):
     fs:  float = Field(..., gt=5, lt=500)
     vas: float = Field(..., gt=0.1, lt=2000)
     qts: float = Field(..., gt=0.05, lt=2.0)
     qtc_target: float = Field(0.707, gt=0.05, lt=2.0)
+    qb: float = Field(7.0, ge=3.0, le=30.0)
 
 def _dd(d: DriverParams) -> dict:
     d_dict = d.model_dump() if hasattr(d, "model_dump") else d.dict()
@@ -178,15 +181,35 @@ async def get_speakers():
 @app.post("/api/alignments")
 async def get_alignments(req: AlignmentRequest):
     """Calcula diseños reflex y sellado desde el motor canónico."""
+    import numpy as np
+
+    freqs = np.logspace(np.log10(15), np.log10(800), 500)
+    reflex_supported = 0.20 <= req.qts <= 0.50
+    table_alignments = (
+        AlignmentEngine(req.fs, req.qts, req.vas).get_all_alignments()
+        if reflex_supported else {}
+    )
     try:
         closed = simulate({
             "fs": req.fs, "vas": req.vas, "qts": req.qts,
             "box_type": "closed", "qtc_target": req.qtc_target,
-        })
+        }, freqs=freqs)
+        alignments = {}
+        for name, tabular in table_alignments.items():
+            simulated = simulate({
+                "fs": req.fs, "vas": req.vas, "qts": req.qts,
+                "box_type": "reflex", "alignment": name, "qb": req.qb,
+            }, freqs=freqs)
+            alignments[name] = {
+                **tabular,
+                "f3_table": tabular["f3"],
+                "f3": round(simulated["f3_from_curve"], 1),
+            }
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return {
-        "alignments": AlignmentEngine(req.fs, req.qts, req.vas).get_all_alignments(),
+        "alignments": alignments,
+        "reflex_supported": reflex_supported,
         "closed": {
             "vb": round(closed["vb_liters"], 1),
             "f3": round(closed["f3_from_curve"], 1),
@@ -202,11 +225,13 @@ async def api_simulate(req: SimulateRequest):
     dd       = _dd(req.driver)
     warnings = []
     english = req.language == "en"
-    if req.driver.qts < 0.2 or req.driver.qts > 0.5:
-        warnings.append(
-            (f"Qts={req.driver.qts} is outside the Thiele table range (0.20–0.50)." if english
-             else f"Qts={req.driver.qts} fuera del rango de tablas Thiele (0.20–0.50).")
+    if req.driver.box_type == "reflex" and (req.driver.qts < 0.2 or req.driver.qts > 0.5):
+        detail = (
+            f"Qts={req.driver.qts} is outside the supported reflex alignment range (0.20–0.50)."
+            if english else
+            f"Qts={req.driver.qts} está fuera del rango admitido para alineamientos reflex (0.20–0.50)."
         )
+        raise HTTPException(422, detail)
     if not req.driver.mms:
         warnings.append(
             ("Mms was not provided — it will be estimated from Vas/Sd. The error may exceed 100%. "
@@ -241,17 +266,29 @@ async def api_simulate(req: SimulateRequest):
             "f3": round(result["f3_from_curve"], 1),
             "f6": round(result.get("f6") or 0, 1), "f10": round(result.get("f10") or 0, 1),
             "sens_band": round(result["sens_band"], 1),
+            "input_power_w": round(result["input_power_w"], 2),
+            "simulation_voltage": req.eg_volts,
             "xmax_exceeded_below": result.get("xmax_exceeded_below"),
         },
         "warnings": warnings,
     }
     if result["box_type"] == "reflex":
         resp["port_vel"] = _arr(result["port_vel"])
+        max_port_velocity = float(np.max(result["port_vel"]))
+        if not result["port_feasible"]:
+            warnings.append(
+                ("The calculated port length is below 1 cm; this port geometry is not physically viable. "
+                 "Reduce its area or choose another enclosure/alignment." if english else
+                 "La longitud calculada del puerto es menor que 1 cm; esta geometría no es físicamente viable. "
+                 "Reduce su área o elige otro recinto/alineamiento.")
+            )
         resp["metrics"].update({
             "fb": round(result["fb"], 1), "alignment": result.get("alignment"),
             "L_port_cm": round(result.get("L_port_cm", 0), 1),
             "sp_cm2": round(result.get("sp_cm2", 0), 1),
             "port_turbulence_freq": result.get("port_turbulence_freq"),
+            "port_feasible": result["port_feasible"],
+            "max_port_velocity": round(max_port_velocity, 2),
         })
     else:
         resp["metrics"].update({
@@ -288,7 +325,8 @@ def _compare_sync(driver: DriverParams):
             curves[align] = {
                 "spl": _arr([db - r.get("sens_band", driver.spl) for db in r["spl"]]), 
                 "vb": targets[align]["vb"],
-                "f3": targets[align]["f3"], 
+                "f3": round(r["f3_from_curve"], 1),
+                "f3_table": targets[align]["f3"],
                 "fb": targets[align]["fb"]
             }
         except Exception as e:
@@ -327,11 +365,16 @@ async def api_pdf(req: PDFRequest, bg: BackgroundTasks):
     from pdf_generator import generate_pdf
     dd       = _dd(req.driver)
     dd["language"] = req.language
+    dd["eg_volts"] = req.eg_volts
     out_path = f"/tmp/speakerlab_{int(time.time())}_{secrets.token_hex(4)}.pdf"
     try:
         # El generador comparte rutinas nativas de SciPy/Matplotlib con la
         # simulación; mantenerlas en el mismo hilo evita bloqueos nativos.
         generate_pdf(dd, out_path)
+    except ValueError as e:
+        logger.warning("PDF rechazado: %s", e)
+        _safe_unlink(out_path)
+        raise HTTPException(422, str(e)) from e
     except Exception as e:
         logger.exception("Error interno generando PDF")
         _safe_unlink(out_path)
