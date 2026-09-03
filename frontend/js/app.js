@@ -309,6 +309,8 @@
     }
 
     function switchTab(evt, id) {
+      const requestedTab = evt.currentTarget;
+      if (requestedTab.hidden || requestedTab.disabled) return;
       ['tab-diag', 'tab-port', 'tab-dim', 'tab-chart', 'tab-cuts', 'tab-compare'].forEach(t => {
         const el = document.getElementById(t);
         if (el) el.hidden = true;
@@ -322,7 +324,14 @@
       evt.currentTarget.classList.add('active');
       evt.currentTarget.setAttribute('aria-selected', 'true');
       evt.currentTarget.tabIndex = 0;
-      if (id === 'tab-chart' && calcResults) drawChart(calcResults);
+      if (id === 'tab-chart' && calcResults) {
+        if (sciPyData) {
+          drawChartFromData(sciPyData);
+          renderExcursionChart(sciPyData);
+        } else {
+          drawChart(calcResults);
+        }
+      }
     }
 
     function n(v, d = 1) {
@@ -479,6 +488,8 @@
         : true;
       refreshProjectEditState();
       notify(t('design_success'), 'success');
+      sciPyData = null;
+      await runScipy();
     }
 
     /* ── Renderizado ────────────────────────────────────────── */
@@ -524,14 +535,28 @@
     }
 
     function renderPort(r) {
-      if (r.boxType !== 'reflex') { document.getElementById('tab-port').hidden = true; return; }
+      const portTab = document.querySelector('[data-result-tab="tab-port"]');
+      const portPanel = document.getElementById('tab-port');
+      const portBody = document.getElementById('port-body');
+      const isReflex = r.boxType === 'reflex';
+
+      portTab.hidden = !isReflex;
+      portTab.disabled = !isReflex;
+      portTab.setAttribute('aria-hidden', String(!isReflex));
+
+      if (!isReflex) {
+        portPanel.hidden = true;
+        portBody.replaceChildren();
+        return;
+      }
+
       const portFeasible = r.L >= 1;
       const Fpipe = portFeasible ? 34400 / (2 * r.L) : null;
       const portDesc = r.portType === 'circular'
         ? `<div class="data-row"><span class="dr-label">${t('tube_diameter')}</span><span class="dr-val">${r.portDiam} cm</span></div>`
         : `<div class="data-row"><span class="dr-label">Slot ${r.slotW}×${r.slotH} cm</span><span class="dr-val">${t('area', { value: n(r.Sp) })}</span></div>`;
 
-      document.getElementById('port-body').innerHTML = `
+      portBody.innerHTML = `
     <div class="data-row"><span class="dr-label">${t('tube_length')}</span><span class="dr-val">${n(r.L)} cm &nbsp;(${n(r.L * 10, 0)} mm)</span></div>
     ${!portFeasible ? `<div class="data-row"><span class="dr-label">⚠️ ${t('port_not_feasible')}</span><span class="dr-val pipe-warning">${t('port_change_geometry')}</span></div>` : ''}
     <div class="data-row"><span class="dr-label">${t('area_per_port')}</span><span class="dr-val">${n(r.Sp)} cm²</span></div>
@@ -906,19 +931,37 @@
 
       // Línea de referencia −3dB
       const y3 = yPos(ref - 3);
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8; ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(198,40,40,0.55)'; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
       ctx.beginPath(); ctx.moveTo(PAD.l, y3); ctx.lineTo(PAD.l + fw, y3); ctx.stroke();
       ctx.setLineDash([]);
 
       // Marcadores verticales (F3, Fb, etc.)
-      markers.forEach(({ f, label, color }) => {
+      let previousMarkerX = -Infinity;
+      let labelRow = 0;
+      [...markers].sort((a, b) => a.f - b.f).forEach(({ f, label, color, kind }) => {
         if (!f || f < 15 || f > 900) return;
         const x = xPos(f);
-        ctx.strokeStyle = color; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]);
+        labelRow = x - previousMarkerX < 85 ? (labelRow + 1) % 3 : 0;
+        previousMarkerX = x;
+        const dash = kind === 'f3' ? [] : kind === 'fb' ? [7, 5] : [3, 4];
+        ctx.strokeStyle = color;
+        ctx.lineWidth = kind === 'f3' ? 2.2 : 1.6;
+        ctx.setLineDash(dash);
         ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, PAD.t + fh); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = color; ctx.font = 'bold 10px Kalam,cursive'; ctx.textAlign = 'left';
-        ctx.fillText(label, x + 4, PAD.t + 20);
+        if (kind === 'f3') {
+          ctx.beginPath(); ctx.arc(x, y3, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = color; ctx.fill();
+          ctx.strokeStyle = '#fffdf8'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        const labelY = PAD.t + 17 + labelRow * 17;
+        ctx.font = 'bold 10px Kalam,cursive';
+        const labelWidth = ctx.measureText(label).width + 8;
+        const labelX = Math.min(x + 4, PAD.l + fw - labelWidth);
+        ctx.fillStyle = 'rgba(255,253,248,0.9)';
+        ctx.fillRect(labelX, labelY - 12, labelWidth, 15);
+        ctx.fillStyle = color; ctx.textAlign = 'left';
+        ctx.fillText(label, labelX + 4, labelY);
       });
 
       // Labels de ejes
@@ -933,9 +976,9 @@
       const canvas = document.getElementById('freqChart');
       const m = data.metrics;
       const markers = [
-        { f: m.f3, label: `F3=${m.f3}Hz`, color: '#d63031' },
-        { f: m.f6, label: `F6=${m.f6}Hz`, color: 'rgba(214,48,49,0.5)' },
-        { f: m.fb, label: `Fb=${m.fb}Hz`, color: '#0984e3' },
+        { f: m.f3, label: `F3=${m.f3}Hz`, color: '#c62828', kind: 'f3' },
+        { f: m.f6, label: `F6=${m.f6}Hz`, color: '#8d6e63', kind: 'f6' },
+        { f: m.fb, label: `Fb=${m.fb}Hz`, color: '#075fa8', kind: 'fb' },
       ].filter(mk => mk.f);
       _drawCanvasCore(canvas, data.freqs, data.spl, markers, m.sens_band);
       document.getElementById('extra-charts').hidden = false;
@@ -1050,22 +1093,14 @@
       // Construir arrays desde la aproximación JS
       const freqArr = [], splArr = [];
       for (let fi = 15; fi <= 850; fi *= 1.015) {
-        let db;
-        if (r.boxType === 'reflex') {
-          db = -10 * Math.log10(1 + (r.F3 / fi) ** 8) * 0.4;
-          if (fi < r.Fb * 0.5) db -= 15 * (r.Fb * 0.5 / fi - 1);
-        } else {
-          const Qtc = r.Qtc_real || 0.707, ratio = fi / r.F3;
-          const denom = (1 - ratio ** 2) ** 2 + ratio ** 2 / Qtc ** 2;
-          db = denom > 0 ? 10 * Math.log10(ratio ** 4 / denom) : -30;
-          db = Math.max(db, -28);
-        }
+        const exponent = r.boxType === 'reflex' ? 8 : 4;
+        const db = -10 * Math.log10(1 + (r.F3 / fi) ** exponent);
         freqArr.push(fi); splArr.push(db);
       }
 
       const markers = [
-        { f: r.F3, label: `F3=${n(r.F3, 0)}Hz`, color: '#d63031' },
-        { f: r.Fb, label: `Fb=${n(r.Fb, 0)}Hz`, color: '#0984e3' },
+        { f: r.F3, label: `F3=${n(r.F3, 0)}Hz`, color: '#c62828', kind: 'f3' },
+        { f: r.Fb, label: `Fb=${n(r.Fb, 0)}Hz`, color: '#075fa8', kind: 'fb' },
       ].filter(m => m.f);
 
       _drawCanvasCore(canvas, freqArr, splArr, markers, 0);

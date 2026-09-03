@@ -2,6 +2,7 @@ import asyncio
 import unittest
 
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 
 from api.index import (
@@ -121,6 +122,25 @@ class ApiContractTests(unittest.TestCase):
         self.assertAlmostEqual(response["metrics"]["simulation_voltage"], 2.83)
         self.assertGreater(response["metrics"]["input_power_w"], 0)
         self.assertEqual(response["warnings"], [])
+        jsonable_encoder(response)
+
+    def test_rectangular_port_response_is_json_serializable(self):
+        request = SimulateRequest(
+            driver=reference_driver(
+                port_type="slot",
+                slot_w_cm=10,
+                slot_h_cm=5,
+                num_ports=1,
+            ),
+            freq_points=100,
+        )
+        response = asyncio.run(api_simulate(request))
+        encoded = jsonable_encoder(response)
+
+        self.assertIs(type(encoded["metrics"]["port_feasible"]), bool)
+        self.assertGreater(encoded["metrics"]["L_port_cm"], 0)
+        self.assertAlmostEqual(encoded["metrics"]["sp_cm2"], 50.0)
+        self.assertEqual(len(encoded["port_vel"]), 100)
 
 
 if __name__ == "__main__":

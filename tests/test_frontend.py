@@ -89,6 +89,21 @@ class FrontendExperienceTests(unittest.TestCase):
         self.assertIn("Estimación simplificada (no simulación)", LOCALE_ES)
         self.assertIn("Simplified estimate (not a simulation)", LOCALE_EN)
         self.assertIn("badge.textContent = t('chart_js_approx')", JS)
+        self.assertIn("const exponent = r.boxType === 'reflex' ? 8 : 4", JS)
+        self.assertNotIn("(r.F3 / fi) ** 8) * 0.4", JS)
+
+    def test_scientific_chart_runs_automatically_and_keeps_distinct_markers(self):
+        self.assertIn("await runScipy();", JS)
+        self.assertIn("if (sciPyData)", JS)
+        self.assertIn("kind: 'f3'", JS)
+        self.assertIn("kind: 'fb'", JS)
+        self.assertIn("ctx.arc(x, y3, 4.5", JS)
+
+    def test_closed_box_removes_and_disables_stale_port_results(self):
+        self.assertIn("portTab.hidden = !isReflex", JS)
+        self.assertIn("portTab.disabled = !isReflex", JS)
+        self.assertIn("portBody.replaceChildren()", JS)
+        self.assertIn("if (requestedTab.hidden || requestedTab.disabled) return", JS)
 
     def test_chart_explains_scope_and_port_limits(self):
         self.assertIn('data-i18n="chart_model_scope"', HTML)

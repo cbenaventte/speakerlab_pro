@@ -415,11 +415,11 @@ def simulate(driver: dict, freqs: np.ndarray = None,
             d_eq  = port_diam
         else:
             sp    = slot_w * slot_h
-            d_eq  = 2 * np.sqrt(sp / np.pi)
+            d_eq  = float(2 * np.sqrt(sp / np.pi))
 
         sp_total  = N * sp
-        L_port    = (29974.86 * N * sp) / (fb**2 * vb_liters) - k * d_eq
-        port_feasible = L_port >= 1.0
+        L_port    = float((29974.86 * N * sp) / (fb**2 * vb_liters) - k * d_eq)
+        port_feasible = bool(L_port >= 1.0)
 
         # Función de transferencia 4º orden
         tf = tf_reflex(p, vb_liters, fb, p["qb"])
